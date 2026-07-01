@@ -4,7 +4,7 @@ import {
   useAccountSession,
   useAccountToken,
   type AccountAvAppId
-} from "@avalsys/account-av-web";
+} from "@avalsys/account-av-web/client";
 import { createContext, useContext, useMemo, type ReactNode } from "react";
 import {
   getAutonomoAccountApiBaseUrl,
