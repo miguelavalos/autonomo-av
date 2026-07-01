@@ -31,6 +31,7 @@ For production/TestFlight, generate ignored production config first, then run:
 scripts/generate-ios-local-xcconfig.sh --env prod
 scripts/check-ios-release-preflight.sh --env prod --configuration Release
 scripts/check-ios-signing-readiness.sh --env prod --mode testflight
+scripts/ios-release-archive.sh
 ```
 
 The release preflight does not archive, export, upload, or contact App Store
@@ -40,3 +41,8 @@ shape required for `Enviar a Autonomo AV Inbox`.
 The signing readiness check also does not archive, export, upload, or contact
 App Store Connect. It only verifies that this Mac has the expected Apple signing
 identity and local provisioning profiles for the app and Share Extension.
+
+The release archive script creates and verifies a signed `.xcarchive`, but it
+intentionally does not export, upload, or contact App Store Connect. Add
+`--allow-provisioning-updates` only when the release Mac is signed into the
+correct Apple Developer team and Xcode should repair local profiles.
