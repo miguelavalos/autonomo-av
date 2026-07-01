@@ -8,11 +8,11 @@ export const autonomoProductConfig: AppsAvProductConfig = {
   accentColor: autonomoAccent,
   name: "Autonomo AV",
   links: {
-    deleteAccount: externalLink(accountManagementUrl("/account/delete"), "Delete account"),
-    privacy: externalLink(import.meta.env.VITE_AUTONOMOAV_PRIVACY_URL, "Privacy"),
+    deleteAccount: externalLink(import.meta.env.VITE_AUTONOMOAV_DELETE_ACCOUNT_URL || commercialSiteUrl("/delete-account"), "Delete account"),
+    privacy: externalLink(import.meta.env.VITE_AUTONOMOAV_PRIVACY_URL || commercialSiteUrl("/privacy"), "Privacy"),
     suite: externalLink(import.meta.env.VITE_ACCOUNTAV_MANAGEMENT_URL, "Apps"),
     support: externalLink(supportUrl(), "Support"),
-    terms: externalLink(import.meta.env.VITE_AUTONOMOAV_TERMS_URL, "Terms")
+    terms: externalLink(import.meta.env.VITE_AUTONOMOAV_TERMS_URL || commercialSiteUrl("/terms"), "Terms")
   }
 };
 

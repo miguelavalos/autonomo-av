@@ -101,6 +101,60 @@ textarea {
   gap: 1rem;
 }
 
+.legal-page {
+  display: grid;
+  gap: 1rem;
+  max-width: 58rem;
+}
+
+.legal-hero {
+  display: grid;
+  gap: 0.75rem;
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 0.25rem 0 1.25rem;
+}
+
+.legal-hero h1 {
+  font-size: 2rem;
+  font-weight: 720;
+  line-height: 1.15;
+}
+
+.legal-hero p {
+  max-width: 45rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.legal-meta {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.legal-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.legal-section {
+  align-content: start;
+}
+
+.legal-section p {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.legal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .autonomo-auth-page {
   display: grid;
   min-height: 100vh;
@@ -625,6 +679,7 @@ textarea {
 
 @media (max-width: 980px) {
   .inbox-layout,
+  .legal-grid,
   .quarter-grid,
   .settings-grid {
     grid-template-columns: 1fr;
@@ -652,6 +707,10 @@ textarea {
 
   .autonomo-header-strip {
     display: grid;
+  }
+
+  .legal-hero h1 {
+    font-size: 1.65rem;
   }
 
   .filters-grid,

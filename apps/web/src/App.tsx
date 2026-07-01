@@ -91,7 +91,9 @@ const reviewedDocumentTypes: AutonomoReviewedDocumentType[] = ["invoice", "ticke
 const counterpartyKinds: AutonomoCounterpartyKind[] = ["supplier", "customer", "both", "unknown"];
 const uploadAccept = `${autonomoUploadContentTypeValues.join(",")},.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif`;
 
-type AppRoute = "inbox" | "quarter" | "settings" | "sign-in";
+type PublicRoute = "delete-account" | "privacy" | "support" | "terms";
+type AppRoute = "inbox" | "quarter" | "settings" | "sign-in" | PublicRoute;
+type SignedInRoute = Exclude<AppRoute, "sign-in" | PublicRoute>;
 
 type FiltersState = {
   status: AutonomoDocumentStatus | "all";
@@ -160,6 +162,129 @@ const emptyReviewForm: ReviewFormState = {
   notes: ""
 };
 
+const supportMailto = "mailto:support@avalsys.com?subject=Autonomo%20AV%20support";
+
+const publicPages: Record<PublicRoute, {
+  actionBody: string;
+  actionTitle: string;
+  primaryHref: string;
+  primaryLabel: string;
+  sections: Array<{ body: string[]; title: string }>;
+  summary: string;
+  title: string;
+}> = {
+  "delete-account": {
+    title: "Delete account",
+    summary: "Autonomo AV uses Account AV for sign-in, account identity, and account deletion requests.",
+    sections: [
+      {
+        title: "How deletion works",
+        body: [
+          "Sign in with the Account AV user that owns the Autonomo AV workspace, then open the account deletion flow from the app or Account AV management.",
+          "Because Account AV can be shared across Avalsys apps, the deletion flow may show linked apps, active billing, or other consequences before final confirmation."
+        ]
+      },
+      {
+        title: "Autonomo AV data",
+        body: [
+          "Deletion can include the Autonomo AV workspace, uploaded business documents, AI draft metadata, reviewed records, and related account identifiers.",
+          "Some operational records may be retained when needed for security, abuse prevention, billing, legal compliance, or unresolved support cases."
+        ]
+      }
+    ],
+    actionTitle: "Need help deleting an account?",
+    actionBody: "If you cannot sign in, contact support from the email address attached to the Account AV user and include Autonomo AV in the subject.",
+    primaryHref: supportMailto,
+    primaryLabel: "Contact support"
+  },
+  privacy: {
+    title: "Privacy policy",
+    summary: "Autonomo AV handles business documents so a signed-in user can queue, classify, review, and organize them.",
+    sections: [
+      {
+        title: "Data we process",
+        body: [
+          "Autonomo AV may process uploaded files, filenames, file metadata, document classifications, extracted draft fields, reviewed records, workspace settings, account identifiers, and support messages.",
+          "The app uses Account AV for authentication and may receive session identifiers needed to keep uploads scoped to the correct workspace."
+        ]
+      },
+      {
+        title: "AI document handling",
+        body: [
+          "Uploaded documents may be analyzed by AI systems to propose classifications, extraction fields, urgency, and review actions.",
+          "AI output is a draft for human review. It is not tax, legal, accounting, or financial advice, and it does not submit official filings."
+        ]
+      },
+      {
+        title: "Sharing and retention",
+        body: [
+          "We do not sell personal data. We use service providers only where needed to run authentication, hosting, storage, processing, observability, support, and security.",
+          "Business documents and derived records are retained while the workspace is active, unless deleted through supported account or workspace deletion processes."
+        ]
+      }
+    ],
+    actionTitle: "Privacy questions",
+    actionBody: "Contact support for privacy questions, access requests, or deletion questions related to Autonomo AV.",
+    primaryHref: supportMailto,
+    primaryLabel: "Contact support"
+  },
+  support: {
+    title: "Support",
+    summary: "Contact Avalsys support for Autonomo AV account, upload, privacy, and deletion questions.",
+    sections: [
+      {
+        title: "What to include",
+        body: [
+          "Include the Account AV email address, the affected Autonomo AV workspace if known, the device or browser, and a short description of the issue.",
+          "Do not send unnecessary private documents in the first support email. If a file is needed, support will ask for the safest next step."
+        ]
+      },
+      {
+        title: "Business document issues",
+        body: [
+          "For upload or AI draft issues, include the approximate upload time, source such as iPhone share or web upload, and the filename if it is safe to share.",
+          "Autonomo AV support can help with app behavior, but does not provide tax, legal, accounting, or financial advice."
+        ]
+      }
+    ],
+    actionTitle: "Contact",
+    actionBody: "Use email support for now. A fuller support portal can replace this page later without changing the App Store URL.",
+    primaryHref: supportMailto,
+    primaryLabel: "Email support"
+  },
+  terms: {
+    title: "Terms of service",
+    summary: "These terms describe the first Autonomo AV service boundary for document intake, AI drafts, and manual review.",
+    sections: [
+      {
+        title: "Service scope",
+        body: [
+          "Autonomo AV helps signed-in users collect business documents, queue them for processing, review AI drafts, and organize reviewed records.",
+          "The service does not replace professional advice and does not file taxes, submit official forms, make payments, or act as an accountant."
+        ]
+      },
+      {
+        title: "User responsibility",
+        body: [
+          "You are responsible for reviewing extracted fields, document classifications, totals, dates, counterparties, and any action you take outside the app.",
+          "Only upload documents you are allowed to process, and do not use the service for illegal, abusive, or unauthorized content."
+        ]
+      },
+      {
+        title: "Availability and changes",
+        body: [
+          "Autonomo AV may change while it is prepared for private use, TestFlight, and later production releases.",
+          "Access may depend on Account AV identity, backend availability, plan eligibility, security checks, and product readiness."
+        ]
+      }
+    ],
+    actionTitle: "Questions about these terms",
+    actionBody: "Contact support before relying on Autonomo AV for a workflow that has legal, tax, accounting, or financial consequences.",
+    primaryHref: supportMailto,
+    primaryLabel: "Contact support"
+  }
+};
+
 export function App() {
   const initialLocale = getAppsAvLocaleFromSearch(window.location.search);
 
@@ -193,7 +318,21 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
       ),
     [authSession.getToken, useFixtures]
   );
-  const appRoute = route === "sign-in" ? "inbox" : route;
+  const appRoute: SignedInRoute = route === "sign-in" || isPublicRoute(route) ? "inbox" : route;
+
+  if (isPublicRoute(route)) {
+    return (
+      <AppShell
+        currentPath={pathForRoute(route)}
+        footerLabels={autonomoFooterLabels}
+        labels={autonomoShellLabels}
+        navLinks={autonomoNavLinks}
+        product={autonomoProductConfig}
+      >
+        <AutonomoPublicPage route={route} />
+      </AppShell>
+    );
+  }
 
   if (!authSession.isLoaded) {
     return <AuthSkeleton />;
@@ -230,7 +369,7 @@ function AutonomoSurface({
   authSession: AutonomoAuthSession;
   client: AutonomoApiClient;
   emailIntake: AutonomoEmailIntakeSettings;
-  route: Exclude<AppRoute, "sign-in">;
+  route: SignedInRoute;
   useFixtures: boolean;
 }) {
   const queryClient = useQueryClient();
@@ -360,6 +499,39 @@ function AutonomoSurface({
         />
       ) : null}
     </section>
+  );
+}
+
+function AutonomoPublicPage({ route }: { route: PublicRoute }) {
+  const page = publicPages[route];
+
+  return (
+    <main className="legal-page" aria-labelledby="legal-page-title">
+      <section className="legal-hero">
+        <Badge tone="info">Autonomo AV</Badge>
+        <h1 id="legal-page-title">{page.title}</h1>
+        <p>{page.summary}</p>
+        <div className="legal-meta">Last updated: July 1, 2026</div>
+      </section>
+
+      <div className="legal-grid">
+        {page.sections.map((section) => (
+          <section className="panel legal-section" key={section.title}>
+            <h2 className="section-title">{section.title}</h2>
+            {section.body.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+          </section>
+        ))}
+      </div>
+
+      <section className="panel legal-section">
+        <h2 className="section-title">{page.actionTitle}</h2>
+        <p>{page.actionBody}</p>
+        <div className="legal-actions">
+          <a className="primary-button" href={page.primaryHref}>{page.primaryLabel}</a>
+          <a className="secondary-button" href="/">Open inbox</a>
+        </div>
+      </section>
+    </main>
   );
 }
 
@@ -1248,6 +1420,10 @@ function usePathRoute(): AppRoute {
   }, []);
 
   if (path.startsWith("/sign-in")) return "sign-in";
+  if (path.startsWith("/delete-account")) return "delete-account";
+  if (path.startsWith("/privacy")) return "privacy";
+  if (path.startsWith("/support")) return "support";
+  if (path.startsWith("/terms")) return "terms";
   if (path.startsWith("/quarter")) return "quarter";
   if (path.startsWith("/settings")) return "settings";
   return "inbox";
@@ -1255,9 +1431,17 @@ function usePathRoute(): AppRoute {
 
 function pathForRoute(route: AppRoute) {
   if (route === "sign-in") return "/sign-in";
+  if (route === "delete-account") return "/delete-account";
+  if (route === "privacy") return "/privacy";
+  if (route === "support") return "/support";
+  if (route === "terms") return "/terms";
   if (route === "quarter") return "/quarter";
   if (route === "settings") return "/settings";
   return "/";
+}
+
+function isPublicRoute(route: AppRoute): route is PublicRoute {
+  return route === "delete-account" || route === "privacy" || route === "support" || route === "terms";
 }
 
 function authBadgeTone(authSession: AutonomoAuthSession): "danger" | "info" | "muted" | "success" | "warning" {
