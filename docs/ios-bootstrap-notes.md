@@ -44,3 +44,27 @@ Remaining live blockers:
 - The extension intentionally does not read or store Account AV tokens. If
   upload directly from the extension is required later, add an extension-safe
   backend handoff route rather than copying bearer tokens into the extension.
+
+## Local Validation Update - 2026-07-01
+
+Checks run from `apps/ios`:
+
+- `scripts/check-ios-release-preflight.sh --env dev --configuration Debug --skip-build`:
+  passed. The effective dev runtime config resolves to the preview Account AV
+  API, preview Autonomo API, `com.avalsys.autonomoav.dev`,
+  `group.com.avalsys.autonomoav.dev`, and a redacted `pk_test_` publishable key.
+- XcodeBuildMCP `build_sim` with the configured `iPhone 17` simulator failed
+  before build because this Mac cannot currently resolve that simulator. Xcode
+  also reports CoreSimulator `1051.54.0` is older than the Xcode build's
+  expected `1051.55.0`.
+- Fallback generic simulator build passed:
+  `xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO`.
+- `scripts/check-ios-signing-readiness.sh --env dev --mode device-dev` remains
+  blocked on this Mac: missing Apple Development identity for team
+  `935PM55U6R` and missing local provisioning profiles for
+  `com.avalsys.autonomoav.dev` and `com.avalsys.autonomoav.dev.share` with app
+  group `group.com.avalsys.autonomoav.dev`.
+
+Conclusion: the iOS project compiles without signing and the dev runtime config
+is coherent. Real iPhone/share-extension smoke needs Apple signing identity,
+matching app-group profiles, and a fixed/updated local Simulator runtime.
