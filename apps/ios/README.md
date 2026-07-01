@@ -35,8 +35,9 @@ For production/TestFlight, generate ignored production config first, then run:
 ```bash
 scripts/generate-ios-local-xcconfig.sh --env prod
 scripts/check-ios-release-preflight.sh --env prod --configuration Release
-scripts/check-ios-signing-readiness.sh --env prod --mode testflight
-scripts/ios-release-archive.sh
+scripts/check-ios-signing-readiness.sh --env prod --mode device-dev
+scripts/ios-release-archive.sh --allow-provisioning-updates
+scripts/ios-export-testflight-ipa.sh --archive <path-from-archive> --allow-provisioning-updates
 ```
 
 The release preflight does not archive, export, upload, or contact App Store
@@ -51,3 +52,9 @@ The release archive script creates and verifies a signed `.xcarchive`, but it
 intentionally does not export, upload, or contact App Store Connect. Add
 `--allow-provisioning-updates` only when the release Mac is signed into the
 correct Apple Developer team and Xcode should repair local profiles.
+
+The TestFlight export script verifies the archive, exports a local App Store
+Connect `.ipa`, and validates the exported app/Share Extension bundle IDs,
+App Group entitlements, team id, and distribution profiles. It does not upload
+by default; pass `--upload` explicitly only when you want xcodebuild to upload
+to App Store Connect.

@@ -33,14 +33,13 @@ files outside the V1 backend allowlist: PDF, JPEG, PNG, WebP, HEIC, and HEIF.
 
 Remaining live blockers:
 
-- The Apple developer account/provisioning profile must include the dev and prod
-  app groups (`group.com.avalsys.autonomoav.dev` and
-  `group.com.avalsys.autonomoav`) for device/TestFlight builds.
 - The private AVALSYS preflight must pass for `--app autonomo-av --intent
   testflight`, and `apps/ios/scripts/check-ios-release-preflight.sh --env prod
   --configuration Release` must pass before archive/export/upload.
-- `apps/ios/scripts/check-ios-signing-readiness.sh --env prod --mode
-  testflight` must pass on the release Mac before the first signed archive.
+- The release Mac must be signed into the Apple Developer team or use an App
+  Store Connect API key when running archive/export with
+  `--allow-provisioning-updates`.
+- Real-device Share Extension smoke still needs a connected, trusted iPhone.
 - The extension intentionally does not read or store Account AV tokens. If
   upload directly from the extension is required later, add an extension-safe
   backend handoff route rather than copying bearer tokens into the extension.
@@ -66,5 +65,25 @@ Checks run from `apps/ios`:
   group `group.com.avalsys.autonomoav.dev`.
 
 Conclusion: the iOS project compiles without signing and the dev runtime config
-is coherent. Real iPhone/share-extension smoke needs Apple signing identity,
-matching app-group profiles, and a fixed/updated local Simulator runtime.
+is coherent. Real iPhone/share-extension smoke needs a connected, trusted
+device and a fixed/updated local Simulator runtime.
+
+## Local Signing, Archive, and Export Update - 2026-07-02
+
+Checks run from `apps/ios`:
+
+- Xcode automatic provisioning created working dev profiles for
+  `com.avalsys.autonomoav.dev` and `com.avalsys.autonomoav.dev.share`.
+- Xcode automatic provisioning created working production archive profiles for
+  `com.avalsys.autonomoav` and `com.avalsys.autonomoav.share`.
+- `scripts/check-ios-signing-readiness.sh --env prod --mode testflight` now
+  distinguishes App Store/TestFlight profiles from development profiles and
+  passes after local export provisioning.
+- `scripts/ios-release-archive.sh --allow-provisioning-updates` passed and
+  produced a verified production `.xcarchive`.
+- `scripts/ios-export-testflight-ipa.sh --archive <archive>
+  --allow-provisioning-updates` passed and produced a verified local
+  App Store Connect `.ipa` without uploading.
+
+The next release step is an explicit upload run with `--upload`, ideally using
+an App Store Connect API key once that credential is available for automation.
