@@ -30,6 +30,9 @@ Remaining live blockers:
 - The Apple developer account/provisioning profile must include the dev and prod
   app groups (`group.com.avalsys.autonomoav.dev` and
   `group.com.avalsys.autonomoav`) for device/TestFlight builds.
+- The private AVALSYS preflight must pass for `--app autonomo-av --intent
+  testflight`, and `apps/ios/scripts/check-ios-release-preflight.sh --env prod
+  --configuration Release` must pass before archive/export/upload.
 - The extension intentionally does not read or store Account AV tokens. If
   upload directly from the extension is required later, add an extension-safe
   backend handoff route rather than copying bearer tokens into the extension.

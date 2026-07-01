@@ -23,6 +23,7 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
 
 ## Docs
 
+- `AGENTS.md`
 - `docs/ios-bootstrap-notes.md`
 - `docs/web-bootstrap-notes.md`
 
@@ -38,6 +39,7 @@ bun run build
 ```bash
 cd apps/ios
 xcodegen generate
+scripts/check-ios-release-preflight.sh --env dev --configuration Debug
 xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 

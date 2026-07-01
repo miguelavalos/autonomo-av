@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/ios-ci.yml"
+      - "AGENTS.md"
       - "apps/ios/**"
       - "docs/ios-bootstrap-notes.md"
   push:
@@ -12,6 +13,7 @@ on:
       - main
     paths:
       - ".github/workflows/ios-ci.yml"
+      - "AGENTS.md"
       - "apps/ios/**"
       - "docs/ios-bootstrap-notes.md"
 
@@ -61,8 +63,8 @@ jobs:
         working-directory: apps/ios
         run: xcodegen generate
 
-      - name: Validate dev runtime config
-        run: apps/ios/scripts/check-ios-runtime-config.sh --env dev --configuration Debug
+      - name: Validate dev runtime and share extension preflight
+        run: apps/ios/scripts/check-ios-release-preflight.sh --env dev --configuration Debug --skip-build
 
       - name: Build iOS app
         working-directory: apps/ios
