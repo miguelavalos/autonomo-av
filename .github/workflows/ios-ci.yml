@@ -66,12 +66,12 @@ jobs:
       - name: Validate dev runtime and share extension preflight
         run: apps/ios/scripts/check-ios-release-preflight.sh --env dev --configuration Debug --skip-build
 
-      - name: Build iOS app
+      - name: Build iOS app and tests
         working-directory: apps/ios
         run: |
           xcodebuild \
             -project AutonomoAV.xcodeproj \
             -scheme AutonomoAV \
             -destination 'generic/platform=iOS Simulator' \
-            build \
+            build-for-testing \
             CODE_SIGNING_ALLOWED=NO

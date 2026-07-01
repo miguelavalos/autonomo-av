@@ -91,8 +91,9 @@ this public repo.
 GitHub Actions run:
 
 - web typecheck and deploy-safe production build;
-- iOS XcodeGen, dev runtime config check, and generic simulator build without
-  signing.
+- iOS XcodeGen, dev runtime config check, and generic simulator
+  `build-for-testing` without signing.
 
 iOS unit tests are intentionally not part of the first CI gate until the
-simulator/runtime lane is stable for this new product repo.
+simulator/runtime lane is stable for this new product repo. The iOS CI still
+compiles the test bundle through `build-for-testing`.
