@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+web_root="$(cd "$script_dir/.." && pwd)"
 environment="${1:-}"
 
 case "$environment" in
@@ -33,6 +35,14 @@ export VITE_AUTONOMOAV_TERMS_URL="$web_origin/terms"
 
 if [[ -z "${VITE_ACCOUNTAV_PUBLISHABLE_KEY:-}" ]]; then
   echo "VITE_ACCOUNTAV_PUBLISHABLE_KEY is not set; signed-in routes will show live auth missing."
+elif [[ "$environment" = "production" && "${VITE_ACCOUNTAV_PUBLISHABLE_KEY}" != pk_live_* ]]; then
+  echo "VITE_ACCOUNTAV_PUBLISHABLE_KEY must use the live prefix for production builds." >&2
+  exit 1
+elif [[ "${VITE_ACCOUNTAV_PUBLISHABLE_KEY}" != pk_* ]]; then
+  echo "VITE_ACCOUNTAV_PUBLISHABLE_KEY has an unexpected prefix." >&2
+  exit 1
 fi
 
-vite build
+cd "$web_root"
+rm -rf "$web_root/dist"
+vite build --emptyOutDir

@@ -87,10 +87,12 @@ Use these commands from `apps/web`:
 
 ```bash
 bun run build:preview
+bun run build:preview:live
 bun run deploy:preview:dry-run
 bun run deploy:preview
 
 bun run build:production
+bun run build:production:live
 bun run deploy:production:dry-run
 bun run deploy:production
 ```
@@ -101,6 +103,10 @@ deploys cannot accidentally ship fixture mode, a local bearer token, or a
 placeholder email alias. If `VITE_ACCOUNTAV_PUBLISHABLE_KEY` is not available,
 the deployed shell still serves `/privacy`, `/terms`, `/delete-account`, and
 `/support`, while signed-in routes show the live-auth missing state.
+
+The `build:*:live` and `deploy:*` scripts resolve Account AV's publishable key
+from the private suite with Varlock/Infisical. Production live builds fail fast
+unless the key has the `pk_live_` prefix.
 
 ## Follow-Up Boundary
 

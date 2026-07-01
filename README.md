@@ -67,6 +67,11 @@ disabled in this first public web deploy. If
 missing state while `/privacy`, `/terms`, `/delete-account`, and `/support`
 remain public.
 
+Deploy commands use `build:preview:live` and `build:production:live`, which
+resolve `VITE_ACCOUNTAV_PUBLISHABLE_KEY` from the private suite through
+Varlock/Infisical before bundling. Production live builds require a `pk_live_`
+publishable key.
+
 ## Web Deploy
 
 ```bash
