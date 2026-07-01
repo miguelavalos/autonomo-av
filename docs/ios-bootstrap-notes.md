@@ -33,6 +33,8 @@ Remaining live blockers:
 - The private AVALSYS preflight must pass for `--app autonomo-av --intent
   testflight`, and `apps/ios/scripts/check-ios-release-preflight.sh --env prod
   --configuration Release` must pass before archive/export/upload.
+- `apps/ios/scripts/check-ios-signing-readiness.sh --env prod --mode
+  testflight` must pass on the release Mac before the first signed archive.
 - The extension intentionally does not read or store Account AV tokens. If
   upload directly from the extension is required later, add an extension-safe
   backend handoff route rather than copying bearer tokens into the extension.

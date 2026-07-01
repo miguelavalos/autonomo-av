@@ -30,8 +30,13 @@ For production/TestFlight, generate ignored production config first, then run:
 ```bash
 scripts/generate-ios-local-xcconfig.sh --env prod
 scripts/check-ios-release-preflight.sh --env prod --configuration Release
+scripts/check-ios-signing-readiness.sh --env prod --mode testflight
 ```
 
 The release preflight does not archive, export, upload, or contact App Store
 Connect. It validates resolved runtime config plus the App Group/Share Extension
 shape required for `Enviar a Autonomo AV Inbox`.
+
+The signing readiness check also does not archive, export, upload, or contact
+App Store Connect. It only verifies that this Mac has the expected Apple signing
+identity and local provisioning profiles for the app and Share Extension.

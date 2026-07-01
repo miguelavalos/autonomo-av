@@ -40,6 +40,7 @@ bun run build
 cd apps/ios
 xcodegen generate
 scripts/check-ios-release-preflight.sh --env dev --configuration Debug
+scripts/check-ios-signing-readiness.sh --env dev --mode device-dev
 xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
