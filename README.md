@@ -67,6 +67,10 @@ disabled in this first public web deploy. If
 missing state while `/privacy`, `/terms`, `/delete-account`, and `/support`
 remain public.
 
+The Cloudflare deploy uses a Worker Assets binding through `apps/web/src/worker.ts`
+so hashed JS/CSS assets are served by the assets runtime and SPA fallback stays
+limited to app routes.
+
 Deploy commands use `build:preview:live` and `build:production:live`, which
 resolve `VITE_ACCOUNTAV_PUBLISHABLE_KEY` from the private suite through
 Varlock/Infisical before bundling. Production live builds require a `pk_live_`

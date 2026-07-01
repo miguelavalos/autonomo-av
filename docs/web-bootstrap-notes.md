@@ -108,6 +108,23 @@ The `build:*:live` and `deploy:*` scripts resolve Account AV's publishable key
 from the private suite with Varlock/Infisical. Production live builds fail fast
 unless the key has the `pk_live_` prefix.
 
+The preview and production Wrangler configs use a tiny Worker entrypoint
+(`src/worker.ts`) with an explicit `ASSETS` binding. The Worker delegates every
+request to `env.ASSETS.fetch(request)`. Keep that binding in place: without it,
+Cloudflare can serve the SPA HTML fallback for hashed JS asset paths, which
+causes a blank page because the browser receives HTML instead of JavaScript.
+
+Quick deployed preview check:
+
+```bash
+curl -sS -D - https://autonomo-av-preview.avalsys.com/ -o /tmp/autonomo-preview.html
+curl -sS -D - https://autonomo-av-preview.avalsys.com/assets/<bundle>.js -o /tmp/autonomo-preview.js
+rg -n "AsyncLocalStorage|tanstack-react-start|start-storage-context" /tmp/autonomo-preview.js || true
+```
+
+The JS response must be `content-type: text/javascript`, and the client bundle
+must not include the server-only TanStack Start auth code.
+
 ## Follow-Up Boundary
 
 The app currently keeps contract-shaped TypeScript types locally because
