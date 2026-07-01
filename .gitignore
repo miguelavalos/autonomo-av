@@ -1,0 +1,28 @@
+.DS_Store
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+Config/Local.xcconfig
+apps/ios/Config/Local.xcconfig
+
+# Web
+node_modules/
+apps/**/node_modules/
+dist/
+apps/**/dist/
+.vite/
+
+# Apple/Xcode local state
+DerivedData/
+apps/**/DerivedData/
+.swiftpm/
+apps/**/.swiftpm/
+xcuserdata/
+apps/**/xcuserdata/
+*.xcuserstate
+
+# Logs and temp files
+*.log
+tmp/
