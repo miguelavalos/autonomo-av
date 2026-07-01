@@ -86,6 +86,14 @@ struct LocalIntakePersistence {
             }
         }
 
+        return try copyFile(from: url, source: source)
+    }
+
+    func copySharedInboxFile(from url: URL) throws -> LocalIntakeItem {
+        try copyFile(from: url, source: .iosShare)
+    }
+
+    private func copyFile(from url: URL, source: AutonomoUploadSource) throws -> LocalIntakeItem {
         try ensureDirectories()
         let id = UUID()
         let fileName = url.lastPathComponent.isEmpty ? "document-\(id.uuidString).pdf" : url.lastPathComponent
@@ -194,16 +202,23 @@ struct LocalIntakePersistence {
 final class IntakeStore {
     private let client: AutonomoAPIClient
     private let persistence: LocalIntakePersistence
+    private let sharedInbox: SharedIntakeInbox
 
     private(set) var localItems: [LocalIntakeItem]
     private(set) var remoteDocuments: [AutonomoDocumentSummary] = []
+    private(set) var isImportingSharedInbox = false
     private(set) var isRefreshingRemoteDocuments = false
     private(set) var isUploading = false
     var lastErrorMessage: String?
 
-    init(client: AutonomoAPIClient, persistence: LocalIntakePersistence = LocalIntakePersistence()) {
+    init(
+        client: AutonomoAPIClient,
+        persistence: LocalIntakePersistence = LocalIntakePersistence(),
+        sharedInbox: SharedIntakeInbox = SharedIntakeInbox()
+    ) {
         self.client = client
         self.persistence = persistence
+        self.sharedInbox = sharedInbox
         self.localItems = persistence.loadItems().sorted { $0.createdAt > $1.createdAt }
     }
 
@@ -232,6 +247,54 @@ final class IntakeStore {
             localItems.insert(contentsOf: items, at: 0)
             try save()
             await uploadPending()
+        } catch {
+            lastErrorMessage = error.localizedDescription
+        }
+    }
+
+    func importSharedInboxItems() async {
+        guard !isImportingSharedInbox else { return }
+        isImportingSharedInbox = true
+        defer { isImportingSharedInbox = false }
+
+        do {
+            let urls = try sharedInbox.pendingFileURLs()
+            guard !urls.isEmpty else { return }
+
+            var importedItems: [LocalIntakeItem] = []
+            var skippedUnsupportedCount = 0
+            var failedCount = 0
+
+            for url in urls {
+                do {
+                    let item = try persistence.copySharedInboxFile(from: url)
+                    try sharedInbox.removePendingFile(at: url)
+                    importedItems.append(item)
+                } catch {
+                    if (error as? AutonomoAPIClientError) == .unsupportedFile {
+                        skippedUnsupportedCount += 1
+                        try? sharedInbox.removePendingFile(at: url)
+                    } else {
+                        failedCount += 1
+                    }
+                }
+            }
+
+            if !importedItems.isEmpty {
+                localItems.insert(contentsOf: importedItems, at: 0)
+                try save()
+                await uploadPending()
+            }
+
+            if failedCount > 0 || skippedUnsupportedCount > 0 {
+                lastErrorMessage = L10n.string(
+                    "intake.shareImport.partialFailure",
+                    failedCount,
+                    skippedUnsupportedCount
+                )
+            } else if !importedItems.isEmpty {
+                lastErrorMessage = nil
+            }
         } catch {
             lastErrorMessage = error.localizedDescription
         }
@@ -295,7 +358,7 @@ final class IntakeStore {
                 idempotencyKey: current.idempotencyKey,
                 clientCreatedAt: current.createdAt
             ))
-            try await client.uploadData(data, uploadId: prepared.uploadId, mimeType: current.mimeType)
+            try await client.uploadData(data, preparedUpload: prepared, mimeType: current.mimeType)
             let completed = try await client.completeUpload(
                 uploadId: prepared.uploadId,
                 source: current.source,

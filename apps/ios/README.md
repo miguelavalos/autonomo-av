@@ -2,6 +2,10 @@
 
 SwiftUI iPhone intake app for Autonomo AV.
 
+The app uses Account AV for session restore and bearer tokens, uploads through
+`/v1/apps/autonomo/*`, and drains Share Extension PDF/image handoffs from the
+configured app group before retrying pending intake.
+
 ## iOS
 
 ```bash

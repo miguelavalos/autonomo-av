@@ -65,6 +65,35 @@ struct AutonomoPrepareUploadResponse: Decodable, Equatable {
     let uploadURL: URL?
     let uploadMethod: String?
     let maxBytes: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case uploadId
+        case uploadURL
+        case uploadUrl
+        case uploadMethod
+        case maxBytes
+    }
+
+    init(
+        uploadId: String,
+        uploadURL: URL? = nil,
+        uploadMethod: String? = nil,
+        maxBytes: Int? = nil
+    ) {
+        self.uploadId = uploadId
+        self.uploadURL = uploadURL
+        self.uploadMethod = uploadMethod
+        self.maxBytes = maxBytes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        uploadId = try container.decode(String.self, forKey: .uploadId)
+        uploadURL = try container.decodeIfPresent(URL.self, forKey: .uploadURL)
+            ?? container.decodeIfPresent(URL.self, forKey: .uploadUrl)
+        uploadMethod = try container.decodeIfPresent(String.self, forKey: .uploadMethod)
+        maxBytes = try container.decodeIfPresent(Int.self, forKey: .maxBytes)
+    }
 }
 
 struct AutonomoCompleteUploadRequest: Encodable, Equatable {
@@ -251,6 +280,23 @@ final class AutonomoAPIClient {
         )
     }
 
+    func uploadData(
+        _ data: Data,
+        preparedUpload: AutonomoPrepareUploadResponse,
+        mimeType: String
+    ) async throws {
+        if let uploadURL = preparedUpload.uploadURL {
+            try await uploadData(
+                data,
+                uploadURL: uploadURL,
+                uploadMethod: preparedUpload.uploadMethod,
+                mimeType: mimeType
+            )
+        } else {
+            try await uploadData(data, uploadId: preparedUpload.uploadId, mimeType: mimeType)
+        }
+    }
+
     func completeUpload(
         uploadId: String,
         source: AutonomoUploadSource,
@@ -353,6 +399,42 @@ final class AutonomoAPIClient {
         }
     }
 
+    private func uploadData(
+        _ data: Data,
+        uploadURL: URL,
+        uploadMethod: String?,
+        mimeType: String
+    ) async throws {
+        let baseURL = baseURLProvider()
+        let resolvedUploadURL = Self.resolvedPreparedUploadURL(uploadURL, baseURL: baseURL)
+        let method = uploadMethod?.trimmingCharacters(in: .whitespacesAndNewlines)
+        var request = URLRequest(url: resolvedUploadURL)
+        request.httpMethod = method?.isEmpty == false ? method : "PUT"
+        request.httpBody = data
+        request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
+        if Self.shouldAuthorizePreparedUpload(uploadURL: resolvedUploadURL, baseURL: baseURL) {
+            guard let token = try await tokenProvider(), !token.isEmpty else {
+                throw AutonomoAPIClientError.missingToken
+            }
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("autonomo", forHTTPHeaderField: "x-appsav-app-id")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+        }
+
+        let startedAt = Date()
+        let (_, response, attempts) = try await performDataTask(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            logger.error("Autonomo prepared upload failed method=\(request.httpMethod ?? "unknown", privacy: .public) status=\(httpResponse.statusCode, privacy: .public) attempts=\(attempts, privacy: .public)")
+            throw AutonomoAPIClientError.requestFailed(statusCode: httpResponse.statusCode)
+        }
+
+        let durationMilliseconds = Int(Date().timeIntervalSince(startedAt) * 1_000)
+        logger.info("Autonomo prepared upload completed method=\(request.httpMethod ?? "unknown", privacy: .public) status=\(httpResponse.statusCode, privacy: .public) duration_ms=\(durationMilliseconds, privacy: .public)")
+    }
+
     nonisolated static func url(baseURL: URL, path: String) -> URL {
         let sanitizedPath = path.hasPrefix("/") ? String(path.dropFirst()) : path
         let pathAndQuery = sanitizedPath.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false)
@@ -364,6 +446,24 @@ final class AutonomoAPIClient {
 
         components.percentEncodedQuery = String(pathAndQuery[1])
         return components.url ?? url
+    }
+
+    nonisolated static func resolvedPreparedUploadURL(_ uploadURL: URL, baseURL: URL?) -> URL {
+        guard uploadURL.scheme == nil, let baseURL else {
+            return uploadURL
+        }
+        return URL(string: uploadURL.relativeString, relativeTo: baseURL)?.absoluteURL ?? uploadURL
+    }
+
+    nonisolated static func shouldAuthorizePreparedUpload(uploadURL: URL, baseURL: URL?) -> Bool {
+        guard let baseURL,
+              let uploadHost = uploadURL.host,
+              let baseHost = baseURL.host else {
+            return false
+        }
+        return uploadURL.scheme == baseURL.scheme &&
+            uploadHost == baseHost &&
+            uploadURL.port == baseURL.port
     }
 
     nonisolated private static func decodeDate(from decoder: Decoder) throws -> Date {

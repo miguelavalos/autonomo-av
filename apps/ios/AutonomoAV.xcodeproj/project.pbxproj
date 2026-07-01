@@ -23,6 +23,7 @@
 		7DF4F695F4EE489E0CEF9744 /* AuthGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FBE9EAFFD8235FF1D694BA1 /* AuthGateView.swift */; };
 		8597CA4F2288BB60C42BFD3D /* AccountAV in Frameworks */ = {isa = PBXBuildFile; productRef = 0308EE17408DBF73BE2AA5BA /* AccountAV */; };
 		8825451E601800EF5A26093C /* AVSettingsFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 429C4E2D8F2D89E5CA67407F /* AVSettingsFoundation */; };
+		A3D54FB54BB8FB07AE488FC1 /* SharedIntakeInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8655A376E74801AFDC2B2E97 /* SharedIntakeInbox.swift */; };
 		A5E6E4EA3A38B2928E425F10 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3B07E32813A399D90924C4A /* PrivacyInfo.xcprivacy */; };
 		A84E8B82073C5CF879482C1B /* AVHaptics in Frameworks */ = {isa = PBXBuildFile; productRef = 2F9C505A39209249E1B1A0EA /* AVHaptics */; };
 		AAC9D172A3DFF0758AB0E41A /* PreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2EE1B08FDA7CA57C605D01F /* PreviewSupport.swift */; };
@@ -84,12 +85,14 @@
 		6F52C633E9665C007AC54A8B /* AutonomoAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccount.swift; sourceTree = "<group>"; };
 		712D316975E738950E8E50E4 /* AutonomoAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAPIClient.swift; sourceTree = "<group>"; };
 		7BAC48713D71BF0465D8353F /* LocalIntakeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalIntakeStore.swift; sourceTree = "<group>"; };
+		8655A376E74801AFDC2B2E97 /* SharedIntakeInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedIntakeInbox.swift; sourceTree = "<group>"; };
 		95FD8C885FCDF72A9DE635E5 /* AutonomoAVTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AutonomoAVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C5F4AEA38D3F2304D9BB1BC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A658CBE41F23C4799977956D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B2EE1B08FDA7CA57C605D01F /* PreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSupport.swift; sourceTree = "<group>"; };
 		B5C36BA376AE46A09680463E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		BE833F56DF4D45D426CE752E /* account-av */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "account-av"; path = "../../../account-av"; sourceTree = SOURCE_ROOT; };
+		CABE24E9D726B18A34E229D0 /* AutonomoAVShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AutonomoAVShareExtension.entitlements; sourceTree = "<group>"; };
 		CC705FEFB4E90CA8A2FFE824 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
 		E4D41DD61C3AF6AC0EE18697 /* LocalIntakeStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalIntakeStoreTests.swift; sourceTree = "<group>"; };
 		E6BA94EE2426CA81EACF99BE /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
@@ -155,6 +158,7 @@
 		9E3CCE760FD08DB51CC749B5 /* AutonomoAVShareExtension */ = {
 			isa = PBXGroup;
 			children = (
+				CABE24E9D726B18A34E229D0 /* AutonomoAVShareExtension.entitlements */,
 				A658CBE41F23C4799977956D /* Info.plist */,
 				E6BA94EE2426CA81EACF99BE /* ShareViewController.swift */,
 			);
@@ -209,6 +213,7 @@
 				55513D91774B563A79703D23 /* DocumentScannerView.swift */,
 				F5D7414930EEB051F3693533 /* IntakeShellView.swift */,
 				7BAC48713D71BF0465D8353F /* LocalIntakeStore.swift */,
+				8655A376E74801AFDC2B2E97 /* SharedIntakeInbox.swift */,
 			);
 			path = Intake;
 			sourceTree = "<group>";
@@ -399,6 +404,7 @@
 				0DFA63D421D4631D11F2C869 /* LocalIntakeStore.swift in Sources */,
 				AAC9D172A3DFF0758AB0E41A /* PreviewSupport.swift in Sources */,
 				1B471CF6893C34EE45E10400 /* RootView.swift in Sources */,
+				A3D54FB54BB8FB07AE488FC1 /* SharedIntakeInbox.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -534,6 +540,7 @@
 			baseConfigurationReference = CC705FEFB4E90CA8A2FFE824 /* Debug.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = AutonomoAVShareExtension/AutonomoAVShareExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
@@ -638,6 +645,7 @@
 			baseConfigurationReference = B5C36BA376AE46A09680463E /* Release.xcconfig */;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = AutonomoAVShareExtension/AutonomoAVShareExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";

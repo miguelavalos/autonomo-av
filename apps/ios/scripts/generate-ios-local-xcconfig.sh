@@ -129,6 +129,7 @@ content="$(cat <<EOF
 XCCONFIG_SLASH = /
 AUTONOMOAV_CONFIG_ENVIRONMENT = $env_name
 AUTONOMOAV_BUNDLE_IDENTIFIER = $bundle_identifier
+AUTONOMOAV_APP_GROUP_IDENTIFIER = group.$bundle_identifier
 AVALSYS_APPLE_DEVELOPMENT_TEAM = $development_team
 ACCOUNTAV_PUBLISHABLE_KEY = $publishable_key
 ACCOUNTAV_KEYCHAIN_SERVICE = $keychain_service

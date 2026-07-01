@@ -48,6 +48,10 @@ enum AppConfig {
         AutonomoAVBundleConfig.urlValue(for: "AUTONOMOAV_API_BASE_URL") ?? accountAPIBaseURL
     }
 
+    static var appGroupIdentifier: String? {
+        AutonomoAVBundleConfig.nonEmptyStringValue(for: "AUTONOMOAV_APP_GROUP_IDENTIFIER")
+    }
+
     static var accountManagementURL: URL? {
         AutonomoAVBundleConfig.urlValue(for: "ACCOUNTAV_MANAGEMENT_URL")
     }

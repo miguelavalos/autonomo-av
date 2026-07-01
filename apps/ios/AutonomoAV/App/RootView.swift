@@ -22,12 +22,19 @@ struct RootView: View {
         }
         .task(id: accountController.state.isSignedIn) {
             guard accountController.state.isSignedIn else { return }
-            await intakeStore.refreshRemoteDocuments()
+            await syncSignedInIntake()
             await intakeStore.uploadPending()
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             await accountController.syncFromAccountProvider()
+            guard accountController.state.isSignedIn else { return }
+            await syncSignedInIntake()
         }
+    }
+
+    private func syncSignedInIntake() async {
+        await intakeStore.importSharedInboxItems()
+        await intakeStore.refreshRemoteDocuments()
     }
 }

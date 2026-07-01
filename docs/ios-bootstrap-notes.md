@@ -11,12 +11,25 @@ Scope kept intentionally narrow:
 - Account AV wrapped behind an app-local account controller;
 - import/scan/share capture surfaces for Autonomo intake;
 - authenticated backend calls through `/v1/apps/autonomo/*`;
+- prepared-upload support for both signed upload URLs and the authenticated
+  API fallback;
 - local pending upload metadata and retry state;
+- app-group handoff from the Share Extension into the containing app's pending
+  intake queue;
 - no direct D1/R2/provider access;
 - no private suite code changes.
 
 The Share Extension target is present and labeled `Enviar a Autonomo AV Inbox`.
-It currently captures supported share items into a confirmation surface. Upload
-from the extension itself still needs an approved app group/token bridge or a
-backend handoff route, so the containing app remains the first working upload
-path.
+It now saves PDF/image share items into the configured app group
+(`AUTONOMOAV_APP_GROUP_IDENTIFIER`) under `ShareInbox/Pending`. The containing
+app drains that folder after Account AV session restore, imports files as
+`ios_share`, and uploads them with the app's existing Account AV bearer token.
+
+Remaining live blockers:
+
+- The Apple developer account/provisioning profile must include the dev and prod
+  app groups (`group.com.avalsys.autonomoav.dev` and
+  `group.com.avalsys.autonomoav`) for device/TestFlight builds.
+- The extension intentionally does not read or store Account AV tokens. If
+  upload directly from the extension is required later, add an extension-safe
+  backend handoff route rather than copying bearer tokens into the extension.

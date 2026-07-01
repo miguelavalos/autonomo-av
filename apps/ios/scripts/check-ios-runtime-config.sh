@@ -73,6 +73,7 @@ fail() {
 
 product_bundle_identifier="$(setting PRODUCT_BUNDLE_IDENTIFIER)"
 autonomo_bundle_identifier="$(setting AUTONOMOAV_BUNDLE_IDENTIFIER)"
+app_group_identifier="$(setting AUTONOMOAV_APP_GROUP_IDENTIFIER)"
 api_base_url="$(setting ACCOUNTAV_API_BASE_URL)"
 autonomo_api_base_url="$(setting AUTONOMOAV_API_BASE_URL)"
 publishable_key="$(setting ACCOUNTAV_PUBLISHABLE_KEY)"
@@ -82,11 +83,13 @@ development_team="$(setting DEVELOPMENT_TEAM)"
 if [ "$env_name" = "prod" ]; then
   [ "$product_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod bundle must be com.avalsys.autonomoav"
   [ "$autonomo_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod AUTONOMOAV_BUNDLE_IDENTIFIER must be com.avalsys.autonomoav"
+  [ "$app_group_identifier" = "group.com.avalsys.autonomoav" ] || fail "prod app group mismatch"
   [ "$keychain_access_group" = "935PM55U6R.com.avalsys.autonomoav" ] || fail "prod keychain access group mismatch"
   [[ "$publishable_key" == pk_live_* ]] || fail "prod publishable key must be pk_live"
 else
   [ "$product_bundle_identifier" = "com.avalsys.autonomoav.dev" ] || fail "dev bundle must be com.avalsys.autonomoav.dev"
   [ "$autonomo_bundle_identifier" = "com.avalsys.autonomoav.dev" ] || fail "dev AUTONOMOAV_BUNDLE_IDENTIFIER must be com.avalsys.autonomoav.dev"
+  [ "$app_group_identifier" = "group.com.avalsys.autonomoav.dev" ] || fail "dev app group mismatch"
   [ "$keychain_access_group" = "935PM55U6R.com.avalsys.autonomoav.dev" ] || fail "dev keychain access group mismatch"
   if [ -n "$publishable_key" ] && [ "$publishable_key" != '$(inherited)' ]; then
     [[ "$publishable_key" == pk_test_* || "$publishable_key" == pk_live_* ]] || fail "dev publishable key has unexpected prefix"
@@ -111,6 +114,7 @@ Autonomo AV iOS runtime config ($env_name)
   configuration: $configuration
   product bundle: $product_bundle_identifier
   autonomo bundle: $autonomo_bundle_identifier
+  app group: $app_group_identifier
   development team: ${development_team:-unknown}
   Account AV API: $api_base_url
   Autonomo AV API: $autonomo_api_base_url
