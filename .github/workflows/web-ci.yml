@@ -1,0 +1,65 @@
+name: Web CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/web-ci.yml"
+      - "apps/web/**"
+      - "docs/web-bootstrap-notes.md"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/web-ci.yml"
+      - "apps/web/**"
+      - "docs/web-bootstrap-notes.md"
+
+concurrency:
+  group: web-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  web:
+    name: Typecheck and build web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout Autonomo AV
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+      - name: Checkout Apps AV
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          repository: miguelavalos/apps-av
+          path: apps-av
+
+      - name: Link local packages
+        run: |
+          set -euo pipefail
+          ln -s "$GITHUB_WORKSPACE/apps-av" "$GITHUB_WORKSPACE/../apps-av"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.3.13
+
+      - name: Install web dependencies
+        working-directory: apps/web
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck web
+        working-directory: apps/web
+        run: bun run typecheck
+
+      - name: Build web
+        working-directory: apps/web
+        run: bun run build

@@ -43,3 +43,14 @@ xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generi
 
 Private API URLs, Clerk keys, and Apple team values must stay in ignored local
 config files.
+
+## CI
+
+GitHub Actions run:
+
+- web typecheck and production build;
+- iOS XcodeGen, dev runtime config check, and generic simulator build without
+  signing.
+
+iOS unit tests are intentionally not part of the first CI gate until the
+simulator/runtime lane is stable for this new product repo.
