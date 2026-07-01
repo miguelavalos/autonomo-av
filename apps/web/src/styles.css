@@ -101,6 +101,80 @@ textarea {
   gap: 1rem;
 }
 
+.autonomo-auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  background: hsl(var(--background));
+  padding: 1.5rem;
+}
+
+.auth-panel {
+  display: grid;
+  width: min(100%, 31rem);
+  gap: 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  padding: 1.25rem;
+}
+
+.auth-panel h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.auth-panel p {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.auth-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid rgb(47 158 131 / 32%);
+  border-radius: 999px;
+  background: rgb(47 158 131 / 10%);
+  color: var(--autonomo-accent);
+}
+
+.auth-action {
+  width: max-content;
+}
+
+.auth-config-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.auth-config-list > div {
+  display: grid;
+  gap: 0.25rem;
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 0.75rem;
+}
+
+.auth-config-list dt {
+  color: hsl(var(--foreground));
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.auth-config-list dd {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
 .autonomo-header-strip,
 .panel {
   border: 1px solid hsl(var(--border));

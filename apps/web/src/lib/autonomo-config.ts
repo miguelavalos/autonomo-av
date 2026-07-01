@@ -46,6 +46,14 @@ export function getAutonomoDevToken() {
   return import.meta.env.VITE_AUTONOMOAV_DEV_BEARER_TOKEN as string | undefined;
 }
 
+export function getAutonomoAccountApiBaseUrl() {
+  return trimTrailingSlash(import.meta.env.VITE_ACCOUNTAV_API_BASE_URL);
+}
+
+export function getAutonomoAccountPublishableKey() {
+  return import.meta.env.VITE_ACCOUNTAV_PUBLISHABLE_KEY as string | undefined;
+}
+
 export function useAutonomoFixtures() {
   return import.meta.env.VITE_AUTONOMOAV_USE_FIXTURES !== "false";
 }

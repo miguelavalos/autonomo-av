@@ -36,6 +36,12 @@ jobs:
       - name: Checkout Autonomo AV
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
+      - name: Checkout Account AV
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          repository: miguelavalos/account-av
+          path: account-av
+
       - name: Checkout Apps AV
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
@@ -45,6 +51,7 @@ jobs:
       - name: Link local packages
         run: |
           set -euo pipefail
+          ln -s "$GITHUB_WORKSPACE/account-av" "$GITHUB_WORKSPACE/../account-av"
           ln -s "$GITHUB_WORKSPACE/apps-av" "$GITHUB_WORKSPACE/../apps-av"
 
       - name: Setup Bun

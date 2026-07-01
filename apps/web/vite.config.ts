@@ -11,7 +11,7 @@ export default defineConfig({
     preserveSymlinks: true
   },
   optimizeDeps: {
-    exclude: ["@avalsys/apps-av-web"]
+    exclude: ["@avalsys/account-av-web", "@avalsys/apps-av-web"]
   },
   server: {
     port: 5195

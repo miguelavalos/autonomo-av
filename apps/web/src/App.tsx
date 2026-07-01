@@ -1,4 +1,4 @@
-import { AppShell, AppsAvWebProvider, getAppsAvLocaleFromSearch } from "@avalsys/apps-av-web";
+import { AppShell, AppsAvWebProvider, AuthSkeleton, getAppsAvLocaleFromSearch } from "@avalsys/apps-av-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -9,6 +9,7 @@ import {
   Filter,
   Inbox,
   Loader2,
+  LogIn,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -21,13 +22,18 @@ import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } 
 import { toast } from "sonner";
 import { AutonomoApiClient } from "@/lib/autonomo-api-client";
 import {
+  AutonomoAccountSignIn,
+  AutonomoAuthProvider,
+  useAutonomoAuthSession,
+  type AutonomoAuthSession
+} from "@/lib/autonomo-auth";
+import {
   autonomoAccent,
   autonomoFooterLabels,
   autonomoNavLinks,
   autonomoProductConfig,
   autonomoShellLabels,
   getAutonomoApiBaseUrl,
-  getAutonomoDevToken,
   getEmailIntakeSettings,
   useAutonomoFixtures
 } from "@/lib/autonomo-config";
@@ -85,7 +91,7 @@ const reviewedDocumentTypes: AutonomoReviewedDocumentType[] = ["invoice", "ticke
 const counterpartyKinds: AutonomoCounterpartyKind[] = ["supplier", "customer", "both", "unknown"];
 const uploadAccept = `${autonomoUploadContentTypeValues.join(",")},.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif`;
 
-type AppRoute = "inbox" | "quarter" | "settings";
+type AppRoute = "inbox" | "quarter" | "settings" | "sign-in";
 
 type FiltersState = {
   status: AutonomoDocumentStatus | "all";
@@ -167,39 +173,64 @@ export function App() {
 function AutonomoRuntime() {
   const route = usePathRoute();
   const useFixtures = useAutonomoFixtures();
+
+  return (
+    <AutonomoAuthProvider useFixtures={useFixtures}>
+      <AutonomoAuthenticatedRuntime route={route} useFixtures={useFixtures} />
+    </AutonomoAuthProvider>
+  );
+}
+
+function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute; useFixtures: boolean }) {
+  const authSession = useAutonomoAuthSession();
   const emailIntake = useMemo(() => getEmailIntakeSettings(useFixtures), [useFixtures]);
   const client = useMemo(
     () =>
       new AutonomoApiClient(
         getAutonomoApiBaseUrl(),
-        async () => getAutonomoDevToken() ?? null,
+        authSession.getToken,
         useFixtures
       ),
-    [useFixtures]
+    [authSession.getToken, useFixtures]
   );
+  const appRoute = route === "sign-in" ? "inbox" : route;
+
+  if (!authSession.isLoaded) {
+    return <AuthSkeleton />;
+  }
+
+  if (!useFixtures && authSession.authMode === "missing-config") {
+    return <AuthConfigurationMissing />;
+  }
+
+  if (!useFixtures && (!authSession.isSignedIn || route === "sign-in")) {
+    return <AutonomoSignInScreen authSession={authSession} route={route} />;
+  }
 
   return (
     <AppShell
-      currentPath={pathForRoute(route)}
+      currentPath={pathForRoute(appRoute)}
       footerLabels={autonomoFooterLabels}
       labels={autonomoShellLabels}
       navLinks={autonomoNavLinks}
       product={autonomoProductConfig}
     >
-      <AutonomoSurface client={client} emailIntake={emailIntake} route={route} useFixtures={useFixtures} />
+      <AutonomoSurface authSession={authSession} client={client} emailIntake={emailIntake} route={appRoute} useFixtures={useFixtures} />
     </AppShell>
   );
 }
 
 function AutonomoSurface({
+  authSession,
   client,
   emailIntake,
   route,
   useFixtures
 }: {
+  authSession: AutonomoAuthSession;
   client: AutonomoApiClient;
   emailIntake: AutonomoEmailIntakeSettings;
-  route: AppRoute;
+  route: Exclude<AppRoute, "sign-in">;
   useFixtures: boolean;
 }) {
   const queryClient = useQueryClient();
@@ -295,7 +326,7 @@ function AutonomoSurface({
 
   return (
     <section className="autonomo-surface">
-      <HeaderStrip useFixtures={useFixtures} onRefresh={() => void refreshAll()} isRefreshing={documentsQuery.isFetching || quarterSummaryQuery.isFetching} />
+      <HeaderStrip authSession={authSession} useFixtures={useFixtures} onRefresh={() => void refreshAll()} isRefreshing={documentsQuery.isFetching || quarterSummaryQuery.isFetching} />
       {error ? <InlineAlert tone="danger" title="Autonomo AV could not load this workspace">{error}</InlineAlert> : null}
 
       {route === "inbox" ? (
@@ -333,10 +364,12 @@ function AutonomoSurface({
 }
 
 function HeaderStrip({
+  authSession,
   isRefreshing,
   onRefresh,
   useFixtures
 }: {
+  authSession: AutonomoAuthSession;
   isRefreshing: boolean;
   onRefresh: () => void;
   useFixtures: boolean;
@@ -355,11 +388,70 @@ function HeaderStrip({
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={useFixtures ? "warning" : "success"}>{useFixtures ? "Fixture" : "Live"}</Badge>
+        <Badge tone={authBadgeTone(authSession)}>{authSession.statusLabel}</Badge>
         <button className="icon-button" type="button" onClick={onRefresh} aria-label="Refresh Autonomo AV">
           {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
         </button>
       </div>
     </div>
+  );
+}
+
+function AuthConfigurationMissing() {
+  return (
+    <main className="autonomo-auth-page">
+      <section className="auth-panel" aria-labelledby="auth-config-title">
+        <Badge tone="danger">Live auth missing</Badge>
+        <h1 id="auth-config-title">Autonomo AV needs Account AV auth configuration</h1>
+        <p>
+          Set Account AV auth env vars for live mode, or turn fixture mode back on for local product work.
+        </p>
+        <dl className="auth-config-list">
+          <div><dt>Required for Account AV auth</dt><dd>VITE_ACCOUNTAV_PUBLISHABLE_KEY and VITE_ACCOUNTAV_API_BASE_URL</dd></div>
+          <div><dt>Required for live backend</dt><dd>VITE_AUTONOMOAV_API_BASE_URL and VITE_AUTONOMOAV_USE_FIXTURES=false</dd></div>
+          <div><dt>Temporary local fallback</dt><dd>VITE_AUTONOMOAV_DEV_BEARER_TOKEN</dd></div>
+        </dl>
+      </section>
+    </main>
+  );
+}
+
+function AutonomoSignInScreen({ authSession, route }: { authSession: AutonomoAuthSession; route: AppRoute }) {
+  const fallbackRedirectUrl = safeReturnTo(window.location.search) ?? "/";
+  const shouldRedirect = authSession.authMode === "account-av" && !authSession.isSignedIn && route !== "sign-in";
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      window.location.replace(`/sign-in?returnTo=${encodeURIComponent(currentReturnPath())}`);
+    }
+  }, [shouldRedirect]);
+
+  if (shouldRedirect) {
+    return <AuthSkeleton />;
+  }
+
+  return (
+    <main className="autonomo-auth-page">
+      <section className="auth-panel" aria-labelledby="auth-title">
+        <div className="auth-mark" aria-hidden="true">
+          <LogIn className="size-5" />
+        </div>
+        <Badge tone={authBadgeTone(authSession)}>{authSession.statusLabel}</Badge>
+        <h1 id="auth-title">{authSession.isSignedIn ? "Autonomo AV is ready" : "Sign in to Autonomo AV"}</h1>
+        <p>
+          {authSession.isSignedIn
+            ? "Open the inbox to continue reviewing workspace documents."
+            : "Use your Account AV session to open the live inbox and backend workspace."}
+        </p>
+        {authSession.isSignedIn ? (
+          <a className="primary-button auth-action" href={fallbackRedirectUrl}>
+            Open inbox
+          </a>
+        ) : (
+          <AutonomoAccountSignIn fallbackRedirectUrl={fallbackRedirectUrl} />
+        )}
+      </section>
+    </main>
   );
 }
 
@@ -1155,15 +1247,36 @@ function usePathRoute(): AppRoute {
     return () => window.removeEventListener("popstate", onNavigation);
   }, []);
 
+  if (path.startsWith("/sign-in")) return "sign-in";
   if (path.startsWith("/quarter")) return "quarter";
   if (path.startsWith("/settings")) return "settings";
   return "inbox";
 }
 
 function pathForRoute(route: AppRoute) {
+  if (route === "sign-in") return "/sign-in";
   if (route === "quarter") return "/quarter";
   if (route === "settings") return "/settings";
   return "/";
+}
+
+function authBadgeTone(authSession: AutonomoAuthSession): "danger" | "info" | "muted" | "success" | "warning" {
+  if (authSession.authMode === "account-av") return authSession.isSignedIn ? "success" : "warning";
+  if (authSession.authMode === "dev-bearer") return "warning";
+  if (authSession.authMode === "missing-config") return "danger";
+  return "muted";
+}
+
+function currentReturnPath() {
+  return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+}
+
+function safeReturnTo(search: string) {
+  const returnTo = new URLSearchParams(search).get("returnTo")?.trim();
+  if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
+    return null;
+  }
+  return returnTo;
 }
 
 function metricsFromDocuments(documents: AutonomoDocumentListItem[]) {

@@ -44,6 +44,16 @@ xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generi
 Private API URLs, Clerk keys, and Apple team values must stay in ignored local
 config files.
 
+## Web Runtime Modes
+
+`apps/web` starts in fixture mode by default with
+`VITE_AUTONOMOAV_USE_FIXTURES=true`. Live mode uses Account AV auth when
+`VITE_ACCOUNTAV_API_BASE_URL`, `VITE_ACCOUNTAV_PUBLISHABLE_KEY`, and
+`VITE_AUTONOMOAV_API_BASE_URL` are set alongside
+`VITE_AUTONOMOAV_USE_FIXTURES=false`. `VITE_AUTONOMOAV_DEV_BEARER_TOKEN`
+remains only as a temporary local fallback when Account AV auth config is not
+available.
+
 ## CI
 
 GitHub Actions run:
