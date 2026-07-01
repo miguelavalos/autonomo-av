@@ -70,7 +70,10 @@ else
   app_group_id="group.com.avalsys.autonomoav.dev"
 fi
 share_bundle_id="$app_bundle_id.share"
-profiles_dir="$HOME/Library/MobileDevice/Provisioning Profiles"
+profiles_dirs=(
+  "$HOME/Library/MobileDevice/Provisioning Profiles"
+  "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
+)
 
 failures=0
 fail() {
@@ -83,7 +86,28 @@ if [ "$mode" = "testflight" ]; then
   identity_label="Apple Distribution"
 fi
 
-if ! security find-identity -v -p codesigning | grep -F "$identity_label" | grep -Fq "($team_id)"; then
+identity_matches_team() {
+  local identity_line
+  local identity_name
+  local subject
+
+  while IFS= read -r identity_line; do
+    case "$identity_line" in
+      *"$identity_label"*)
+        identity_name="${identity_line#*\"}"
+        identity_name="${identity_name%\"*}"
+        subject="$(security find-certificate -c "$identity_name" -p 2>/dev/null | openssl x509 -noout -subject 2>/dev/null || true)"
+        if printf '%s' "$subject" | grep -Eq "OU[ =/]+$team_id"; then
+          return 0
+        fi
+        ;;
+    esac
+  done < <(security find-identity -v -p codesigning)
+
+  return 1
+}
+
+if ! identity_matches_team; then
   fail "missing $identity_label signing identity for team $team_id"
 fi
 
@@ -114,18 +138,21 @@ profile_matches_bundle() {
 find_profile_for_bundle() {
   local bundle_id="$1"
   local app_group="$2"
+  local profiles_dir
   local profile
 
-  if [ ! -d "$profiles_dir" ]; then
-    return 1
-  fi
-
-  while IFS= read -r profile; do
-    if profile_matches_bundle "$profile" "$bundle_id" "$app_group"; then
-      printf '%s\n' "$profile"
-      return 0
+  for profiles_dir in "${profiles_dirs[@]}"; do
+    if [ ! -d "$profiles_dir" ]; then
+      continue
     fi
-  done < <(find "$profiles_dir" -maxdepth 1 -type f \( -name '*.mobileprovision' -o -name '*.provisionprofile' \) -print 2>/dev/null)
+
+    while IFS= read -r profile; do
+      if profile_matches_bundle "$profile" "$bundle_id" "$app_group"; then
+        printf '%s\n' "$profile"
+        return 0
+      fi
+    done < <(find "$profiles_dir" -maxdepth 1 -type f \( -name '*.mobileprovision' -o -name '*.provisionprofile' \) -print 2>/dev/null)
+  done
 
   return 1
 }
