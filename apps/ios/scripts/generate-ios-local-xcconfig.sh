@@ -111,8 +111,27 @@ support_base_url="${SUPPORTAV_BASE_URL:-https://support-av.avalsys.com}"
 keychain_service="$(read_optional_config ACCOUNTAV_KEYCHAIN_SERVICE)"
 keychain_access_group="$(read_optional_config ACCOUNTAV_KEYCHAIN_ACCESS_GROUP)"
 
-if [ -z "$development_team" ]; then
+if [ "$env_name" = "dev" ]; then
+  case "$api_base_url" in
+    ""|http://127.0.0.1*|http://localhost*)
+      api_base_url="https://api-account-av-preview.avalsys.com"
+      ;;
+  esac
+  case "$autonomo_api_base_url" in
+    ""|http://127.0.0.1*|http://localhost*)
+      autonomo_api_base_url="$api_base_url"
+      ;;
+  esac
+fi
+
+if [ -z "$development_team" ] && [ "$env_name" = "prod" ]; then
+  development_team="935PM55U6R"
+elif [ -z "$development_team" ]; then
   development_team="\$(inherited)"
+fi
+if [ "$development_team" = "346677S99H" ]; then
+  echo "Warning: replacing stale non-Avalsys Apple team 346677S99H with 935PM55U6R." >&2
+  development_team="935PM55U6R"
 fi
 if [ -z "$keychain_access_group" ] || [ "$keychain_access_group" = "\$(inherited)" ]; then
   keychain_access_group="935PM55U6R.$bundle_identifier"

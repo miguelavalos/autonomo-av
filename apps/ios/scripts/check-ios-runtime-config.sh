@@ -84,6 +84,7 @@ if [ "$env_name" = "prod" ]; then
   [ "$product_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod bundle must be com.avalsys.autonomoav"
   [ "$autonomo_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod AUTONOMOAV_BUNDLE_IDENTIFIER must be com.avalsys.autonomoav"
   [ "$app_group_identifier" = "group.com.avalsys.autonomoav" ] || fail "prod app group mismatch"
+  [ "$development_team" = "935PM55U6R" ] || fail "prod development team must be 935PM55U6R"
   [ "$keychain_access_group" = "935PM55U6R.com.avalsys.autonomoav" ] || fail "prod keychain access group mismatch"
   [[ "$publishable_key" == pk_live_* ]] || fail "prod publishable key must be pk_live"
 else
