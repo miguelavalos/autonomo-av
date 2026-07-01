@@ -75,6 +75,33 @@ The API client uses the Autonomo backend paths from the V1 contract:
 7. Check the browser console and network panel for auth, CORS, or token
    retrieval errors. Do not copy tokens into logs or screenshots.
 
+## Cloudflare Web Deploy
+
+`apps/web` deploys as static Worker Assets, with SPA fallback enabled for the
+signed-in app routes and the public legal routes:
+
+- preview: `https://autonomo-av-preview.avalsys.com`
+- production: `https://autonomo-av.avalsys.com`
+
+Use these commands from `apps/web`:
+
+```bash
+bun run build:preview
+bun run deploy:preview:dry-run
+bun run deploy:preview
+
+bun run build:production
+bun run deploy:production:dry-run
+bun run deploy:production
+```
+
+The Cloudflare build scripts force `VITE_AUTONOMOAV_USE_FIXTURES=false`, clear
+`VITE_AUTONOMOAV_DEV_BEARER_TOKEN`, and keep email intake disabled so public
+deploys cannot accidentally ship fixture mode, a local bearer token, or a
+placeholder email alias. If `VITE_ACCOUNTAV_PUBLISHABLE_KEY` is not available,
+the deployed shell still serves `/privacy`, `/terms`, `/delete-account`, and
+`/support`, while signed-in routes show the live-auth missing state.
+
 ## Follow-Up Boundary
 
 The app currently keeps contract-shaped TypeScript types locally because

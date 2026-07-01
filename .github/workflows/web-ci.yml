@@ -67,6 +67,6 @@ jobs:
         working-directory: apps/web
         run: bun run typecheck
 
-      - name: Build web
+      - name: Build deploy-safe web
         working-directory: apps/web
-        run: bun run build
+        run: bun run build:production

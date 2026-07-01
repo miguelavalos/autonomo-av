@@ -34,6 +34,7 @@ cd apps/web
 bun install
 bun run typecheck
 bun run build
+bun run build:production
 ```
 
 ```bash
@@ -57,11 +58,34 @@ config files.
 remains only as a temporary local fallback when Account AV auth config is not
 available.
 
+Cloudflare deployment builds use `bun run build:preview` and
+`bun run build:production`. Those builds force
+`VITE_AUTONOMOAV_USE_FIXTURES=false`, set the matching public legal URLs, and
+clear `VITE_AUTONOMOAV_DEV_BEARER_TOKEN` before bundling. Email intake is
+disabled in this first public web deploy. If
+`VITE_ACCOUNTAV_PUBLISHABLE_KEY` is absent, signed-in routes show the live-auth
+missing state while `/privacy`, `/terms`, `/delete-account`, and `/support`
+remain public.
+
+## Web Deploy
+
+```bash
+cd apps/web
+bun run deploy:preview:dry-run
+bun run deploy:preview
+bun run deploy:production:dry-run
+bun run deploy:production
+```
+
+The deploy scripts use the private suite's `wrangler-account.sh` wrapper from
+the shared workspace, so Cloudflare account selection and API tokens stay out of
+this public repo.
+
 ## CI
 
 GitHub Actions run:
 
-- web typecheck and production build;
+- web typecheck and deploy-safe production build;
 - iOS XcodeGen, dev runtime config check, and generic simulator build without
   signing.
 
