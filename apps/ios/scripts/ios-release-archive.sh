@@ -16,8 +16,11 @@ Usage:
   scripts/ios-release-archive.sh [--build <build>] [--version <version>]
     [--archive <path>] [--skip-preflight] [--allow-provisioning-updates]
 
-Creates and verifies a signed Autonomo AV iOS release archive for TestFlight
-readiness. This script does not export, upload, or contact App Store Connect.
+Creates and verifies an Autonomo AV iOS release archive for TestFlight
+readiness. Under automatic signing, Xcode creates the archive with Apple
+Development signing; App Store/TestFlight distribution signing happens during
+export/upload. This script does not export, upload, or contact App Store
+Connect.
 
 Use --allow-provisioning-updates only on a Mac signed into the correct Apple
 Developer team when you intentionally want Xcode to repair local profiles.
@@ -120,8 +123,10 @@ if [ "$use_existing_archive" -eq 0 ]; then
     run_step "Run production runtime and Share Extension preflight"
     "$ios_root/scripts/check-ios-release-preflight.sh" --env prod --configuration Release --skip-build
 
-    run_step "Check local TestFlight signing readiness"
-    "$ios_root/scripts/check-ios-signing-readiness.sh" --env prod --mode testflight
+    if [ "$allow_provisioning_updates" -eq 0 ]; then
+      run_step "Check local production archive signing readiness"
+      "$ios_root/scripts/check-ios-signing-readiness.sh" --env prod --mode device-dev
+    fi
   fi
 
   provisioning_args=()
@@ -138,8 +143,13 @@ if [ "$use_existing_archive" -eq 0 ]; then
     -archivePath "$archive_path" \
     "${provisioning_args[@]}" \
     DEVELOPMENT_TEAM=935PM55U6R \
-    "CODE_SIGN_IDENTITY=Apple Distribution" \
+    "CODE_SIGN_IDENTITY=Apple Development" \
     CODE_SIGN_STYLE=Automatic
+
+  if [ "$allow_provisioning_updates" -eq 1 ]; then
+    run_step "Check local production archive signing readiness after provisioning"
+    "$ios_root/scripts/check-ios-signing-readiness.sh" --env prod --mode device-dev
+  fi
 else
   run_step "Use existing iOS archive"
   echo "$archive_path"
@@ -154,6 +164,7 @@ run_step "Verify final iOS release archive"
 cat <<REPORT
 
 Verified Autonomo AV archive is ready for manual TestFlight export/upload.
+Distribution signing is expected in the export/upload step.
   archive: $archive_path
 
 This script intentionally did not export or upload the archive.

@@ -16,6 +16,7 @@ apps/**/dist/
 
 # Apple/Xcode local state
 DerivedData/
+.derived-data/
 apps/**/DerivedData/
 .swiftpm/
 apps/**/.swiftpm/

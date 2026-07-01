@@ -16,7 +16,7 @@ exporting, uploading, or contacting App Store Connect.
 
 Modes:
   device-dev   Requires Apple Development identity and local profiles.
-  testflight   Requires Apple Distribution identity and local profiles.
+  testflight   Requires Apple Distribution identity and App Store/TestFlight profiles.
 
 Default mode is device-dev for dev and testflight for prod.
 USAGE
@@ -82,8 +82,10 @@ fail() {
 }
 
 identity_label="Apple Development"
+profile_kind_label="development"
 if [ "$mode" = "testflight" ]; then
   identity_label="Apple Distribution"
+  profile_kind_label="App Store/TestFlight"
 fi
 
 identity_matches_team() {
@@ -125,14 +127,31 @@ profile_matches_bundle() {
   local application_identifier
   local team_identifier
   local groups
+  local get_task_allow
+  local has_provisioned_devices=0
+  local provisions_all_devices
   application_identifier="$(/usr/libexec/PlistBuddy -c "Print :Entitlements:application-identifier" "$plist" 2>/dev/null || true)"
   team_identifier="$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" "$plist" 2>/dev/null || true)"
   groups="$(/usr/libexec/PlistBuddy -c "Print :Entitlements:com.apple.security.application-groups" "$plist" 2>/dev/null || true)"
+  get_task_allow="$(/usr/libexec/PlistBuddy -c "Print :Entitlements:get-task-allow" "$plist" 2>/dev/null || true)"
+  if /usr/libexec/PlistBuddy -c "Print :ProvisionedDevices" "$plist" >/dev/null 2>&1; then
+    has_provisioned_devices=1
+  fi
+  provisions_all_devices="$(/usr/libexec/PlistBuddy -c "Print :ProvisionsAllDevices" "$plist" 2>/dev/null || true)"
   rm -f "$plist"
 
-  [ "$team_identifier" = "$team_id" ] &&
-    [ "$application_identifier" = "$team_id.$bundle_id" ] &&
-    printf '%s' "$groups" | grep -Fq "$app_group"
+  [ "$team_identifier" = "$team_id" ] || return 1
+  [ "$application_identifier" = "$team_id.$bundle_id" ] || return 1
+  printf '%s' "$groups" | grep -Fq "$app_group" || return 1
+
+  if [ "$mode" = "testflight" ]; then
+    [ "$get_task_allow" = "false" ] || return 1
+    [ "$has_provisioned_devices" -eq 0 ] || return 1
+    [ "$provisions_all_devices" != "true" ] || return 1
+  else
+    [ "$get_task_allow" = "true" ] || return 1
+    [ "$has_provisioned_devices" -eq 1 ] || return 1
+  fi
 }
 
 find_profile_for_bundle() {
@@ -161,10 +180,10 @@ app_profile="$(find_profile_for_bundle "$app_bundle_id" "$app_group_id" || true)
 share_profile="$(find_profile_for_bundle "$share_bundle_id" "$app_group_id" || true)"
 
 if [ -z "$app_profile" ]; then
-  fail "missing local provisioning profile for $app_bundle_id with app group $app_group_id"
+  fail "missing local $profile_kind_label provisioning profile for $app_bundle_id with app group $app_group_id"
 fi
 if [ -z "$share_profile" ]; then
-  fail "missing local provisioning profile for $share_bundle_id with app group $app_group_id"
+  fail "missing local $profile_kind_label provisioning profile for $share_bundle_id with app group $app_group_id"
 fi
 
 cat <<EOF
