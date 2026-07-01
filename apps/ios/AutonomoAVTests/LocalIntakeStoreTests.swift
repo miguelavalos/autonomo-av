@@ -37,6 +37,21 @@ final class LocalIntakeStoreTests: XCTestCase {
         }
     }
 
+    func testUnsupportedImageMimeTypeIsRejected() throws {
+        let rootURL = FileManager.default.temporaryDirectory
+            .appending(path: "AutonomoAVTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+
+        let persistence = LocalIntakePersistence(rootURL: rootURL)
+        let sourceURL = rootURL.appending(path: "source.gif")
+        try FileManager.default.createDirectory(at: rootURL, withIntermediateDirectories: true)
+        try Data("not supported".utf8).write(to: sourceURL)
+
+        XCTAssertThrowsError(try persistence.copyImportedFile(from: sourceURL, source: .iosFiles)) { error in
+            XCTAssertEqual(error as? AutonomoAPIClientError, .unsupportedFile)
+        }
+    }
+
     func testCopySharedInboxFileMarksShareSource() throws {
         let rootURL = FileManager.default.temporaryDirectory
             .appending(path: "AutonomoAVTests-\(UUID().uuidString)", directoryHint: .isDirectory)

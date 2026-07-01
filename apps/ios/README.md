@@ -6,6 +6,11 @@ The app uses Account AV for session restore and bearer tokens, uploads through
 `/v1/apps/autonomo/*`, and drains Share Extension PDF/image handoffs from the
 configured app group before retrying pending intake.
 
+The live upload client bootstraps the user's Autonomo workspace, sends the
+backend V1 prepare payload (`originalFilename`, `contentType`, `byteSize`,
+`sha256`, `source`), uploads with the prepared URL or API fallback, and then
+completes the upload so the backend creates the intake queue item.
+
 ## iOS
 
 ```bash

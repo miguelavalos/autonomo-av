@@ -168,9 +168,13 @@ struct LocalIntakePersistence {
     static func mimeType(for url: URL) -> String? {
         if let type = UTType(filenameExtension: url.pathExtension),
            type.conforms(to: .pdf) || type.conforms(to: .image) {
-            return type.preferredMIMEType ?? fallbackMimeType(forExtension: url.pathExtension)
+            let mimeType = type.preferredMIMEType ?? fallbackMimeType(forExtension: url.pathExtension)
+            return supportedMimeTypes.contains(mimeType ?? "") ? mimeType : nil
         }
-        return fallbackMimeType(forExtension: url.pathExtension)
+        guard let fallbackMimeType = fallbackMimeType(forExtension: url.pathExtension) else {
+            return nil
+        }
+        return supportedMimeTypes.contains(fallbackMimeType) ? fallbackMimeType : nil
     }
 
     static func fallbackMimeType(forExtension pathExtension: String) -> String? {
@@ -183,12 +187,23 @@ struct LocalIntakePersistence {
             return "image/png"
         case "heic":
             return "image/heic"
-        case "tif", "tiff":
-            return "image/tiff"
+        case "heif":
+            return "image/heif"
+        case "webp":
+            return "image/webp"
         default:
             return nil
         }
     }
+
+    private static let supportedMimeTypes: Set<String> = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/heic",
+        "image/heif"
+    ]
 
     static func defaultRootURL() -> URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
@@ -210,6 +225,7 @@ final class IntakeStore {
     private(set) var isRefreshingRemoteDocuments = false
     private(set) var isUploading = false
     var lastErrorMessage: String?
+    private var workspaceBootstrapped = false
 
     init(
         client: AutonomoAPIClient,
@@ -315,6 +331,13 @@ final class IntakeStore {
         isUploading = true
         defer { isUploading = false }
 
+        do {
+            try await bootstrapWorkspaceIfNeeded()
+        } catch {
+            lastErrorMessage = error.localizedDescription
+            return
+        }
+
         for item in localItems where item.status == .pending {
             await upload(item)
         }
@@ -330,6 +353,7 @@ final class IntakeStore {
         defer { isRefreshingRemoteDocuments = false }
 
         do {
+            try await bootstrapWorkspaceIfNeeded()
             remoteDocuments = try await client.fetchRecentDocuments()
             lastErrorMessage = nil
         } catch {
@@ -351,12 +375,11 @@ final class IntakeStore {
             let fileURL = persistence.fileURL(for: current)
             let data = try Data(contentsOf: fileURL)
             let prepared = try await client.prepareUpload(AutonomoPrepareUploadRequest(
-                fileName: current.fileName,
-                mimeType: current.mimeType,
+                originalFilename: current.fileName,
+                contentType: current.mimeType,
                 byteSize: data.count,
-                source: current.source,
-                idempotencyKey: current.idempotencyKey,
-                clientCreatedAt: current.createdAt
+                sha256: AutonomoAPIClient.sha256Hex(data),
+                source: current.source
             ))
             try await client.uploadData(data, preparedUpload: prepared, mimeType: current.mimeType)
             let completed = try await client.completeUpload(
@@ -389,6 +412,15 @@ final class IntakeStore {
         guard let index = localItems.firstIndex(where: { $0.id == id }) else { return }
         mutate(&localItems[index])
         localItems.sort { $0.createdAt > $1.createdAt }
+    }
+
+    private func bootstrapWorkspaceIfNeeded() async throws {
+        guard !workspaceBootstrapped else { return }
+        guard client.isConfigured else {
+            throw AutonomoAPIClientError.missingBaseURL
+        }
+        _ = try await client.bootstrapWorkspace()
+        workspaceBootstrapped = true
     }
 
     private func save() throws {

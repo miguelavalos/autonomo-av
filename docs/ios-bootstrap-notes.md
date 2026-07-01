@@ -16,6 +16,8 @@ Scope kept intentionally narrow:
 - local pending upload metadata and retry state;
 - app-group handoff from the Share Extension into the containing app's pending
   intake queue;
+- backend-compatible upload payloads with `originalFilename`, `contentType`,
+  `byteSize`, SHA-256 checksum, and V1-supported MIME filtering;
 - no direct D1/R2/provider access;
 - no private suite code changes.
 
@@ -24,6 +26,10 @@ It now saves PDF/image share items into the configured app group
 (`AUTONOMOAV_APP_GROUP_IDENTIFIER`) under `ShareInbox/Pending`. The containing
 app drains that folder after Account AV session restore, imports files as
 `ios_share`, and uploads them with the app's existing Account AV bearer token.
+
+The containing app bootstraps the Autonomo workspace before remote refresh or
+pending upload, then uses the backend prepared-upload contract. It rejects local
+files outside the V1 backend allowlist: PDF, JPEG, PNG, WebP, HEIC, and HEIF.
 
 Remaining live blockers:
 

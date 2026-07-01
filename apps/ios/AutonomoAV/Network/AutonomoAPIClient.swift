@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import OSLog
 
 struct AccountSummaryResponse: Decodable, Equatable {
@@ -8,9 +9,13 @@ struct AccountSummaryResponse: Decodable, Equatable {
 }
 
 enum AutonomoUploadSource: String, Codable, CaseIterable {
+    case adminUpload = "admin_upload"
     case iosCamera = "ios_camera"
     case iosFiles = "ios_files"
     case iosShare = "ios_share"
+    case webUpload = "web_upload"
+    case emailAttachment = "email_attachment"
+    case emailBody = "email_body"
 }
 
 enum AutonomoDocumentStatus: String, Codable, CaseIterable {
@@ -52,12 +57,11 @@ enum AutonomoDocumentStatus: String, Codable, CaseIterable {
 }
 
 struct AutonomoPrepareUploadRequest: Encodable, Equatable {
-    let fileName: String
-    let mimeType: String
+    let originalFilename: String
+    let contentType: String
     let byteSize: Int
+    let sha256: String
     let source: AutonomoUploadSource
-    let idempotencyKey: String
-    let clientCreatedAt: Date
 }
 
 struct AutonomoPrepareUploadResponse: Decodable, Equatable {
@@ -71,6 +75,7 @@ struct AutonomoPrepareUploadResponse: Decodable, Equatable {
         case uploadURL
         case uploadUrl
         case uploadMethod
+        case method
         case maxBytes
     }
 
@@ -92,6 +97,7 @@ struct AutonomoPrepareUploadResponse: Decodable, Equatable {
         uploadURL = try container.decodeIfPresent(URL.self, forKey: .uploadURL)
             ?? container.decodeIfPresent(URL.self, forKey: .uploadUrl)
         uploadMethod = try container.decodeIfPresent(String.self, forKey: .uploadMethod)
+            ?? container.decodeIfPresent(String.self, forKey: .method)
         maxBytes = try container.decodeIfPresent(Int.self, forKey: .maxBytes)
     }
 }
@@ -105,6 +111,24 @@ struct AutonomoCompleteUploadResponse: Decodable, Equatable {
     let documentId: String?
     let queueItemId: String?
     let status: AutonomoDocumentStatus?
+}
+
+struct AutonomoWorkspaceSummary: Decodable, Equatable {
+    let workspaceId: String
+    let ownerUserId: String
+    let displayName: String
+    let country: String
+    let timezone: String
+    let defaultCurrency: String
+    let status: String
+    let createdAt: Date?
+    let updatedAt: Date?
+}
+
+struct AutonomoWorkspaceBootstrapResponse: Decodable, Equatable {
+    let appId: String
+    let workspace: AutonomoWorkspaceSummary
+    let generatedAt: Date?
 }
 
 struct AutonomoDocumentSummary: Decodable, Equatable, Identifiable {
@@ -122,7 +146,9 @@ struct AutonomoDocumentSummary: Decodable, Equatable, Identifiable {
         case documentId
         case title
         case fileName
+        case originalFilename
         case mimeType
+        case contentType
         case source
         case status
         case createdAt
@@ -155,7 +181,9 @@ struct AutonomoDocumentSummary: Decodable, Equatable, Identifiable {
             ?? container.decode(String.self, forKey: .documentId)
         title = try container.decodeIfPresent(String.self, forKey: .title)
         fileName = try container.decodeIfPresent(String.self, forKey: .fileName)
+            ?? container.decodeIfPresent(String.self, forKey: .originalFilename)
         mimeType = try container.decodeIfPresent(String.self, forKey: .mimeType)
+            ?? container.decodeIfPresent(String.self, forKey: .contentType)
         source = try container.decodeIfPresent(AutonomoUploadSource.self, forKey: .source)
         status = try container.decode(AutonomoDocumentStatus.self, forKey: .status)
         createdAt = try container.decodeFlexibleDateIfPresent(forKey: .createdAt)
@@ -251,7 +279,7 @@ final class AutonomoAPIClient {
         self.encoder = encoder
 
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .custom(Self.decodeDate)
+        decoder.dateDecodingStrategy = .custom(Self.decodeAutonomoDate)
         self.decoder = decoder
     }
 
@@ -261,6 +289,10 @@ final class AutonomoAPIClient {
 
     func fetchAccountSummary() async throws -> AccountSummaryResponse {
         try await request(path: "/v1/me")
+    }
+
+    func bootstrapWorkspace() async throws -> AutonomoWorkspaceBootstrapResponse {
+        try await request(path: "/v1/apps/autonomo/workspace/bootstrap", method: "POST")
     }
 
     func prepareUpload(_ request: AutonomoPrepareUploadRequest) async throws -> AutonomoPrepareUploadResponse {
@@ -302,11 +334,7 @@ final class AutonomoAPIClient {
         source: AutonomoUploadSource,
         idempotencyKey: String
     ) async throws -> AutonomoCompleteUploadResponse {
-        try await jsonRequest(
-            path: "/v1/apps/autonomo/uploads/\(uploadId)/complete",
-            method: "POST",
-            body: AutonomoCompleteUploadRequest(source: source, idempotencyKey: idempotencyKey)
-        )
+        try await request(path: "/v1/apps/autonomo/uploads/\(uploadId)/complete", method: "POST")
     }
 
     func fetchRecentDocuments(limit: Int = 25) async throws -> [AutonomoDocumentSummary] {
@@ -466,7 +494,13 @@ final class AutonomoAPIClient {
             uploadURL.port == baseURL.port
     }
 
-    nonisolated private static func decodeDate(from decoder: Decoder) throws -> Date {
+    nonisolated static func sha256Hex(_ data: Data) -> String {
+        SHA256.hash(data: data)
+            .map { String(format: "%02x", $0) }
+            .joined()
+    }
+
+    nonisolated static func decodeAutonomoDate(from decoder: Decoder) throws -> Date {
         let container = try decoder.singleValueContainer()
         let value = try container.decode(String.self)
         if let date = parseAutonomoDate(value) {
