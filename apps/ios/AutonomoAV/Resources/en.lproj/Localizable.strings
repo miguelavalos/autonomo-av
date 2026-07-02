@@ -1,8 +1,13 @@
 "app.name" = "Autonomo AV";
-"auth.title" = "Sign in to Autonomo AV";
-"auth.subtitle" = "Send receipts, invoices, and business documents to your private intake queue.";
+"auth.title" = "Start Autonomo AV Pro";
+"auth.subtitle" = "Your private AI inbox for receipts, invoices, purchases, financing, courses, and business documents.";
 "auth.avi.title" = "Avi keeps the intake tidy";
 "auth.avi.detail" = "Uploads land in a private queue before Autonomo AV classifies and prepares them for review.";
+"auth.pro.badge" = "Pro required";
+"auth.pro.monthly" = "Monthly";
+"auth.pro.inbox" = "Private queue for iPhone files and forwarded business mail.";
+"auth.pro.ai" = "AI routes invoices, expenses, sales, financing, courses, and flyers.";
+"auth.pro.access" = "No guest mode; sign in to activate monthly Pro.";
 "auth.apple" = "Continue with Apple";
 "auth.google" = "Continue with Google";
 "auth.unavailable" = "Account AV is not configured for this build.";

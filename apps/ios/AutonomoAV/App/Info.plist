@@ -75,7 +75,7 @@
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
 		<key>UIImageName</key>
-		<string>AutonomoLaunchScreenLogo</string>
+		<string>AutonomoLaunchScreenHero</string>
 	</dict>
 	<key>UIRequiresFullScreen</key>
 	<true/>

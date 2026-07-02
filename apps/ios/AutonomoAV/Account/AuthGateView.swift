@@ -6,19 +6,19 @@ struct AuthGateView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 22) {
+                VStack(spacing: 18) {
                     Spacer(minLength: 20)
 
                     Image("AutonomoLaunchLogo")
                         .resizable()
                         .scaledToFit()
-                        .frame(maxWidth: 292)
+                        .frame(maxWidth: 276)
                         .accessibilityLabel(L10n.string("app.name"))
 
                     Image("AutonomoSplashHero")
                         .resizable()
                         .scaledToFit()
-                        .frame(maxWidth: 340, maxHeight: 220)
+                        .frame(maxWidth: 352, maxHeight: 176)
                         .accessibilityHidden(true)
 
                     VStack(spacing: 10) {
@@ -34,10 +34,7 @@ struct AuthGateView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    AutonomoAviBriefCard(
-                        title: L10n.string("auth.avi.title"),
-                        detail: L10n.string("auth.avi.detail")
-                    )
+                    AutonomoProOnboardingCard()
 
                     VStack(spacing: 12) {
                         Button {
@@ -97,6 +94,67 @@ struct AuthGateView: View {
                 }
             }
         )
+    }
+}
+
+private struct AutonomoProOnboardingCard: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Label(L10n.string("auth.pro.badge"), systemImage: "checkmark.seal.fill")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(AutonomoTheme.accentDeep)
+
+                Spacer(minLength: 10)
+
+                Text(L10n.string("auth.pro.monthly"))
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(AutonomoTheme.ink)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(AutonomoTheme.surfaceMuted, in: Capsule())
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                AutonomoProBenefitRow(
+                    systemImage: "tray.and.arrow.down.fill",
+                    text: L10n.string("auth.pro.inbox")
+                )
+                AutonomoProBenefitRow(
+                    systemImage: "sparkles",
+                    text: L10n.string("auth.pro.ai")
+                )
+                AutonomoProBenefitRow(
+                    systemImage: "creditcard.fill",
+                    text: L10n.string("auth.pro.access")
+                )
+            }
+        }
+        .padding(14)
+        .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(AutonomoTheme.border, lineWidth: 1)
+        }
+    }
+}
+
+private struct AutonomoProBenefitRow: View {
+    let systemImage: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(AutonomoTheme.accentDeep)
+                .frame(width: 22, height: 22)
+
+            Text(text)
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(AutonomoTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
