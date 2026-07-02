@@ -147,6 +147,16 @@ final class AutonomoAPIClientTests: XCTestCase {
         XCTAssertEqual(resolved.absoluteString, "https://api-account-av-preview.avalsys.com/v1/apps/autonomo/uploads/upload_123")
     }
 
+    func testAuthenticatedRequestsUseCanonicalAutonomoAppId() {
+        var request = URLRequest(url: URL(string: "https://api-account-av-preview.avalsys.com/v1/me")!)
+
+        AutonomoAPIClient.addAuthenticatedHeaders(to: &request, bearerToken: "token_123")
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer token_123")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "x-appsav-app-id"), "autonomoav")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+    }
+
     func testSHA256Hex() {
         let digest = AutonomoAPIClient.sha256Hex(Data("abc".utf8))
 

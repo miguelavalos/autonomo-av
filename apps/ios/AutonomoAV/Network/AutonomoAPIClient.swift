@@ -217,6 +217,8 @@ enum AutonomoAPIClientError: LocalizedError, Equatable {
 
 @MainActor
 final class AutonomoAPIClient {
+    nonisolated private static let appIdHeaderValue = "autonomoav"
+
     struct RetryPolicy: Equatable {
         let maxAttempts: Int
         let backoffNanoseconds: UInt64
@@ -381,9 +383,7 @@ final class AutonomoAPIClient {
         var request = URLRequest(url: Self.url(baseURL: baseURL, path: path))
         request.httpMethod = method
         request.httpBody = body
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("autonomo", forHTTPHeaderField: "x-appsav-app-id")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        Self.addAuthenticatedHeaders(to: &request, bearerToken: token)
         for (field, value) in headers {
             request.setValue(value, forHTTPHeaderField: field)
         }
@@ -444,9 +444,7 @@ final class AutonomoAPIClient {
             guard let token = try await tokenProvider(), !token.isEmpty else {
                 throw AutonomoAPIClientError.missingToken
             }
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-            request.setValue("autonomo", forHTTPHeaderField: "x-appsav-app-id")
-            request.setValue("application/json", forHTTPHeaderField: "Accept")
+            Self.addAuthenticatedHeaders(to: &request, bearerToken: token)
         }
 
         let startedAt = Date()
@@ -492,6 +490,12 @@ final class AutonomoAPIClient {
         return uploadURL.scheme == baseURL.scheme &&
             uploadHost == baseHost &&
             uploadURL.port == baseURL.port
+    }
+
+    nonisolated static func addAuthenticatedHeaders(to request: inout URLRequest, bearerToken: String) {
+        request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
+        request.setValue(appIdHeaderValue, forHTTPHeaderField: "x-appsav-app-id")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
     }
 
     nonisolated static func sha256Hex(_ data: Data) -> String {
