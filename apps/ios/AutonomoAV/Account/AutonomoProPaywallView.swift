@@ -51,7 +51,7 @@ struct AutonomoProPaywallView: View {
             subscriptionTermsRow
             subscriptionStatusRow
             AVPaywallBenefitList(items: benefitItems)
-            AVPaywallLegalLinks(links: legalLinkItems)
+            footerLinks
         }
         .task(id: accountController.currentUser?.id) {
             await accessController.refreshAccess(for: accountController.currentUser)
@@ -78,7 +78,7 @@ struct AutonomoProPaywallView: View {
     @ViewBuilder
     private var subscriptionStatusRow: some View {
         if accessController.isWaitingForSubscriptionReconciliation {
-            AVPaywallStatusRow(systemImage: "arrow.triangle.2.circlepath", message: L10n.string("paywall.status.refreshingAccess"))
+            AVPaywallStatusRow(systemImage: "arrow.triangle.2.circlepath", message: reconciliationStatusMessage)
         } else if accessController.isRefreshingAccess {
             AVPaywallStatusRow(systemImage: "arrow.triangle.2.circlepath", message: L10n.string("paywall.status.refreshingAccess"))
         } else if let error = accessController.subscriptionError?.errorDescription {
@@ -127,6 +127,15 @@ struct AutonomoProPaywallView: View {
             : L10n.string("paywall.restore")
     }
 
+    private var reconciliationStatusMessage: String {
+        switch accessController.subscriptionReconciliationSource {
+        case .redeemCode:
+            L10n.string("paywall.status.redeemingCode")
+        case .purchase, .restore, .none:
+            L10n.string("paywall.status.refreshingAccess")
+        }
+    }
+
     private var benefitItems: [AVPaywallBenefitItem] {
         [
             AVPaywallBenefitItem(
@@ -163,5 +172,47 @@ struct AutonomoProPaywallView: View {
             })
         }
         return links
+    }
+
+    private var footerLinks: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 9) {
+            footerButton(L10n.string("paywall.redeemCode"), accessibilityIdentifier: "paywall.redeemCode", action: redeemOfferCode)
+
+            ForEach(legalLinkItems) { link in
+                footerSeparator
+                footerButton(link.title, accessibilityIdentifier: link.accessibilityIdentifier, action: link.action)
+            }
+        }
+        .font(.system(size: 12, weight: .bold, design: .rounded))
+        .foregroundStyle(AutonomoTheme.accentDeep)
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func footerButton(_ title: String, accessibilityIdentifier: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .lineLimit(1)
+                .minimumScaleFactor(0.78)
+                .allowsTightening(true)
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(accessibilityIdentifier)
+    }
+
+    private var footerSeparator: some View {
+        Text("·")
+            .foregroundStyle(AutonomoTheme.graphite.opacity(0.72))
+    }
+
+    private func redeemOfferCode() {
+        guard accountController.currentUser != nil else {
+            dismiss()
+            startSignInFlow()
+            return
+        }
+
+        Task {
+            await accessController.redeemOfferCode(for: accountController.currentUser)
+        }
     }
 }

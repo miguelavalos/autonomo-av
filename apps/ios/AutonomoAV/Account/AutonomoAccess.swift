@@ -173,6 +173,7 @@ final class AutonomoAccessController {
     enum SubscriptionReconciliationSource: Equatable {
         case purchase
         case restore
+        case redeemCode
     }
 
     private let apiClient: AutonomoAccessProviding
@@ -306,6 +307,12 @@ final class AutonomoAccessController {
     func restorePurchases(for user: AutonomoAccountUser?) async {
         await runSubscriptionOperation(for: user, source: .restore) {
             try await subscriptionPurchasing.restorePurchases(for: subscriptionAccountUser(from: user))
+        }
+    }
+
+    func redeemOfferCode(for user: AutonomoAccountUser?) async {
+        await runSubscriptionOperation(for: user, source: .redeemCode) {
+            try await subscriptionPurchasing.redeemOfferCode(for: subscriptionAccountUser(from: user))
         }
     }
 

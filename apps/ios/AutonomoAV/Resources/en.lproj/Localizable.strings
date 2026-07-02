@@ -85,6 +85,7 @@
 "paywall.restore" = "Restore purchases";
 "paywall.restore.loading" = "Restoring purchases";
 "paywall.status.refreshingAccess" = "Refreshing your Pro access.";
+"paywall.status.redeemingCode" = "Checking your code and refreshing Pro access.";
 "paywall.subscriptionTerms" = "Monthly subscription at %@. Renews automatically until canceled.";
 "paywall.benefit.inbox.title" = "One business inbox";
 "paywall.benefit.inbox.detail" = "Files, scans, forwarded mail, and shared content land in the same private queue.";
@@ -94,10 +95,12 @@
 "paywall.benefit.priority.detail" = "Avi highlights urgent or interesting items so you can act faster.";
 "paywall.terms" = "Terms";
 "paywall.privacy" = "Privacy";
+"paywall.redeemCode" = "Redeem code";
 "subscription.error.signInRequired" = "Sign in to start Autonomo AV Pro.";
 "subscription.error.configuration" = "Monthly Pro is being prepared for this build.";
 "subscription.error.offerUnavailable" = "Monthly Pro is not available right now.";
 "subscription.error.productUnavailable" = "The monthly plan is not available right now.";
+"subscription.error.redemptionUnavailable" = "Code redemption is not available right now.";
 "subscription.error.cancelled" = "Purchase canceled.";
 "subscription.error.unknown" = "The purchase could not be completed.";
 "upload.error.missingToken" = "Sign in again to upload.";
