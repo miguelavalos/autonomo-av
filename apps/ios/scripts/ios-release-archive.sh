@@ -129,22 +129,20 @@ if [ "$use_existing_archive" -eq 0 ]; then
     fi
   fi
 
-  provisioning_args=()
-  if [ "$allow_provisioning_updates" -eq 1 ]; then
-    provisioning_args=(-allowProvisioningUpdates)
-  fi
-
   run_step "Archive signed iOS release"
-  xcodebuild archive \
+  archive_command=(xcodebuild archive \
     -project "$ios_root/AutonomoAV.xcodeproj" \
     -scheme AutonomoAV \
     -configuration Release \
     -destination "generic/platform=iOS" \
     -archivePath "$archive_path" \
-    "${provisioning_args[@]}" \
     DEVELOPMENT_TEAM=935PM55U6R \
     "CODE_SIGN_IDENTITY=Apple Development" \
-    CODE_SIGN_STYLE=Automatic
+    CODE_SIGN_STYLE=Automatic)
+  if [ "$allow_provisioning_updates" -eq 1 ]; then
+    archive_command+=(-allowProvisioningUpdates)
+  fi
+  "${archive_command[@]}"
 
   if [ "$allow_provisioning_updates" -eq 1 ]; then
     run_step "Check local production archive signing readiness after provisioning"
