@@ -19,6 +19,7 @@
 		20FDDD7EC7259B0F31919111 /* AVBrandFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 4184770238F3F2AAB44B8564 /* AVBrandFoundation */; };
 		2C1388F040740123295796E8 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 70E5450FF006CD6646EB03C4 /* RevenueCat */; };
 		2D23F3C0CAE49C176003CF95 /* AVProductAccountFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = EB0392E8255C4B1B3743E10D /* AVProductAccountFoundation */; };
+		321FF27E9144AB73A88FC54F /* AutonomoAccessControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD99A9562089C27A2040337 /* AutonomoAccessControllerTests.swift */; };
 		3488B40733B3F0223BD089D1 /* LocalIntakeStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D41DD61C3AF6AC0EE18697 /* LocalIntakeStoreTests.swift */; };
 		3A094D17CFD409C017AB91FA /* AccountSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0652BB494C48241575D4DBB1 /* AccountSheet.swift */; };
 		4214774481319311D68D924B /* AutonomoAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0584248BA8FEF9B42DE805 /* AutonomoAPIClientTests.swift */; };
@@ -106,6 +107,7 @@
 		E4D41DD61C3AF6AC0EE18697 /* LocalIntakeStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalIntakeStoreTests.swift; sourceTree = "<group>"; };
 		E6BA94EE2426CA81EACF99BE /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		EE0C64E0B5433D869CF0AC02 /* AutonomoAVBundleConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVBundleConfig.swift; sourceTree = "<group>"; };
+		EFD99A9562089C27A2040337 /* AutonomoAccessControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccessControllerTests.swift; sourceTree = "<group>"; };
 		F3B07E32813A399D90924C4A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F405171E34353339D552FE2A /* AutonomoAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccess.swift; sourceTree = "<group>"; };
 		F5D7414930EEB051F3693533 /* IntakeShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntakeShellView.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 		88B800BC1518A9854D141FA3 /* AutonomoAVTests */ = {
 			isa = PBXGroup;
 			children = (
+				EFD99A9562089C27A2040337 /* AutonomoAccessControllerTests.swift */,
 				0A0584248BA8FEF9B42DE805 /* AutonomoAPIClientTests.swift */,
 				E4D41DD61C3AF6AC0EE18697 /* LocalIntakeStoreTests.swift */,
 			);
@@ -394,6 +397,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4214774481319311D68D924B /* AutonomoAPIClientTests.swift in Sources */,
+				321FF27E9144AB73A88FC54F /* AutonomoAccessControllerTests.swift in Sources */,
 				3488B40733B3F0223BD089D1 /* LocalIntakeStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -124,6 +124,20 @@ struct AutonomoAppAccess: Decodable, Equatable {
     let capabilities: AutonomoAccessCapabilities
     let limits: AutonomoAccessLimits
 
+    init(
+        appId: String,
+        accessMode: AutonomoAccessMode,
+        planTier: AutonomoPlanTier,
+        capabilities: AutonomoAccessCapabilities,
+        limits: AutonomoAccessLimits
+    ) {
+        self.appId = appId
+        self.accessMode = accessMode
+        self.planTier = planTier
+        self.capabilities = capabilities
+        self.limits = limits
+    }
+
     enum CodingKeys: String, CodingKey {
         case appId
         case accessMode
@@ -145,6 +159,15 @@ struct AutonomoAppAccess: Decodable, Equatable {
 }
 
 @MainActor
+protocol AutonomoAccessProviding {
+    var isConfigured: Bool { get }
+
+    func fetchMeAccess() async throws -> AutonomoMeAccessResponse
+}
+
+extension AutonomoAPIClient: AutonomoAccessProviding {}
+
+@MainActor
 @Observable
 final class AutonomoAccessController {
     enum SubscriptionReconciliationSource: Equatable {
@@ -152,8 +175,9 @@ final class AutonomoAccessController {
         case restore
     }
 
-    private let apiClient: AutonomoAPIClient
+    private let apiClient: AutonomoAccessProviding
     private let subscriptionPurchasing: AutonomoSubscriptionPurchasing
+    private let debugForceProModeProvider: () -> Bool
     private let logger = Logger(subsystem: "com.avalsys.autonomoav", category: "account-access")
     private let subscriptionReconciliationRetryDelaysNanoseconds: [UInt64]
     private let sleepNanoseconds: (UInt64) async -> Void
@@ -172,8 +196,9 @@ final class AutonomoAccessController {
     private(set) var subscriptionReconciliationSource: SubscriptionReconciliationSource?
 
     init(
-        apiClient: AutonomoAPIClient,
+        apiClient: AutonomoAccessProviding,
         subscriptionPurchasing: AutonomoSubscriptionPurchasing = RevenueCatAutonomoSubscriptionPurchasing(),
+        debugForceProModeProvider: @escaping () -> Bool = { AppConfig.isDebugForceProModeEnabled },
         subscriptionReconciliationRetryDelaysNanoseconds: [UInt64] = [
             1_000_000_000,
             2_000_000_000,
@@ -186,6 +211,7 @@ final class AutonomoAccessController {
     ) {
         self.apiClient = apiClient
         self.subscriptionPurchasing = subscriptionPurchasing
+        self.debugForceProModeProvider = debugForceProModeProvider
         self.subscriptionReconciliationRetryDelaysNanoseconds = subscriptionReconciliationRetryDelaysNanoseconds
         self.sleepNanoseconds = sleepNanoseconds
         self.accessMode = .guest
@@ -240,13 +266,14 @@ final class AutonomoAccessController {
             }
 
             guard generation == accessRefreshGeneration else { return }
-            applyResolvedAccess(AutonomoResolvedAccess(
+            let remoteAccess = AutonomoResolvedAccess(
                 platformUserId: payload.viewer?.userId,
                 planTier: appAccess.planTier,
                 accessMode: appAccess.accessMode,
                 capabilities: appAccess.capabilities,
                 limits: appAccess.limits
-            ))
+            )
+            applyResolvedAccess(resolvedAccessApplyingDebugOverride(remoteAccess, user: user))
         } catch {
             logger.error("Unable to refresh Autonomo AV access")
             guard generation == accessRefreshGeneration else { return }
@@ -333,11 +360,28 @@ final class AutonomoAccessController {
     }
 
     private func resolveLocalAccess(for user: AutonomoAccountUser?) -> AutonomoResolvedAccess {
-        if AppConfig.isDebugForceProModeEnabled {
+        guard user != nil else { return .guest }
+        if debugForceProModeProvider() {
             return .localFallback(for: .signedInPro)
         }
-        guard user != nil else { return .guest }
         return .localFallback(for: .signedInFree)
+    }
+
+    private func resolvedAccessApplyingDebugOverride(
+        _ resolvedAccess: AutonomoResolvedAccess,
+        user: AutonomoAccountUser?
+    ) -> AutonomoResolvedAccess {
+        guard user != nil, debugForceProModeProvider() else {
+            return resolvedAccess
+        }
+
+        return AutonomoResolvedAccess(
+            platformUserId: resolvedAccess.platformUserId ?? user?.id,
+            planTier: .pro,
+            accessMode: .signedInPro,
+            capabilities: .forMode(.signedInPro),
+            limits: .forMode(.signedInPro)
+        )
     }
 
     private func applyResolvedAccess(_ resolvedAccess: AutonomoResolvedAccess) {

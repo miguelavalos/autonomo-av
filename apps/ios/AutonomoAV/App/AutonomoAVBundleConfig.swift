@@ -9,6 +9,21 @@ enum AutonomoAVBundleConfig {
         nonEmptyStringValue(for: key, in: bundle) ?? ""
     }
 
+    static func boolValue(for key: String, in bundle: Bundle = .main, default defaultValue: Bool = false) -> Bool {
+        guard let rawValue = nonEmptyStringValue(for: key, in: bundle) else {
+            return defaultValue
+        }
+
+        switch rawValue.lowercased() {
+        case "1", "true", "yes", "on", "enabled":
+            return true
+        case "0", "false", "no", "off", "disabled":
+            return false
+        default:
+            return defaultValue
+        }
+    }
+
     static func nonEmptyStringValue(for key: String, in bundle: Bundle = .main) -> String? {
         guard let rawValue = bundle.object(forInfoDictionaryKey: key) as? String else {
             return nil
@@ -91,7 +106,7 @@ enum AppConfig {
     }
 
     static var isDebugForceProModeEnabled: Bool {
-        AutonomoAVBundleConfig.stringValue(for: "AUTONOMOAV_DEBUG_FORCE_PRO_MODE").uppercased() == "YES"
+        AutonomoAVBundleConfig.boolValue(for: "AUTONOMOAV_DEBUG_FORCE_PRO_MODE")
     }
 
     static var isAccountAvailable: Bool {

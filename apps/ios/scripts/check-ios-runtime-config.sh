@@ -89,7 +89,16 @@ keychain_access_group="$(setting ACCOUNTAV_KEYCHAIN_ACCESS_GROUP)"
 revenuecat_public_api_key="$(setting AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY)"
 revenuecat_offering_id="$(setting AUTONOMOAV_REVENUECAT_OFFERING_ID)"
 revenuecat_monthly_package_id="$(setting AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID)"
+debug_force_pro_mode="$(setting AUTONOMOAV_DEBUG_FORCE_PRO_MODE)"
 development_team="$(setting DEVELOPMENT_TEAM)"
+debug_force_pro_mode_normalized="$(printf '%s' "$debug_force_pro_mode" | tr '[:upper:]' '[:lower:]')"
+debug_force_pro_mode_enabled=0
+
+case "$debug_force_pro_mode_normalized" in
+  1|true|yes|on|enabled)
+    debug_force_pro_mode_enabled=1
+    ;;
+esac
 
 if [ "$env_name" = "prod" ]; then
   require_present "AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY" "$revenuecat_public_api_key"
@@ -101,6 +110,7 @@ if [ "$env_name" = "prod" ]; then
   [ "$development_team" = "935PM55U6R" ] || fail "prod development team must be 935PM55U6R"
   [ "$keychain_access_group" = "935PM55U6R.com.avalsys.autonomoav" ] || fail "prod keychain access group mismatch"
   [[ "$publishable_key" == pk_live_* ]] || fail "prod publishable key must be pk_live"
+  [ "$debug_force_pro_mode_enabled" -eq 0 ] || fail "prod AUTONOMOAV_DEBUG_FORCE_PRO_MODE must be disabled"
 else
   [ "$product_bundle_identifier" = "com.avalsys.autonomoav.dev" ] || fail "dev bundle must be com.avalsys.autonomoav.dev"
   [ "$autonomo_bundle_identifier" = "com.avalsys.autonomoav.dev" ] || fail "dev AUTONOMOAV_BUNDLE_IDENTIFIER must be com.avalsys.autonomoav.dev"
@@ -153,6 +163,7 @@ Autonomo AV iOS runtime config ($env_name)
   RevenueCat key: $redacted_revenuecat_key
   RevenueCat offering: $revenuecat_offering_id
   RevenueCat monthly package: $revenuecat_monthly_package_id
+  debug force Pro mode: ${debug_force_pro_mode:-unset}
 EOF
 
 if [ "$failures" -gt 0 ]; then
