@@ -87,6 +87,7 @@
 "paywall.status.refreshingAccess" = "Refreshing your Pro access.";
 "paywall.status.redeemingCode" = "Checking your code and refreshing Pro access.";
 "paywall.subscriptionTerms" = "Monthly subscription at %@. Renews automatically until canceled.";
+"paywall.legal.renewal" = "Monthly Pro renews automatically. Manage or cancel anytime in App Store settings.";
 "paywall.benefit.inbox.title" = "One business inbox";
 "paywall.benefit.inbox.detail" = "Files, scans, forwarded mail, and shared content land in the same private queue.";
 "paywall.benefit.ai.title" = "AI document routing";
@@ -96,6 +97,10 @@
 "paywall.terms" = "Terms";
 "paywall.privacy" = "Privacy";
 "paywall.redeemCode" = "Redeem code";
+"paywall.redeem.title" = "Redeem code";
+"paywall.redeem.detail" = "Use an App Store offer code to activate Autonomo AV Pro on this account.";
+"paywall.redeem.button" = "Open App Store code sheet";
+"paywall.redeem.note" = "Enter the code in Apple's secure sheet. When it finishes, Autonomo AV refreshes your Pro access.";
 "subscription.error.signInRequired" = "Sign in to start Autonomo AV Pro.";
 "subscription.error.configuration" = "Monthly Pro is being prepared for this build.";
 "subscription.error.offerUnavailable" = "Monthly Pro is not available right now.";

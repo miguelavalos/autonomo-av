@@ -9,6 +9,10 @@ struct AutonomoProPaywallView: View {
 
     let startSignInFlow: () -> Void
 
+    @State private var isShowingRedeemCodeSheet = false
+    @State private var isRedeemingCode = false
+    @State private var isRestoringPurchases = false
+
     var body: some View {
         AVPaywallSheetScaffold(
             navigationTitle: L10n.string("paywall.navigationTitle"),
@@ -35,17 +39,6 @@ struct AutonomoProPaywallView: View {
                     .scaledToFit()
                     .padding(4)
                     .background(AutonomoTheme.surfaceMuted, in: Circle())
-            } restoreButton: {
-                if accountController.currentUser != nil {
-                    AVPaywallRestoreButton(
-                        title: restoreTitle,
-                        isDisabled: accessController.isSubscriptionOperationInProgress
-                    ) {
-                        Task { await accessController.restorePurchases(for: accountController.currentUser) }
-                    }
-                } else {
-                    EmptyView()
-                }
             }
 
             subscriptionTermsRow
@@ -61,6 +54,9 @@ struct AutonomoProPaywallView: View {
             if mode == .signedInPro {
                 dismiss()
             }
+        }
+        .sheet(isPresented: $isShowingRedeemCodeSheet) {
+            redeemCodeSheet
         }
     }
 
@@ -122,7 +118,7 @@ struct AutonomoProPaywallView: View {
     }
 
     private var restoreTitle: String {
-        accessController.isSubscriptionOperationInProgress
+        isRestoringPurchases
             ? L10n.string("paywall.restore.loading")
             : L10n.string("paywall.restore")
     }
@@ -175,25 +171,53 @@ struct AutonomoProPaywallView: View {
     }
 
     private var footerLinks: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 9) {
-            footerButton(L10n.string("paywall.redeemCode"), accessibilityIdentifier: "paywall.redeemCode", action: redeemOfferCode)
+        VStack(spacing: 8) {
+            Text(L10n.string("paywall.legal.renewal"))
+                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .foregroundStyle(AutonomoTheme.graphite)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
 
-            ForEach(legalLinkItems) { link in
-                footerSeparator
-                footerButton(link.title, accessibilityIdentifier: link.accessibilityIdentifier, action: link.action)
+            VStack(spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 9) {
+                    if accountController.currentUser != nil {
+                        footerButton(
+                            L10n.string("paywall.redeemCode"),
+                            accessibilityIdentifier: "paywall.redeemCode",
+                            action: showRedeemCodeSheet
+                        )
+                        footerSeparator
+                    }
+
+                    restoreFooterButton
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+
+                HStack(alignment: .firstTextBaseline, spacing: 9) {
+                    ForEach(Array(legalLinkItems.enumerated()), id: \.element.id) { item in
+                        if item.offset > 0 {
+                            footerSeparator
+                        }
+                        footerButton(
+                            item.element.title,
+                            accessibilityIdentifier: item.element.accessibilityIdentifier,
+                            action: item.element.action
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
             }
+            .font(.system(size: 12, weight: .bold, design: .rounded))
+            .foregroundStyle(AutonomoTheme.accentDeep)
         }
-        .font(.system(size: 12, weight: .bold, design: .rounded))
-        .foregroundStyle(AutonomoTheme.accentDeep)
         .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func footerButton(_ title: String, accessibilityIdentifier: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .lineLimit(1)
-                .minimumScaleFactor(0.78)
-                .allowsTightening(true)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(accessibilityIdentifier)
@@ -204,15 +228,134 @@ struct AutonomoProPaywallView: View {
             .foregroundStyle(AutonomoTheme.graphite.opacity(0.72))
     }
 
-    private func redeemOfferCode() {
+    private var restoreFooterButton: some View {
+        Button {
+            restorePreviousPurchases()
+        } label: {
+            HStack(spacing: 4) {
+                if isRestoringPurchases {
+                    ProgressView()
+                        .controlSize(.mini)
+                        .tint(AutonomoTheme.accentDeep)
+                }
+
+                Text(restoreTitle)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(accountController.currentUser == nil || accessController.isSubscriptionOperationInProgress)
+        .accessibilityIdentifier("paywall.restore")
+    }
+
+    private var redeemCodeSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(L10n.string("paywall.redeem.title"))
+                            .font(.system(size: 21, weight: .black, design: .rounded))
+                            .foregroundStyle(AutonomoTheme.ink)
+
+                        Text(L10n.string("paywall.redeem.detail"))
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .foregroundStyle(AutonomoTheme.graphite)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Button(action: redeemOfferCodeFromSheet) {
+                        HStack(spacing: 10) {
+                            if isRedeemingCode {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(AutonomoTheme.ink)
+                            } else {
+                                Image(systemName: "gift.fill")
+                                    .font(.system(size: 15, weight: .black))
+                            }
+
+                            Text(L10n.string("paywall.redeem.button"))
+                                .font(.system(size: 15, weight: .black, design: .rounded))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.78)
+
+                            Spacer()
+
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 14, weight: .black))
+                        }
+                        .foregroundStyle(AutonomoTheme.ink)
+                        .padding(.horizontal, 16)
+                        .frame(height: 52)
+                        .background(AutonomoTheme.accent, in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isRedeemingCode || accessController.isSubscriptionOperationInProgress)
+                    .accessibilityIdentifier("paywall.redeem.openStoreKit")
+
+                    Text(L10n.string("paywall.redeem.note"))
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundStyle(AutonomoTheme.graphite)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(18)
+                .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(AutonomoTheme.border, lineWidth: 1)
+                }
+                .padding(20)
+            }
+            .background(AutonomoTheme.background.ignoresSafeArea())
+            .navigationTitle(L10n.string("paywall.redeem.title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(L10n.string("paywall.close")) {
+                        isShowingRedeemCodeSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func showRedeemCodeSheet() {
         guard accountController.currentUser != nil else {
             dismiss()
             startSignInFlow()
             return
         }
 
+        isShowingRedeemCodeSheet = true
+    }
+
+    private func redeemOfferCodeFromSheet() {
+        guard accountController.currentUser != nil else {
+            isShowingRedeemCodeSheet = false
+            dismiss()
+            startSignInFlow()
+            return
+        }
+        guard !isRedeemingCode, !accessController.isSubscriptionOperationInProgress else { return }
+
+        isRedeemingCode = true
+        isShowingRedeemCodeSheet = false
         Task {
             await accessController.redeemOfferCode(for: accountController.currentUser)
+            isRedeemingCode = false
+        }
+    }
+
+    private func restorePreviousPurchases() {
+        guard accountController.currentUser != nil else { return }
+        guard !isRestoringPurchases, !accessController.isSubscriptionOperationInProgress else { return }
+
+        isRestoringPurchases = true
+        Task {
+            await accessController.restorePurchases(for: accountController.currentUser)
+            isRestoringPurchases = false
         }
     }
 }
