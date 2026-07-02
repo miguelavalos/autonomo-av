@@ -1,7 +1,5 @@
 import Foundation
 import OSLog
-import StoreKit
-import UIKit
 
 #if canImport(RevenueCat)
 import RevenueCat
@@ -51,7 +49,6 @@ protocol AutonomoSubscriptionPurchasing {
     func loadMonthlyOffer(for user: AutonomoAccountUser?) async throws -> AutonomoSubscriptionOffer
     func purchaseMonthlyPro(for user: AutonomoAccountUser?) async throws -> AutonomoPurchaseOutcome
     func restorePurchases(for user: AutonomoAccountUser?) async throws -> AutonomoPurchaseOutcome
-    func redeemOfferCode(for user: AutonomoAccountUser?) async throws -> AutonomoPurchaseOutcome
 }
 
 @MainActor
@@ -74,11 +71,6 @@ final class NoopAutonomoSubscriptionPurchasing: AutonomoSubscriptionPurchasing {
     }
 
     func restorePurchases(for user: AutonomoAccountUser?) async throws -> AutonomoPurchaseOutcome {
-        try await prepare(for: user)
-        throw AutonomoSubscriptionPurchaseError.missingConfiguration
-    }
-
-    func redeemOfferCode(for user: AutonomoAccountUser?) async throws -> AutonomoPurchaseOutcome {
         try await prepare(for: user)
         throw AutonomoSubscriptionPurchaseError.missingConfiguration
     }
@@ -163,17 +155,6 @@ final class RevenueCatAutonomoSubscriptionPurchasing: AutonomoSubscriptionPurcha
         return AutonomoPurchaseOutcome(shouldRefreshAccess: true, customerUserID: userID)
     }
 
-    func redeemOfferCode(for user: AutonomoAccountUser?) async throws -> AutonomoPurchaseOutcome {
-        let userID = try requireUserID(user)
-        try await prepare(for: user)
-        let scene = try activeWindowScene()
-        purchaseLogger.info("Starting StoreKit offer code redemption userID=\(userID, privacy: .private)")
-        try await AppStore.presentOfferCodeRedeemSheet(in: scene)
-        _ = try await syncPurchases()
-        purchaseLogger.info("Finished StoreKit offer code redemption userID=\(userID, privacy: .private)")
-        return AutonomoPurchaseOutcome(shouldRefreshAccess: true, customerUserID: userID)
-    }
-
     private func requireUserID(_ user: AutonomoAccountUser?) throws -> String {
         guard let userID = user?.id, !userID.isEmpty else {
             throw AutonomoSubscriptionPurchaseError.missingAccountUser
@@ -249,18 +230,6 @@ final class RevenueCatAutonomoSubscriptionPurchasing: AutonomoSubscriptionPurcha
         }
     }
 
-    private func syncPurchases() async throws -> CustomerInfo {
-        try await withCheckedThrowingContinuation { continuation in
-            Purchases.shared.syncPurchases { customerInfo, error in
-                if let customerInfo {
-                    continuation.resume(returning: customerInfo)
-                } else {
-                    continuation.resume(throwing: Self.purchaseError(from: error))
-                }
-            }
-        }
-    }
-
     private func logInRevenueCat(_ userID: String) async throws -> CustomerInfo {
         try await withCheckedThrowingContinuation { continuation in
             Purchases.shared.logIn(userID) { customerInfo, _, error in
@@ -278,20 +247,6 @@ final class RevenueCatAutonomoSubscriptionPurchasing: AutonomoSubscriptionPurcha
             return .underlying(error.localizedDescription)
         }
         return .underlying(L10n.string("subscription.error.unknown"))
-    }
-
-    private func activeWindowScene() throws -> UIWindowScene {
-        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        if let activeScene = scenes.first(where: { $0.activationState == .foregroundActive }) {
-            return activeScene
-        }
-        if let inactiveScene = scenes.first(where: { $0.activationState == .foregroundInactive }) {
-            return inactiveScene
-        }
-        if let scene = scenes.first {
-            return scene
-        }
-        throw AutonomoSubscriptionPurchaseError.underlying(L10n.string("subscription.error.redemptionUnavailable"))
     }
 }
 #else

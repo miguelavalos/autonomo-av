@@ -247,6 +247,58 @@ struct AutonomoDocumentsResponse: Decodable, Equatable {
     let documents: [AutonomoDocumentSummary]
 }
 
+private struct AutonomoPromoCodeRedeemRequest: Encodable {
+    let code: String
+}
+
+struct AutonomoPromotionCodeRedemptionResponse: Decodable, Equatable {
+    let appId: String
+    let userId: String
+    let code: String
+    let campaignId: String
+    let redemptionId: String
+}
+
+enum AutonomoPromoCodeClientError: LocalizedError, Equatable {
+    case missingBaseURL
+    case missingToken
+    case requestFailed(statusCode: Int)
+    case server(code: String, message: String, statusCode: Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .missingBaseURL:
+            L10n.string("promo.error.configuration")
+        case .missingToken:
+            L10n.string("upload.error.missingToken")
+        case .requestFailed:
+            L10n.string("promo.error.redeemFailed")
+        case .server(_, let message, _):
+            message
+        }
+    }
+
+    static func decode(from data: Data, statusCode: Int) -> AutonomoPromoCodeClientError {
+        if let decoded = try? JSONDecoder().decode(AutonomoPromoCodeErrorResponse.self, from: data) {
+            return .server(
+                code: decoded.error.code,
+                message: decoded.error.message,
+                statusCode: statusCode
+            )
+        }
+        return .requestFailed(statusCode: statusCode)
+    }
+}
+
+private struct AutonomoPromoCodeErrorResponse: Decodable {
+    struct APIError: Decodable {
+        let code: String
+        let message: String
+    }
+
+    let error: APIError
+}
+
 enum AutonomoAPIClientError: LocalizedError, Equatable {
     case missingToken
     case missingBaseURL
@@ -348,6 +400,31 @@ final class AutonomoAPIClient {
 
     func fetchMeAccess() async throws -> AutonomoMeAccessResponse {
         try await request(path: "/v1/me/access")
+    }
+
+    func redeemPromotionCode(_ code: String) async throws -> AutonomoPromotionCodeRedemptionResponse {
+        guard let token = try await tokenProvider(), !token.isEmpty else {
+            throw AutonomoPromoCodeClientError.missingToken
+        }
+        guard let baseURL = baseURLProvider() else {
+            throw AutonomoPromoCodeClientError.missingBaseURL
+        }
+
+        var request = URLRequest(url: Self.url(baseURL: baseURL, path: "/v1/apps/\(Self.appIdentifier)/promotions/redeem"))
+        request.httpMethod = "POST"
+        request.httpBody = try encoder.encode(AutonomoPromoCodeRedeemRequest(code: code))
+        Self.addAuthenticatedHeaders(to: &request, bearerToken: token)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let (data, response, _) = try await performDataTask(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AutonomoPromoCodeClientError.requestFailed(statusCode: -1)
+        }
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw AutonomoPromoCodeClientError.decode(from: data, statusCode: httpResponse.statusCode)
+        }
+
+        return try decoder.decode(AutonomoPromotionCodeRedemptionResponse.self, from: data)
     }
 
     func bootstrapWorkspace() async throws -> AutonomoWorkspaceBootstrapResponse {

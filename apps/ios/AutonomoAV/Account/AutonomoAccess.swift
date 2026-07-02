@@ -165,7 +165,20 @@ protocol AutonomoAccessProviding {
     func fetchMeAccess() async throws -> AutonomoMeAccessResponse
 }
 
+@MainActor
+protocol AutonomoPromotionCodeRedeeming {
+    func redeemPromotionCode(_ code: String) async throws -> AutonomoPromotionCodeRedemptionResponse
+}
+
 extension AutonomoAPIClient: AutonomoAccessProviding {}
+extension AutonomoAPIClient: AutonomoPromotionCodeRedeeming {}
+
+@MainActor
+private struct NoopAutonomoPromotionCodeRedeemer: AutonomoPromotionCodeRedeeming {
+    func redeemPromotionCode(_ code: String) async throws -> AutonomoPromotionCodeRedemptionResponse {
+        throw AutonomoSubscriptionPurchaseError.missingConfiguration
+    }
+}
 
 @MainActor
 @Observable
@@ -178,6 +191,7 @@ final class AutonomoAccessController {
 
     private let apiClient: AutonomoAccessProviding
     private let subscriptionPurchasing: AutonomoSubscriptionPurchasing
+    private let promotionCodeRedeemer: AutonomoPromotionCodeRedeeming
     private let debugForceProModeProvider: () -> Bool
     private let logger = Logger(subsystem: "com.avalsys.autonomoav", category: "account-access")
     private let subscriptionReconciliationRetryDelaysNanoseconds: [UInt64]
@@ -199,6 +213,7 @@ final class AutonomoAccessController {
     init(
         apiClient: AutonomoAccessProviding,
         subscriptionPurchasing: AutonomoSubscriptionPurchasing = RevenueCatAutonomoSubscriptionPurchasing(),
+        promotionCodeRedeemer: AutonomoPromotionCodeRedeeming? = nil,
         debugForceProModeProvider: @escaping () -> Bool = { AppConfig.isDebugForceProModeEnabled },
         subscriptionReconciliationRetryDelaysNanoseconds: [UInt64] = [
             1_000_000_000,
@@ -212,6 +227,9 @@ final class AutonomoAccessController {
     ) {
         self.apiClient = apiClient
         self.subscriptionPurchasing = subscriptionPurchasing
+        self.promotionCodeRedeemer = promotionCodeRedeemer
+            ?? (apiClient as? AutonomoPromotionCodeRedeeming)
+            ?? NoopAutonomoPromotionCodeRedeemer()
         self.debugForceProModeProvider = debugForceProModeProvider
         self.subscriptionReconciliationRetryDelaysNanoseconds = subscriptionReconciliationRetryDelaysNanoseconds
         self.sleepNanoseconds = sleepNanoseconds
@@ -310,9 +328,33 @@ final class AutonomoAccessController {
         }
     }
 
-    func redeemOfferCode(for user: AutonomoAccountUser?) async {
-        await runSubscriptionOperation(for: user, source: .redeemCode) {
-            try await subscriptionPurchasing.redeemOfferCode(for: subscriptionAccountUser(from: user))
+    func claimPromotionCode(_ code: String, for user: AutonomoAccountUser?) async throws {
+        let normalizedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalizedCode.isEmpty else { return }
+        guard user != nil else {
+            subscriptionError = .missingAccountUser
+            throw AutonomoSubscriptionPurchaseError.missingAccountUser
+        }
+
+        isSubscriptionOperationInProgress = true
+        subscriptionError = nil
+        defer {
+            isSubscriptionOperationInProgress = false
+        }
+
+        do {
+            _ = try await promotionCodeRedeemer.redeemPromotionCode(normalizedCode)
+            isWaitingForSubscriptionReconciliation = true
+            subscriptionReconciliationSource = .redeemCode
+            await refreshAccess(for: user)
+            await retrySubscriptionReconciliationIfNeeded(for: user)
+        } catch let error as AutonomoSubscriptionPurchaseError {
+            subscriptionError = error
+            throw error
+        } catch {
+            let mappedError = AutonomoSubscriptionPurchaseError.underlying(error.localizedDescription)
+            subscriptionError = mappedError
+            throw mappedError
         }
     }
 
