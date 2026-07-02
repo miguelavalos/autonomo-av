@@ -6,6 +6,58 @@ struct AccountSummaryResponse: Decodable, Equatable {
     let id: String
     let displayName: String?
     let emailAddress: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case email
+        case emailAddress
+        case displayName
+        case name
+        case user
+    }
+
+    init(id: String, displayName: String? = nil, emailAddress: String? = nil) {
+        self.id = id
+        self.displayName = displayName
+        self.emailAddress = emailAddress
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let user = try container.decodeIfPresent(AccountSummaryUserResponse.self, forKey: .user)
+        id = try container.decodeIfPresent(String.self, forKey: .id)
+            ?? user?.id
+            ?? ""
+        displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
+            ?? container.decodeIfPresent(String.self, forKey: .name)
+            ?? user?.displayName
+        emailAddress = try container.decodeIfPresent(String.self, forKey: .emailAddress)
+            ?? container.decodeIfPresent(String.self, forKey: .email)
+            ?? user?.emailAddress
+    }
+}
+
+private struct AccountSummaryUserResponse: Decodable, Equatable {
+    let id: String?
+    let displayName: String?
+    let emailAddress: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case email
+        case emailAddress
+        case displayName
+        case name
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(String.self, forKey: .id)
+        displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
+            ?? container.decodeIfPresent(String.self, forKey: .name)
+        emailAddress = try container.decodeIfPresent(String.self, forKey: .emailAddress)
+            ?? container.decodeIfPresent(String.self, forKey: .email)
+    }
 }
 
 enum AutonomoUploadSource: String, Codable, CaseIterable {
@@ -217,7 +269,8 @@ enum AutonomoAPIClientError: LocalizedError, Equatable {
 
 @MainActor
 final class AutonomoAPIClient {
-    nonisolated private static let appIdHeaderValue = "autonomoav"
+    nonisolated static let appIdentifier = "autonomoav"
+    nonisolated private static let appIdHeaderValue = appIdentifier
 
     struct RetryPolicy: Equatable {
         let maxAttempts: Int
@@ -291,6 +344,10 @@ final class AutonomoAPIClient {
 
     func fetchAccountSummary() async throws -> AccountSummaryResponse {
         try await request(path: "/v1/me")
+    }
+
+    func fetchMeAccess() async throws -> AutonomoMeAccessResponse {
+        try await request(path: "/v1/me/access")
     }
 
     func bootstrapWorkspace() async throws -> AutonomoWorkspaceBootstrapResponse {

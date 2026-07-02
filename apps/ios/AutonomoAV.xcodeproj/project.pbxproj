@@ -9,23 +9,29 @@
 /* Begin PBXBuildFile section */
 		0A4A4BA0D992DFB54B2C01E7 /* DocumentScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55513D91774B563A79703D23 /* DocumentScannerView.swift */; };
 		0DFA63D421D4631D11F2C869 /* LocalIntakeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BAC48713D71BF0465D8353F /* LocalIntakeStore.swift */; };
+		180A595009849C5EA17A1A8A /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = E44A0F90DBA9783ADE54DFEF /* ClerkKit */; };
 		18207ED01731A0531316A26A /* AVAppShellFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 6522DEBB2D8F4AA02CCC776D /* AVAppShellFoundation */; };
 		196E04F7805D588B0EB441CD /* IntakeShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D7414930EEB051F3693533 /* IntakeShellView.swift */; };
 		1B471CF6893C34EE45E10400 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C5F4AEA38D3F2304D9BB1BC /* RootView.swift */; };
+		1D04558A03E6A143497FE9CB /* AutonomoProPaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC4CB11F55747EBC45A6B5F8 /* AutonomoProPaywallView.swift */; };
+		1DC171945DC9D8962EC2F9DC /* AutonomoAppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C8ECFF6ADEF60AC87B8CEB0 /* AutonomoAppShellView.swift */; };
 		1DD48BE7025630940D32B6E5 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = DD570F6D091C33B27E535211 /* Localizable.strings */; };
 		20FDDD7EC7259B0F31919111 /* AVBrandFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 4184770238F3F2AAB44B8564 /* AVBrandFoundation */; };
+		2C1388F040740123295796E8 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 70E5450FF006CD6646EB03C4 /* RevenueCat */; };
 		2D23F3C0CAE49C176003CF95 /* AVProductAccountFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = EB0392E8255C4B1B3743E10D /* AVProductAccountFoundation */; };
 		3488B40733B3F0223BD089D1 /* LocalIntakeStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D41DD61C3AF6AC0EE18697 /* LocalIntakeStoreTests.swift */; };
 		3A094D17CFD409C017AB91FA /* AccountSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0652BB494C48241575D4DBB1 /* AccountSheet.swift */; };
 		4214774481319311D68D924B /* AutonomoAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0584248BA8FEF9B42DE805 /* AutonomoAPIClientTests.swift */; };
 		588ECC16D5158FB2ED9ADA5E /* AutonomoAVShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5C82A695A4D13BA44D23E36F /* AutonomoAVShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		597CC13B57AFAEA5CA508CCB /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6BA94EE2426CA81EACF99BE /* ShareViewController.swift */; };
+		7523CDEE368B241BDF978B79 /* AutonomoAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = F405171E34353339D552FE2A /* AutonomoAccess.swift */; };
 		7DF4F695F4EE489E0CEF9744 /* AuthGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FBE9EAFFD8235FF1D694BA1 /* AuthGateView.swift */; };
 		8597CA4F2288BB60C42BFD3D /* AccountAV in Frameworks */ = {isa = PBXBuildFile; productRef = 0308EE17408DBF73BE2AA5BA /* AccountAV */; };
 		8825451E601800EF5A26093C /* AVSettingsFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 429C4E2D8F2D89E5CA67407F /* AVSettingsFoundation */; };
+		9D91F95E7899880121A1B698 /* AutonomoSubscriptionPurchasingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7F8961010D8CAFCCEF8846 /* AutonomoSubscriptionPurchasingService.swift */; };
 		A3D54FB54BB8FB07AE488FC1 /* SharedIntakeInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8655A376E74801AFDC2B2E97 /* SharedIntakeInbox.swift */; };
 		A5E6E4EA3A38B2928E425F10 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F3B07E32813A399D90924C4A /* PrivacyInfo.xcprivacy */; };
-		A84E8B82073C5CF879482C1B /* AVHaptics in Frameworks */ = {isa = PBXBuildFile; productRef = 2F9C505A39209249E1B1A0EA /* AVHaptics */; };
+		A84E8B82073C5CF879482C1B /* AVPaywallFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 4752627EF10FDE4E24428A07 /* AVPaywallFoundation */; };
 		AAC9D172A3DFF0758AB0E41A /* PreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2EE1B08FDA7CA57C605D01F /* PreviewSupport.swift */; };
 		B4D0B61245E800213AC7DC99 /* AutonomoAVBundleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0C64E0B5433D869CF0AC02 /* AutonomoAVBundleConfig.swift */; };
 		C08416BB39B4F21DF96594F5 /* AutonomoTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD8ED3CEB068B8613667581 /* AutonomoTheme.swift */; };
@@ -33,7 +39,7 @@
 		D4DFB849E8FAB2B5530D49B7 /* AutonomoAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 712D316975E738950E8E50E4 /* AutonomoAPIClient.swift */; };
 		D6B63B5189EF3DF52997C27E /* AutonomoAVApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BFC84A99458BB9381B1D8B4 /* AutonomoAVApp.swift */; };
 		E215FFDBA8581A71641AF57B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 19CEE2222E7AC4F81417949B /* Assets.xcassets */; };
-		EEA255C1EC38270D19D44428 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = E44A0F90DBA9783ADE54DFEF /* ClerkKit */; };
+		EEA255C1EC38270D19D44428 /* AVHaptics in Frameworks */ = {isa = PBXBuildFile; productRef = 2F9C505A39209249E1B1A0EA /* AVHaptics */; };
 		F8D436B802FE14DA150311DF /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 407B10C5CE515BFD4B64F22B /* L10n.swift */; };
 /* End PBXBuildFile section */
 
@@ -82,6 +88,7 @@
 		55513D91774B563A79703D23 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
 		5C82A695A4D13BA44D23E36F /* AutonomoAVShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AutonomoAVShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		675A92E6EACECBB54914341A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		6C8ECFF6ADEF60AC87B8CEB0 /* AutonomoAppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAppShellView.swift; sourceTree = "<group>"; };
 		6F52C633E9665C007AC54A8B /* AutonomoAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccount.swift; sourceTree = "<group>"; };
 		712D316975E738950E8E50E4 /* AutonomoAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAPIClient.swift; sourceTree = "<group>"; };
 		7BAC48713D71BF0465D8353F /* LocalIntakeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalIntakeStore.swift; sourceTree = "<group>"; };
@@ -89,8 +96,10 @@
 		95FD8C885FCDF72A9DE635E5 /* AutonomoAVTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AutonomoAVTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9C5F4AEA38D3F2304D9BB1BC /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A658CBE41F23C4799977956D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		AC4CB11F55747EBC45A6B5F8 /* AutonomoProPaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoProPaywallView.swift; sourceTree = "<group>"; };
 		B2EE1B08FDA7CA57C605D01F /* PreviewSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewSupport.swift; sourceTree = "<group>"; };
 		B5C36BA376AE46A09680463E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		BA7F8961010D8CAFCCEF8846 /* AutonomoSubscriptionPurchasingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoSubscriptionPurchasingService.swift; sourceTree = "<group>"; };
 		BE833F56DF4D45D426CE752E /* account-av */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "account-av"; path = "../../../account-av"; sourceTree = SOURCE_ROOT; };
 		CABE24E9D726B18A34E229D0 /* AutonomoAVShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AutonomoAVShareExtension.entitlements; sourceTree = "<group>"; };
 		CC705FEFB4E90CA8A2FFE824 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
@@ -98,6 +107,7 @@
 		E6BA94EE2426CA81EACF99BE /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		EE0C64E0B5433D869CF0AC02 /* AutonomoAVBundleConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVBundleConfig.swift; sourceTree = "<group>"; };
 		F3B07E32813A399D90924C4A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		F405171E34353339D552FE2A /* AutonomoAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccess.swift; sourceTree = "<group>"; };
 		F5D7414930EEB051F3693533 /* IntakeShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntakeShellView.swift; sourceTree = "<group>"; };
 		FCA714D1409AB592BFC9A146 /* AutonomoAV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AutonomoAV.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -112,8 +122,10 @@
 				20FDDD7EC7259B0F31919111 /* AVBrandFoundation in Frameworks */,
 				18207ED01731A0531316A26A /* AVAppShellFoundation in Frameworks */,
 				8825451E601800EF5A26093C /* AVSettingsFoundation in Frameworks */,
-				A84E8B82073C5CF879482C1B /* AVHaptics in Frameworks */,
-				EEA255C1EC38270D19D44428 /* ClerkKit in Frameworks */,
+				A84E8B82073C5CF879482C1B /* AVPaywallFoundation in Frameworks */,
+				EEA255C1EC38270D19D44428 /* AVHaptics in Frameworks */,
+				180A595009849C5EA17A1A8A /* ClerkKit in Frameworks */,
+				2C1388F040740123295796E8 /* RevenueCat in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -150,7 +162,10 @@
 			children = (
 				0652BB494C48241575D4DBB1 /* AccountSheet.swift */,
 				3FBE9EAFFD8235FF1D694BA1 /* AuthGateView.swift */,
+				F405171E34353339D552FE2A /* AutonomoAccess.swift */,
 				6F52C633E9665C007AC54A8B /* AutonomoAccount.swift */,
+				AC4CB11F55747EBC45A6B5F8 /* AutonomoProPaywallView.swift */,
+				BA7F8961010D8CAFCCEF8846 /* AutonomoSubscriptionPurchasingService.swift */,
 			);
 			path = Account;
 			sourceTree = "<group>";
@@ -222,6 +237,7 @@
 			isa = PBXGroup;
 			children = (
 				19CEE2222E7AC4F81417949B /* Assets.xcassets */,
+				6C8ECFF6ADEF60AC87B8CEB0 /* AutonomoAppShellView.swift */,
 				FCA714D1409AB592BFC9A146 /* AutonomoAV.entitlements */,
 				1BFC84A99458BB9381B1D8B4 /* AutonomoAVApp.swift */,
 				EE0C64E0B5433D869CF0AC02 /* AutonomoAVBundleConfig.swift */,
@@ -304,8 +320,10 @@
 				4184770238F3F2AAB44B8564 /* AVBrandFoundation */,
 				6522DEBB2D8F4AA02CCC776D /* AVAppShellFoundation */,
 				429C4E2D8F2D89E5CA67407F /* AVSettingsFoundation */,
+				4752627EF10FDE4E24428A07 /* AVPaywallFoundation */,
 				2F9C505A39209249E1B1A0EA /* AVHaptics */,
 				E44A0F90DBA9783ADE54DFEF /* ClerkKit */,
+				70E5450FF006CD6646EB03C4 /* RevenueCat */,
 			);
 			productName = AutonomoAV;
 			productReference = 131ED33993F3CE41DF5CF6A3 /* AutonomoAV.app */;
@@ -341,6 +359,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				7952680832A4E47AFBA9C1E4 /* XCRemoteSwiftPackageReference "clerk-ios" */,
+				30E1CBFD293BA8CC7762C073 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
 				937634B1B5B3F3AA0F99EC10 /* XCLocalSwiftPackageReference "../../../account-av" */,
 				F00C48BABE01B22571A73376 /* XCLocalSwiftPackageReference "../../../apps-av/apple" */,
 			);
@@ -396,7 +415,11 @@
 				D4DFB849E8FAB2B5530D49B7 /* AutonomoAPIClient.swift in Sources */,
 				D6B63B5189EF3DF52997C27E /* AutonomoAVApp.swift in Sources */,
 				B4D0B61245E800213AC7DC99 /* AutonomoAVBundleConfig.swift in Sources */,
+				7523CDEE368B241BDF978B79 /* AutonomoAccess.swift in Sources */,
 				C366A27FED55CFC8143D0F1E /* AutonomoAccount.swift in Sources */,
+				1DC171945DC9D8962EC2F9DC /* AutonomoAppShellView.swift in Sources */,
+				1D04558A03E6A143497FE9CB /* AutonomoProPaywallView.swift in Sources */,
+				9D91F95E7899880121A1B698 /* AutonomoSubscriptionPurchasingService.swift in Sources */,
 				C08416BB39B4F21DF96594F5 /* AutonomoTheme.swift in Sources */,
 				0A4A4BA0D992DFB54B2C01E7 /* DocumentScannerView.swift in Sources */,
 				196E04F7805D588B0EB441CD /* IntakeShellView.swift in Sources */,
@@ -741,6 +764,14 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		30E1CBFD293BA8CC7762C073 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 		7952680832A4E47AFBA9C1E4 /* XCRemoteSwiftPackageReference "clerk-ios" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/clerk/clerk-ios";
@@ -768,9 +799,18 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = AVSettingsFoundation;
 		};
+		4752627EF10FDE4E24428A07 /* AVPaywallFoundation */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AVPaywallFoundation;
+		};
 		6522DEBB2D8F4AA02CCC776D /* AVAppShellFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AVAppShellFoundation;
+		};
+		70E5450FF006CD6646EB03C4 /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 30E1CBFD293BA8CC7762C073 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
 		};
 		E44A0F90DBA9783ADE54DFEF /* ClerkKit */ = {
 			isa = XCSwiftPackageProductDependency;

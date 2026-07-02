@@ -148,7 +148,7 @@ final class AccountController {
         case .temporarilyUnavailable:
             state = .temporarilyUnavailable(Self.lastKnownUser(from: userDefaults))
         case .active:
-            await resolveInternalUser()
+            await resolveInternalUser(presentsError: false)
         }
     }
 
@@ -184,13 +184,13 @@ final class AccountController {
 
         do {
             try await operation()
-            await resolveInternalUser()
+            await resolveInternalUser(presentsError: true)
         } catch {
             lastErrorMessage = error.localizedDescription
         }
     }
 
-    private func resolveInternalUser() async {
+    private func resolveInternalUser(presentsError: Bool) async {
         do {
             let user = try await profileResolver.resolveCurrentAccountUser()
             state = .signedIn(user)
@@ -198,7 +198,9 @@ final class AccountController {
             lastErrorMessage = nil
         } catch {
             state = .temporarilyUnavailable(Self.lastKnownUser(from: userDefaults))
-            lastErrorMessage = error.localizedDescription
+            if presentsError {
+                lastErrorMessage = error.localizedDescription
+            }
         }
     }
 

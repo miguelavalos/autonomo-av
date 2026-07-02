@@ -2,11 +2,12 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct IntakeShellView: View {
-    @Environment(AccountController.self) private var accountController
     @Environment(IntakeStore.self) private var intakeStore
+    let proAccessIsUnlocked: Bool
+    let showProPaywall: () -> Void
+
     @State private var isFileImporterPresented = false
     @State private var isScannerPresented = false
-    @State private var isAccountPresented = false
     @State private var scannerAlertIsPresented = false
 
     var body: some View {
@@ -19,75 +20,79 @@ struct IntakeShellView: View {
                         isUploading: intakeStore.isUploading
                     )
 
-                    HStack(spacing: 12) {
-                        IntakeActionButton(
-                            title: L10n.string("intake.primary.scan"),
-                            systemImage: "doc.viewfinder"
-                        ) {
-                            if DocumentScannerView.isSupported {
-                                isScannerPresented = true
-                            } else {
-                                scannerAlertIsPresented = true
+                    if proAccessIsUnlocked {
+                        HStack(spacing: 12) {
+                            IntakeActionButton(
+                                title: L10n.string("intake.primary.scan"),
+                                systemImage: "doc.viewfinder"
+                            ) {
+                                if DocumentScannerView.isSupported {
+                                    isScannerPresented = true
+                                } else {
+                                    scannerAlertIsPresented = true
+                                }
+                            }
+
+                            IntakeActionButton(
+                                title: L10n.string("intake.primary.files"),
+                                systemImage: "folder"
+                            ) {
+                                isFileImporterPresented = true
                             }
                         }
 
-                        IntakeActionButton(
-                            title: L10n.string("intake.primary.files"),
-                            systemImage: "folder"
-                        ) {
-                            isFileImporterPresented = true
-                        }
-                    }
+                        AutonomoAviBriefCard(
+                            title: L10n.string("intake.avi.title"),
+                            detail: L10n.string("intake.avi.detail")
+                        )
 
-                    AutonomoAviBriefCard(
-                        title: L10n.string("intake.avi.title"),
-                        detail: L10n.string("intake.avi.detail")
-                    )
-
-                    if !intakeStore.pendingOrFailedItems.isEmpty {
-                        IntakeSectionHeader(title: L10n.string("intake.pending"))
-                        VStack(spacing: 10) {
-                            ForEach(intakeStore.pendingOrFailedItems) { item in
-                                LocalIntakeRow(item: item) {
-                                    Task { await intakeStore.retry(item) }
+                        if !intakeStore.pendingOrFailedItems.isEmpty {
+                            IntakeSectionHeader(title: L10n.string("intake.pending"))
+                            VStack(spacing: 10) {
+                                ForEach(intakeStore.pendingOrFailedItems) { item in
+                                    LocalIntakeRow(item: item) {
+                                        Task { await intakeStore.retry(item) }
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    IntakeSectionHeader(title: L10n.string("intake.recent"))
-                    VStack(spacing: 10) {
-                        if intakeStore.remoteDocuments.isEmpty {
-                            EmptyIntakeView()
-                        } else {
-                            ForEach(intakeStore.remoteDocuments) { document in
-                                RemoteDocumentRow(document: document)
+                        IntakeSectionHeader(title: L10n.string("intake.recent"))
+                        VStack(spacing: 10) {
+                            if intakeStore.remoteDocuments.isEmpty {
+                                EmptyIntakeView()
+                            } else {
+                                ForEach(intakeStore.remoteDocuments) { document in
+                                    RemoteDocumentRow(document: document)
+                                }
                             }
                         }
+                    } else {
+                        LockedIntakeView(showProPaywall: showProPaywall)
+                        AutonomoAviBriefCard(
+                            title: L10n.string("intake.locked.avi.title"),
+                            detail: L10n.string("intake.locked.avi.detail")
+                        )
                     }
                 }
                 .padding(18)
+                .safeAreaPadding(.bottom, 88)
             }
             .background(AutonomoTheme.background.ignoresSafeArea())
             .navigationTitle(L10n.string("shell.title"))
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        isAccountPresented = true
-                    } label: {
-                        Label(L10n.string("shell.account"), systemImage: "person.crop.circle")
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task {
-                            await intakeStore.refreshRemoteDocuments()
-                            await intakeStore.uploadPending()
+                if proAccessIsUnlocked {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            Task {
+                                await intakeStore.refreshRemoteDocuments()
+                                await intakeStore.uploadPending()
+                            }
+                        } label: {
+                            Label(L10n.string("shell.refresh"), systemImage: "arrow.clockwise")
                         }
-                    } label: {
-                        Label(L10n.string("shell.refresh"), systemImage: "arrow.clockwise")
+                        .disabled(intakeStore.isRefreshingRemoteDocuments || intakeStore.isUploading)
                     }
-                    .disabled(intakeStore.isRefreshingRemoteDocuments || intakeStore.isUploading)
                 }
             }
         }
@@ -107,9 +112,6 @@ struct IntakeShellView: View {
             DocumentScannerView { pages in
                 Task { await intakeStore.importScannedPages(pages) }
             }
-        }
-        .sheet(isPresented: $isAccountPresented) {
-            AccountSheet()
         }
         .alert(L10n.string("intake.scan.unavailable.title"), isPresented: $scannerAlertIsPresented) {
             Button(L10n.string("auth.close"), role: .cancel) {}
@@ -134,6 +136,72 @@ struct IntakeShellView: View {
                 }
             }
         )
+    }
+}
+
+struct LockedIntakeView: View {
+    let showProPaywall: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .top, spacing: 14) {
+                Image("AviAutonomoAssistant")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 76, height: 76)
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(L10n.string("intake.locked.title"))
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(AutonomoTheme.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text(L10n.string("intake.locked.detail"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(AutonomoTheme.graphite)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                LockedBenefitRow(systemImage: "tray.and.arrow.down.fill", text: L10n.string("intake.locked.benefit.inbox"))
+                LockedBenefitRow(systemImage: "sparkles", text: L10n.string("intake.locked.benefit.ai"))
+                LockedBenefitRow(systemImage: "flag.checkered", text: L10n.string("intake.locked.benefit.priority"))
+            }
+
+            Button(action: showProPaywall) {
+                Label(L10n.string("intake.locked.cta"), systemImage: "sparkles")
+                    .font(.system(size: 16, weight: .bold))
+                    .frame(maxWidth: .infinity, minHeight: 52)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AutonomoTheme.ink)
+        }
+        .padding(16)
+        .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(AutonomoTheme.accent.opacity(0.4), lineWidth: 1.5)
+        }
+    }
+}
+
+private struct LockedBenefitRow: View {
+    let systemImage: String
+    let text: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(AutonomoTheme.accentDeep)
+                .frame(width: 24, height: 24)
+
+            Text(text)
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(AutonomoTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 
@@ -418,11 +486,7 @@ struct EmptyIntakeView: View {
 }
 
 #Preview {
-    IntakeShellView()
-        .environment(AccountController(
-            accountService: PreviewAccountService(),
-            profileResolver: PreviewAccountResolver()
-        ))
+    IntakeShellView(proAccessIsUnlocked: false, showProPaywall: {})
         .environment(IntakeStore(
             client: AutonomoAPIClient(baseURLProvider: { nil }, tokenProvider: { nil })
         ))

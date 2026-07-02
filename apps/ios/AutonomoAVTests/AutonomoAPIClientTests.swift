@@ -2,6 +2,24 @@ import XCTest
 @testable import AutonomoAV
 
 final class AutonomoAPIClientTests: XCTestCase {
+    func testAccountSummaryDecodesNestedPlatformUser() throws {
+        let data = Data("""
+        {
+          "user": {
+            "id": "user_123",
+            "email": "owner@example.com",
+            "name": "Business Owner"
+          }
+        }
+        """.utf8)
+
+        let response = try JSONDecoder().decode(AccountSummaryResponse.self, from: data)
+
+        XCTAssertEqual(response.id, "user_123")
+        XCTAssertEqual(response.emailAddress, "owner@example.com")
+        XCTAssertEqual(response.displayName, "Business Owner")
+    }
+
     func testPrepareUploadRequestEncodesBackendPayload() throws {
         let request = AutonomoPrepareUploadRequest(
             originalFilename: "invoice.pdf",

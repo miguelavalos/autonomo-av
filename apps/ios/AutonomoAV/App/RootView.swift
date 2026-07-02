@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(AccountController.self) private var accountController
+    @Environment(AutonomoAccessController.self) private var accessController
     @Environment(IntakeStore.self) private var intakeStore
 
     var body: some View {
@@ -11,7 +12,7 @@ struct RootView: View {
             case .restoring:
                 AutonomoLaunchStateView()
             case .signedIn:
-                IntakeShellView()
+                AutonomoAppShellView()
             case .signedOut, .temporarilyUnavailable:
                 AuthGateView()
             }
@@ -20,15 +21,24 @@ struct RootView: View {
             await accountController.restore()
         }
         .task(id: accountController.state.isSignedIn) {
-            guard accountController.state.isSignedIn else { return }
+            await accessController.refreshAccess(for: accountController.currentUser)
+            guard accountController.state.isSignedIn, accessController.hasProAccess else { return }
             await syncSignedInIntake()
             await intakeStore.uploadPending()
         }
         .task(id: scenePhase) {
             guard scenePhase == .active else { return }
             await accountController.syncFromAccountProvider()
-            guard accountController.state.isSignedIn else { return }
+            await accessController.refreshAccess(for: accountController.currentUser)
+            guard accountController.state.isSignedIn, accessController.hasProAccess else { return }
             await syncSignedInIntake()
+        }
+        .onChange(of: accessController.hasProAccess) { _, hasProAccess in
+            guard hasProAccess else { return }
+            Task {
+                await syncSignedInIntake()
+                await intakeStore.uploadPending()
+            }
         }
     }
 

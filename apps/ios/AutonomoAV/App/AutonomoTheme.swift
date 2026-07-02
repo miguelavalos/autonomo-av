@@ -1,3 +1,4 @@
+import AVSettingsFoundation
 import SwiftUI
 
 enum AutonomoTheme {
@@ -14,22 +15,7 @@ enum AutonomoTheme {
 
 struct AutonomoLaunchStateView: View {
     var body: some View {
-        ZStack {
-            AutonomoTheme.background.ignoresSafeArea()
-
-            VStack(spacing: 24) {
-                Image("AutonomoLaunchLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 300)
-                    .accessibilityLabel(L10n.string("app.name"))
-
-                ProgressView()
-                    .controlSize(.large)
-                    .tint(AutonomoTheme.accent)
-            }
-            .padding(32)
-        }
+        AVConfiguredSplashScreen()
     }
 }
 

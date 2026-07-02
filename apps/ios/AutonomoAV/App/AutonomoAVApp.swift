@@ -1,8 +1,10 @@
+import AVSettingsFoundation
 import SwiftUI
 
 @main
 struct AutonomoAVApp: App {
     @State private var accountController: AccountController
+    @State private var accessController: AutonomoAccessController
     @State private var intakeStore: IntakeStore
 
     init() {
@@ -15,6 +17,7 @@ struct AutonomoAVApp: App {
             accountService: accountService,
             profileResolver: PlatformAccountProfileResolver(apiClient: apiClient)
         ))
+        _accessController = State(initialValue: AutonomoAccessController(apiClient: apiClient))
         _intakeStore = State(initialValue: IntakeStore(client: apiClient))
     }
 
@@ -22,7 +25,9 @@ struct AutonomoAVApp: App {
         WindowGroup {
             RootView()
                 .environment(accountController)
+                .environment(accessController)
                 .environment(intakeStore)
+                .avCommonAppExperience(AppConfig.commonAppExperience)
         }
     }
 }

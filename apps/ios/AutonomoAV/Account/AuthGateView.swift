@@ -1,87 +1,40 @@
+import AVSettingsFoundation
 import SwiftUI
 
 struct AuthGateView: View {
     @Environment(AccountController.self) private var accountController
+    @State private var authOptionsArePresented = false
+    @State private var activeProvider: AVAuthProvider?
+    @State private var isShowingProPaywall = false
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 18) {
-                    Spacer(minLength: 20)
-
-                    Image("AutonomoLaunchLogo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: 276)
-                        .accessibilityLabel(L10n.string("app.name"))
-
-                    Image("AutonomoSplashHero")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(maxWidth: 352, maxHeight: 176)
-                        .accessibilityHidden(true)
-
-                    VStack(spacing: 10) {
-                        Text(L10n.string("auth.title"))
-                            .font(.system(size: 26, weight: .bold))
-                            .foregroundStyle(AutonomoTheme.ink)
-                            .multilineTextAlignment(.center)
-
-                        Text(L10n.string("auth.subtitle"))
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(AutonomoTheme.graphite)
-                            .multilineTextAlignment(.center)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    AutonomoProOnboardingCard()
-
-                    VStack(spacing: 12) {
-                        Button {
-                            Task { await accountController.signInWithApple() }
-                        } label: {
-                            Label(L10n.string("auth.apple"), systemImage: "apple.logo")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(AutonomoTheme.ink)
-                        .controlSize(.large)
-                        .disabled(!accountController.accountIsAvailable || accountController.isAuthenticating)
-
-                        Button {
-                            Task { await accountController.signInWithGoogle() }
-                        } label: {
-                            Label(L10n.string("auth.google"), systemImage: "globe")
-                                .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(AutonomoTheme.ink)
-                        .controlSize(.large)
-                        .disabled(!accountController.accountIsAvailable || accountController.isAuthenticating)
-                    }
-
-                    if !accountController.accountIsAvailable {
-                        Text(L10n.string("auth.unavailable"))
-                            .font(.footnote.weight(.medium))
-                            .foregroundStyle(AutonomoTheme.graphite)
-                            .multilineTextAlignment(.center)
-                    }
-
-                    Spacer(minLength: 20)
-                }
-                .padding(24)
-                .frame(maxWidth: 440)
-                .frame(maxWidth: .infinity)
+        AVAuthConfiguredOnboardingScreen(
+            authOptionsArePresented: $authOptionsArePresented,
+            primaryAction: showAuthOptions,
+            secondaryAction: showProPaywall,
+            brandWidth: 160,
+            ctaCompanionOffset: CGSize(width: -2, height: -112),
+            heroArtwork: {
+                AutonomoOnboardingHeroArtwork()
+            },
+            authPanel: {
+                AuthOptionsPanel(
+                    accountIsAvailable: accountController.accountIsAvailable,
+                    activeProvider: activeProvider,
+                    onAppleTap: startAppleSignIn,
+                    onGoogleTap: startGoogleSignIn
+                )
             }
-            .background(AutonomoTheme.background.ignoresSafeArea())
-            .toolbar(.hidden, for: .navigationBar)
-        }
+        )
         .alert(L10n.string("auth.failed.title"), isPresented: errorIsPresented) {
             Button(L10n.string("auth.close"), role: .cancel) {
                 accountController.lastErrorMessage = nil
             }
         } message: {
             Text(accountController.lastErrorMessage ?? "")
+        }
+        .sheet(isPresented: $isShowingProPaywall) {
+            AutonomoProPaywallView(startSignInFlow: showAuthOptions)
         }
     }
 
@@ -95,66 +48,109 @@ struct AuthGateView: View {
             }
         )
     }
-}
 
-private struct AutonomoProOnboardingCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Label(L10n.string("auth.pro.badge"), systemImage: "checkmark.seal.fill")
-                    .font(.footnote.weight(.bold))
-                    .foregroundStyle(AutonomoTheme.accentDeep)
-
-                Spacer(minLength: 10)
-
-                Text(L10n.string("auth.pro.monthly"))
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(AutonomoTheme.ink)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(AutonomoTheme.surfaceMuted, in: Capsule())
-            }
-
-            VStack(alignment: .leading, spacing: 10) {
-                AutonomoProBenefitRow(
-                    systemImage: "tray.and.arrow.down.fill",
-                    text: L10n.string("auth.pro.inbox")
-                )
-                AutonomoProBenefitRow(
-                    systemImage: "sparkles",
-                    text: L10n.string("auth.pro.ai")
-                )
-                AutonomoProBenefitRow(
-                    systemImage: "creditcard.fill",
-                    text: L10n.string("auth.pro.access")
-                )
-            }
+    private func showAuthOptions() {
+        withAnimation(.spring(response: 0.34, dampingFraction: 0.88)) {
+            authOptionsArePresented = true
         }
-        .padding(14)
-        .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(AutonomoTheme.border, lineWidth: 1)
+    }
+
+    private func showProPaywall() {
+        isShowingProPaywall = true
+    }
+
+    private func startAppleSignIn() {
+        startSignIn(provider: .apple) {
+            await accountController.signInWithApple()
+        }
+    }
+
+    private func startGoogleSignIn() {
+        startSignIn(provider: .google) {
+            await accountController.signInWithGoogle()
+        }
+    }
+
+    private func startSignIn(provider: AVAuthProvider, operation: @escaping () async -> Void) {
+        guard accountController.accountIsAvailable else {
+            accountController.lastErrorMessage = L10n.string("auth.unavailable")
+            return
+        }
+        guard activeProvider == nil else { return }
+
+        activeProvider = provider
+        Task { @MainActor in
+            await operation()
+            activeProvider = nil
+            if accountController.state.isSignedIn {
+                authOptionsArePresented = false
+            }
         }
     }
 }
 
-private struct AutonomoProBenefitRow: View {
-    let systemImage: String
-    let text: String
+private struct AutonomoOnboardingHeroArtwork: View {
+    var body: some View {
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                Spacer(minLength: min(proxy.size.height * 0.34, 285))
+
+                Image("AutonomoSplashHero")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: min(proxy.size.width * 0.92, 360))
+                    .opacity(0.84)
+
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+private struct AuthOptionsPanel: View {
+    let accountIsAvailable: Bool
+    let activeProvider: AVAuthProvider?
+    let onAppleTap: () -> Void
+    let onGoogleTap: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: systemImage)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(AutonomoTheme.accentDeep)
-                .frame(width: 22, height: 22)
-
-            Text(text)
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(AutonomoTheme.ink)
-                .fixedSize(horizontal: false, vertical: true)
+        AVAuthOptionsPanel(
+            title: L10n.string("auth.options.title"),
+            subtitle: L10n.string("auth.options.subtitle"),
+            legalConsentText: legalConsentText,
+            unavailableMessage: accountIsAvailable ? nil : L10n.string("auth.unavailable"),
+            skipTitle: nil,
+            appleTitle: L10n.string("auth.apple"),
+            googleTitle: L10n.string("auth.google"),
+            isBusy: activeProvider != nil,
+            activeProvider: activeProvider,
+            isAvailable: accountIsAvailable,
+            appleAccessibilityIdentifier: "autonomo.onboarding.auth.apple",
+            googleAccessibilityIdentifier: "autonomo.onboarding.auth.google",
+            onApple: onAppleTap,
+            onGoogle: onGoogleTap
+        ) {
+            AVAuthConfiguredCompanionArtwork(
+                placement: .authPanel,
+                imageWidth: 126,
+                imageHeight: 126,
+                frameWidth: 140,
+                frameHeight: 110,
+                imageOffset: CGSize(width: 0, height: -5),
+                groundShadowColor: nil
+            )
+            .offset(x: -44, y: -91)
+            .allowsHitTesting(false)
         }
+    }
+
+    private var legalConsentText: AttributedString {
+        let termsURL = AppConfig.termsURL?.absoluteString ?? "https://www.avalsys.com/account-av/autonomo-av/terms"
+        let privacyURL = AppConfig.privacyURL?.absoluteString ?? "https://www.avalsys.com/account-av/autonomo-av/privacy"
+        let markdown = L10n.string("auth.legal.markdown", termsURL, privacyURL)
+        return (try? AttributedString(markdown: markdown)) ?? AttributedString(L10n.string("auth.legal.fallback"))
     }
 }
 

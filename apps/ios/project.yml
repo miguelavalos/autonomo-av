@@ -19,6 +19,9 @@ packages:
   Clerk:
     url: https://github.com/clerk/clerk-ios
     from: 1.0.0
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios-spm.git
+    from: 5.0.0
 
 schemes:
   AutonomoAV:
@@ -63,9 +66,13 @@ targets:
       - package: AppsAV
         product: AVSettingsFoundation
       - package: AppsAV
+        product: AVPaywallFoundation
+      - package: AppsAV
         product: AVHaptics
       - package: Clerk
         product: ClerkKit
+      - package: RevenueCat
+        product: RevenueCat
       - target: AutonomoAVShareExtension
         embed: true
     settings:
