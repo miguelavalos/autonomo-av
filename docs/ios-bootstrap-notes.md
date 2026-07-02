@@ -85,5 +85,26 @@ Checks run from `apps/ios`:
   --allow-provisioning-updates` passed and produced a verified local
   App Store Connect `.ipa` without uploading.
 
-The next release step is an explicit upload run with `--upload`, ideally using
-an App Store Connect API key once that credential is available for automation.
+## First App Store Connect Upload - 2026-07-02
+
+After the App Store Connect app record for `com.avalsys.autonomoav` was created,
+the first upload attempt reached Apple and failed on App Store validation because
+the app bundle did not include `CFBundleIconName` or a complete iPhone
+`AppIcon.appiconset`.
+
+The iOS target now includes a provisional RGB `AppIcon` set, declares
+`CFBundleIconName=AppIcon`, and keeps `ASSETCATALOG_COMPILER_APPICON_NAME` in
+`project.yml` for future project regeneration. A new archive was created and
+uploaded successfully:
+
+- archive: `.derived-data/release-archives/AutonomoAV-0.1.0-1-2026-07-02-111529.xcarchive`
+- version: `0.1.0`
+- build: `1`
+- destination: App Store Connect upload
+- result: Xcode reported `Upload succeeded`; the package entered Apple
+  processing.
+
+The next release step is to wait for Apple processing, resolve any processing
+email from App Store Connect if it appears, and enable the build for internal
+TestFlight testing. Future automation should use an App Store Connect API key
+once that credential is available.

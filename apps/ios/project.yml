@@ -73,6 +73,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: AutonomoAV/App/AutonomoAV.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]: "$(SDKROOT)/Developer/Library/Frameworks"
         INFOPLIST_FILE: AutonomoAV/App/Info.plist
         GENERATE_INFOPLIST_FILE: NO
