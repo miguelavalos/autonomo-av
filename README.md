@@ -31,10 +31,10 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
 
 ```bash
 cd apps/web
-bun install
-bun run typecheck
-bun run build
-bun run build:production
+pnpm install
+vp run typecheck
+vp run build
+vp run build:production
 ```
 
 ```bash
@@ -58,8 +58,8 @@ config files.
 remains only as a temporary local fallback when Account AV auth config is not
 available.
 
-Cloudflare deployment builds use `bun run build:preview` and
-`bun run build:production`. Those builds force
+Cloudflare deployment builds use `vp run build:preview` and
+`vp run build:production`. Those builds force
 `VITE_AUTONOMOAV_USE_FIXTURES=false`, set the matching public legal URLs, and
 clear `VITE_AUTONOMOAV_DEV_BEARER_TOKEN` before bundling. Email intake is
 disabled in this first public web deploy. If
@@ -80,10 +80,10 @@ publishable key.
 
 ```bash
 cd apps/web
-bun run deploy:preview:dry-run
-bun run deploy:preview
-bun run deploy:production:dry-run
-bun run deploy:production
+vp run deploy:preview:dry-run
+vp run deploy:preview
+vp run deploy:production:dry-run
+vp run deploy:production
 ```
 
 The deploy scripts use the private suite's `wrangler-account.sh` wrapper from

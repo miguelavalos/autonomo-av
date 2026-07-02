@@ -64,7 +64,7 @@ The API client uses the Autonomo backend paths from the V1 contract:
    `VITE_AUTONOMOAV_USE_FIXTURES=false`,
    `VITE_AUTONOMOAV_API_BASE_URL`, `VITE_ACCOUNTAV_API_BASE_URL`, and
    `VITE_ACCOUNTAV_PUBLISHABLE_KEY`.
-2. Run `cd apps/web && bun install && bun run dev`.
+2. Run `cd apps/web && pnpm install && vp run dev`.
 3. Open `http://localhost:5195/sign-in`, sign in with Account AV, then continue
    to `/`.
 4. Confirm the header shows `Live` and `Account AV`.
@@ -86,15 +86,15 @@ signed-in app routes and the public legal routes:
 Use these commands from `apps/web`:
 
 ```bash
-bun run build:preview
-bun run build:preview:live
-bun run deploy:preview:dry-run
-bun run deploy:preview
+vp run build:preview
+vp run build:preview:live
+vp run deploy:preview:dry-run
+vp run deploy:preview
 
-bun run build:production
-bun run build:production:live
-bun run deploy:production:dry-run
-bun run deploy:production
+vp run build:production
+vp run build:production:live
+vp run deploy:production:dry-run
+vp run deploy:production
 ```
 
 The Cloudflare build scripts force `VITE_AUTONOMOAV_USE_FIXTURES=false`, clear

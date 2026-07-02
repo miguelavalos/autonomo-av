@@ -4,18 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --host 0.0.0.0 --port 5195",
-    "build": "vite build",
+    "dev": "vp dev --host 0.0.0.0 --port 5195",
+    "build": "vp build",
     "build:preview": "bash ./scripts/build-cloudflare.sh preview",
     "build:production": "bash ./scripts/build-cloudflare.sh production",
     "build:preview:live": "bash ./scripts/run-with-varlock.sh --profile preview bash ./scripts/build-cloudflare.sh preview",
     "build:production:live": "bash ./scripts/run-with-varlock.sh --profile production bash ./scripts/build-cloudflare.sh production",
-    "deploy:preview": "bun run build:preview:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --config wrangler.preview.jsonc",
-    "deploy:production": "bun run build:production:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --config wrangler.production.jsonc",
-    "deploy:preview:dry-run": "bun run build:preview:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --dry-run --config wrangler.preview.jsonc",
-    "deploy:production:dry-run": "bun run build:production:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --dry-run --config wrangler.production.jsonc",
-    "preview": "vite preview --host 0.0.0.0 --port 5196",
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "deploy:preview": "vp run build:preview:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --config wrangler.preview.jsonc",
+    "deploy:production": "vp run build:production:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --config wrangler.production.jsonc",
+    "deploy:preview:dry-run": "vp run build:preview:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --dry-run --config wrangler.preview.jsonc",
+    "deploy:production:dry-run": "vp run build:production:live && bash ../../../../private/avalsys-suite/scripts/wrangler-account.sh deploy --dry-run --config wrangler.production.jsonc",
+    "preview": "vp preview --host 0.0.0.0 --port 5196",
+    "typecheck": "vp exec tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
     "@avalsys/account-av-web": "file:../../../account-av/web",
@@ -38,6 +38,14 @@
     "@types/node": "^25.9.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite-plus": "0.2.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.0.0",
+      "onFail": "download"
+    }
   }
 }
