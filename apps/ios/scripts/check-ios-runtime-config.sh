@@ -71,6 +71,14 @@ fail() {
   failures=$((failures + 1))
 }
 
+require_present() {
+  local label="$1"
+  local value="$2"
+  if [ -z "$value" ] || [ "$value" = "\$(inherited)" ]; then
+    fail "$label must resolve to a real value"
+  fi
+}
+
 product_bundle_identifier="$(setting PRODUCT_BUNDLE_IDENTIFIER)"
 autonomo_bundle_identifier="$(setting AUTONOMOAV_BUNDLE_IDENTIFIER)"
 app_group_identifier="$(setting AUTONOMOAV_APP_GROUP_IDENTIFIER)"
@@ -78,9 +86,15 @@ api_base_url="$(setting ACCOUNTAV_API_BASE_URL)"
 autonomo_api_base_url="$(setting AUTONOMOAV_API_BASE_URL)"
 publishable_key="$(setting ACCOUNTAV_PUBLISHABLE_KEY)"
 keychain_access_group="$(setting ACCOUNTAV_KEYCHAIN_ACCESS_GROUP)"
+revenuecat_public_api_key="$(setting AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY)"
+revenuecat_offering_id="$(setting AUTONOMOAV_REVENUECAT_OFFERING_ID)"
+revenuecat_monthly_package_id="$(setting AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID)"
 development_team="$(setting DEVELOPMENT_TEAM)"
 
 if [ "$env_name" = "prod" ]; then
+  require_present "AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY" "$revenuecat_public_api_key"
+  require_present "AUTONOMOAV_REVENUECAT_OFFERING_ID" "$revenuecat_offering_id"
+  require_present "AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID" "$revenuecat_monthly_package_id"
   [ "$product_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod bundle must be com.avalsys.autonomoav"
   [ "$autonomo_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod AUTONOMOAV_BUNDLE_IDENTIFIER must be com.avalsys.autonomoav"
   [ "$app_group_identifier" = "group.com.avalsys.autonomoav" ] || fail "prod app group mismatch"
@@ -97,6 +111,17 @@ else
   fi
 fi
 
+if [ -n "$revenuecat_public_api_key" ] && [ "$revenuecat_public_api_key" != '$(inherited)' ]; then
+  [[ "$revenuecat_public_api_key" == appl_* ]] || fail "AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY must use the RevenueCat public appl_ prefix"
+  [[ "$revenuecat_public_api_key" != sk_* ]] || fail "AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY must not be a RevenueCat secret key"
+fi
+if [ -n "$revenuecat_offering_id" ] && [ "$revenuecat_offering_id" != '$(inherited)' ]; then
+  [ "$revenuecat_offering_id" = "default" ] || fail "AUTONOMOAV_REVENUECAT_OFFERING_ID must be default, got $revenuecat_offering_id"
+fi
+if [ -n "$revenuecat_monthly_package_id" ] && [ "$revenuecat_monthly_package_id" != '$(inherited)' ]; then
+  [ "$revenuecat_monthly_package_id" = '$rc_monthly' ] || fail "AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID must be literal \$rc_monthly, got $revenuecat_monthly_package_id"
+fi
+
 for url in "$api_base_url" "$autonomo_api_base_url"; do
   if [ -n "$url" ] && [ "$url" != '$(inherited)' ]; then
     [[ "$url" == https://* ]] || fail "API URL must resolve to https://*: $url"
@@ -108,6 +133,10 @@ if [ -n "$publishable_key" ] && [ "$publishable_key" != '$(inherited)' ]; then
   redacted_key="${publishable_key:0:8}...${#publishable_key}"
 else
   redacted_key="$publishable_key"
+fi
+redacted_revenuecat_key="$revenuecat_public_api_key"
+if [ -n "$revenuecat_public_api_key" ] && [ "$revenuecat_public_api_key" != '$(inherited)' ]; then
+  redacted_revenuecat_key="${revenuecat_public_api_key:0:8}...${#revenuecat_public_api_key}"
 fi
 
 cat <<EOF
@@ -121,6 +150,9 @@ Autonomo AV iOS runtime config ($env_name)
   Autonomo AV API: $autonomo_api_base_url
   Account AV keychain access group: $keychain_access_group
   publishable key: $redacted_key
+  RevenueCat key: $redacted_revenuecat_key
+  RevenueCat offering: $revenuecat_offering_id
+  RevenueCat monthly package: $revenuecat_monthly_package_id
 EOF
 
 if [ "$failures" -gt 0 ]; then
