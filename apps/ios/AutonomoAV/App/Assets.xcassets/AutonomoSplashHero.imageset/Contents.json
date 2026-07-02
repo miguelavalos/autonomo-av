@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "splash-hero.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

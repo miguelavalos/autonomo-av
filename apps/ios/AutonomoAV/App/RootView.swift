@@ -9,8 +9,7 @@ struct RootView: View {
         Group {
             switch accountController.state {
             case .restoring:
-                ProgressView()
-                    .controlSize(.large)
+                AutonomoLaunchStateView()
             case .signedIn:
                 IntakeShellView()
             case .signedOut, .temporarilyUnavailable:

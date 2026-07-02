@@ -1,6 +1,8 @@
 "app.name" = "Autonomo AV";
 "auth.title" = "Sign in to Autonomo AV";
 "auth.subtitle" = "Send receipts, invoices, and business documents to your private intake queue.";
+"auth.avi.title" = "Avi keeps the intake tidy";
+"auth.avi.detail" = "Uploads land in a private queue before Autonomo AV classifies and prepares them for review.";
 "auth.apple" = "Continue with Apple";
 "auth.google" = "Continue with Google";
 "auth.unavailable" = "Account AV is not configured for this build.";
@@ -13,6 +15,8 @@
 "intake.primary.files" = "Files";
 "intake.pending" = "Pending upload";
 "intake.recent" = "Recent intake";
+"intake.avi.title" = "Avi is watching the queue";
+"intake.avi.detail" = "New scans and files stay here while the backend classifies them for review.";
 "intake.empty.title" = "No intake yet";
 "intake.empty.detail" = "Scan a receipt or import a PDF to start the queue.";
 "intake.failed" = "Failed";

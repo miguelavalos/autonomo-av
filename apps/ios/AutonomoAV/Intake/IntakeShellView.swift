@@ -39,6 +39,11 @@ struct IntakeShellView: View {
                         }
                     }
 
+                    AutonomoAviBriefCard(
+                        title: L10n.string("intake.avi.title"),
+                        detail: L10n.string("intake.avi.detail")
+                    )
+
                     if !intakeStore.pendingOrFailedItems.isEmpty {
                         IntakeSectionHeader(title: L10n.string("intake.pending"))
                         VStack(spacing: 10) {
@@ -141,15 +146,19 @@ struct IntakeSummaryHeader: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n.string("app.name"))
-                        .font(.headline)
-                        .foregroundStyle(.secondary)
+                    Image("AutonomoHeaderWordmark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 230, maxHeight: 48, alignment: .leading)
+                        .accessibilityLabel(L10n.string("app.name"))
                     Text(L10n.string("shell.title"))
-                        .font(.system(size: 34, weight: .bold))
+                        .font(.system(size: 30, weight: .bold))
+                        .foregroundStyle(AutonomoTheme.ink)
                 }
                 Spacer()
                 if isUploading {
                     ProgressView()
+                        .tint(AutonomoTheme.accent)
                 }
             }
 
@@ -159,7 +168,7 @@ struct IntakeSummaryHeader: View {
             }
         }
         .padding(16)
-        .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(AutonomoTheme.border, lineWidth: 1)
@@ -179,7 +188,7 @@ struct IntakeActionButton: View {
                 .frame(maxWidth: .infinity, minHeight: 54)
         }
         .buttonStyle(.borderedProminent)
-        .tint(AutonomoTheme.accent)
+        .tint(AutonomoTheme.ink)
     }
 }
 
@@ -189,7 +198,7 @@ struct IntakeSectionHeader: View {
     var body: some View {
         Text(title)
             .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(AutonomoTheme.graphite)
             .textCase(.uppercase)
             .tracking(0)
     }
@@ -350,7 +359,7 @@ struct IntakeRowShell<Trailing: View>: View {
             trailing()
         }
         .padding(12)
-        .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(AutonomoTheme.border, lineWidth: 1)
@@ -366,7 +375,7 @@ struct MetricChip: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: systemImage)
-                .foregroundStyle(AutonomoTheme.accent)
+                .foregroundStyle(AutonomoTheme.accentDeep)
             VStack(alignment: .leading, spacing: 0) {
                 Text(value)
                     .font(.system(size: 18, weight: .bold))
@@ -378,26 +387,29 @@ struct MetricChip: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(AutonomoTheme.surfaceMuted, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
 struct EmptyIntakeView: View {
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "tray")
-                .font(.title2)
-                .foregroundStyle(.secondary)
+        VStack(spacing: 10) {
+            Image("AutonomoBrandMark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 74, height: 74)
+                .accessibilityHidden(true)
             Text(L10n.string("intake.empty.title"))
                 .font(.headline)
+                .foregroundStyle(AutonomoTheme.ink)
             Text(L10n.string("intake.empty.detail"))
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(AutonomoTheme.graphite)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(24)
-        .background(.background, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(AutonomoTheme.surface, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(AutonomoTheme.border, lineWidth: 1)
