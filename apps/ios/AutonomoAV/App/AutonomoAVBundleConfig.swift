@@ -138,11 +138,11 @@ enum AppConfig {
             visualAssets: AVCommonAppVisualAssets(
                 headerLogoName: "AutonomoHeaderWordmark",
                 splashLogoName: "AutonomoLaunchScreenLogo",
-                splashHeroName: "AutonomoLaunchScreenHero",
+                splashHeroName: "AutonomoSplashHero",
                 onboardingBrandName: "AutonomoLaunchLogo",
-                onboardingHeroName: "AutonomoSplashHero",
-                onboardingCTACompanionName: "AviAutonomoAssistant",
-                onboardingAuthPanelCompanionName: "AviAutonomoAssistant",
+                onboardingHeroName: "AutonomoOnboardingHero",
+                onboardingCTACompanionName: "AviOnboardingCTA",
+                onboardingAuthPanelCompanionName: "AviLoginSheetPeek",
                 footerAssistantName: "AviAutonomoAssistant"
             ),
             splashTagline: L10n.string("splash.tagline"),

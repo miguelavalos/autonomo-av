@@ -14,9 +14,6 @@ struct AuthGateView: View {
             secondaryAction: showProPaywall,
             brandWidth: 160,
             ctaCompanionOffset: CGSize(width: -2, height: -112),
-            heroArtwork: {
-                AutonomoOnboardingHeroArtwork()
-            },
             authPanel: {
                 AuthOptionsPanel(
                     accountIsAvailable: accountController.accountIsAvailable,
@@ -86,26 +83,6 @@ struct AuthGateView: View {
                 authOptionsArePresented = false
             }
         }
-    }
-}
-
-private struct AutonomoOnboardingHeroArtwork: View {
-    var body: some View {
-        GeometryReader { proxy in
-            VStack(spacing: 0) {
-                Spacer(minLength: min(proxy.size.height * 0.34, 285))
-
-                Image("AutonomoSplashHero")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: min(proxy.size.width * 0.92, 360))
-                    .opacity(0.84)
-
-                Spacer(minLength: 0)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .accessibilityHidden(true)
     }
 }
 
