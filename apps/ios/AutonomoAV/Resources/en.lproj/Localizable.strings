@@ -98,11 +98,11 @@
 "paywall.privacy" = "Privacy";
 "paywall.redeemCode" = "Redeem code";
 "paywall.redeem.title" = "Redeem a code?";
-"paywall.redeem.detail" = "Enter a code if one was provided to you.";
+"paywall.redeem.detail" = "Enter an Autonomo AV promo code if one was provided to you.";
 "paywall.redeem.placeholder" = "Code";
 "paywall.redeem.claim" = "Claim code";
 "paywall.redeem.note" = "Codes are optional and are not required to buy monthly Pro.";
-"paywall.redeem.redeemed" = "Code redeemed.";
+"paywall.redeem.redeemed" = "Code redeemed. Refreshing Pro access.";
 "promo.error.configuration" = "Code redemption is not available right now.";
 "promo.error.redeemFailed" = "Promo code could not be redeemed.";
 "subscription.error.signInRequired" = "Sign in to start Autonomo AV Pro.";

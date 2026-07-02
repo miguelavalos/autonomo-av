@@ -13,11 +13,18 @@ struct AutonomoAVApp: App {
         let apiClient = AutonomoAPIClient(
             tokenProvider: { try await accountService.getToken() }
         )
+        let promoCodeClient = AutonomoPromoCodeClient(
+            baseURL: AppConfig.autonomoAPIBaseURL,
+            tokenProvider: { try await accountService.getToken() }
+        )
         _accountController = State(initialValue: AccountController(
             accountService: accountService,
             profileResolver: PlatformAccountProfileResolver(apiClient: apiClient)
         ))
-        _accessController = State(initialValue: AutonomoAccessController(apiClient: apiClient))
+        _accessController = State(initialValue: AutonomoAccessController(
+            apiClient: apiClient,
+            promotionCodeRedeemer: promoCodeClient
+        ))
         _intakeStore = State(initialValue: IntakeStore(client: apiClient))
     }
 

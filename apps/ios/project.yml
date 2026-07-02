@@ -54,6 +54,7 @@ targets:
       Release: Config/Release.xcconfig
     sources:
       - path: AutonomoAV
+      - path: ../../shared/apple
     dependencies:
       - package: AccountAV
         product: AccountAV

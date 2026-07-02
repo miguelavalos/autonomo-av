@@ -9,9 +9,9 @@ struct AutonomoProPaywallView: View {
 
     let startSignInFlow: () -> Void
 
-    @State private var promoCode = ""
-    @State private var promoStatusMessage: String?
-    @State private var isClaimingPromo = false
+    @State private var redeemCode = ""
+    @State private var redeemStatusMessage: String?
+    @State private var isRedeemingCode = false
     @State private var isShowingRedeemCodeSheet = false
     @State private var isRestoringPurchases = false
 
@@ -125,8 +125,14 @@ struct AutonomoProPaywallView: View {
             : L10n.string("paywall.restore")
     }
 
-    private var normalizedPromoCode: String {
-        promoCode.trimmingCharacters(in: .whitespacesAndNewlines)
+    private var normalizedRedeemCode: String {
+        redeemCode.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var redeemButtonIsDisabled: Bool {
+        normalizedRedeemCode.isEmpty ||
+            isRedeemingCode ||
+            accessController.isSubscriptionOperationInProgress
     }
 
     private var reconciliationStatusMessage: String {
@@ -186,14 +192,12 @@ struct AutonomoProPaywallView: View {
 
             VStack(spacing: 6) {
                 HStack(alignment: .firstTextBaseline, spacing: 9) {
-                    if accountController.currentUser != nil {
-                        footerButton(
-                            L10n.string("paywall.redeemCode"),
-                            accessibilityIdentifier: "paywall.redeemCode",
-                            action: showRedeemCodeSheet
-                        )
-                        footerSeparator
-                    }
+                    footerButton(
+                        L10n.string("paywall.redeemCode"),
+                        accessibilityIdentifier: "paywall.redeemCode",
+                        action: showRedeemCodeSheet
+                    )
+                    footerSeparator
 
                     restoreFooterButton
                 }
@@ -266,9 +270,17 @@ struct AutonomoProPaywallView: View {
                             .font(.system(size: 15, weight: .black))
                             .foregroundStyle(AutonomoTheme.accentDeep)
 
-                        TextField(L10n.string("paywall.redeem.placeholder"), text: $promoCode)
+                        TextField(L10n.string("paywall.redeem.placeholder"), text: $redeemCode)
+                            .keyboardType(.asciiCapable)
+                            .textContentType(.oneTimeCode)
                             .textInputAutocapitalization(.characters)
                             .autocorrectionDisabled()
+                            .onChange(of: redeemCode) { _, newValue in
+                                let sanitized = sanitizedRedeemCodeInput(newValue)
+                                if sanitized != newValue {
+                                    redeemCode = sanitized
+                                }
+                            }
                             .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(AutonomoTheme.ink)
                             .padding(.horizontal, 14)
@@ -278,11 +290,11 @@ struct AutonomoProPaywallView: View {
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .stroke(AutonomoTheme.border, lineWidth: 1)
                             }
-                            .accessibilityIdentifier("paywall.promo.code")
+                            .accessibilityIdentifier("paywall.redeemCode.field")
 
-                        Button(action: claimPromo) {
+                        Button(action: claimRedeemCode) {
                             ZStack {
-                                if isClaimingPromo {
+                                if isRedeemingCode {
                                     ProgressView()
                                         .tint(AutonomoTheme.ink)
                                 } else {
@@ -292,11 +304,14 @@ struct AutonomoProPaywallView: View {
                                 }
                             }
                             .frame(width: 46, height: 46)
-                            .background(AutonomoTheme.accent, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .background(
+                                redeemButtonIsDisabled ? AutonomoTheme.border : AutonomoTheme.accent,
+                                in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            )
                         }
-                        .disabled(normalizedPromoCode.isEmpty || isClaimingPromo || accessController.isSubscriptionOperationInProgress)
+                        .disabled(redeemButtonIsDisabled)
                         .accessibilityLabel(L10n.string("paywall.redeem.claim"))
-                        .accessibilityIdentifier("paywall.promo.claim")
+                        .accessibilityIdentifier("paywall.redeemCode.claim")
                     }
 
                     Text(L10n.string("paywall.redeem.note"))
@@ -304,18 +319,19 @@ struct AutonomoProPaywallView: View {
                         .foregroundStyle(AutonomoTheme.graphite)
                         .fixedSize(horizontal: false, vertical: true)
 
-                    if let promoStatusMessage {
+                    if let redeemStatusMessage {
                         HStack(alignment: .firstTextBaseline, spacing: 6) {
                             Image(systemName: "info.circle.fill")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundStyle(AutonomoTheme.graphite)
 
-                            Text(promoStatusMessage)
+                            Text(redeemStatusMessage)
                                 .font(.system(size: 12, weight: .bold, design: .rounded))
                                 .foregroundStyle(AutonomoTheme.graphite)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(.top, 2)
+                        .accessibilityIdentifier("paywall.redeemCode.status")
                     }
                 }
                 .padding(18)
@@ -330,11 +346,12 @@ struct AutonomoProPaywallView: View {
                     Button(L10n.string("paywall.close")) {
                         isShowingRedeemCodeSheet = false
                     }
+                    .accessibilityIdentifier("paywall.redeemCode.done")
                 }
             }
         }
         .presentationDetents([.medium])
-        .accessibilityIdentifier("paywall.promo.sheet")
+        .accessibilityIdentifier("paywall.redeemCode.sheet")
     }
 
     private func sectionHeader(title: String, detail: String) -> some View {
@@ -352,33 +369,58 @@ struct AutonomoProPaywallView: View {
     }
 
     private func showRedeemCodeSheet() {
-        guard accountController.currentUser != nil else {
+        guard !accessController.isSubscriptionOperationInProgress else { return }
+        if accountController.currentUser != nil {
+            redeemStatusMessage = nil
+            isShowingRedeemCodeSheet = true
+        } else {
             dismiss()
             startSignInFlow()
-            return
         }
-
-        promoStatusMessage = nil
-        isShowingRedeemCodeSheet = true
     }
 
-    private func claimPromo() {
-        guard !normalizedPromoCode.isEmpty, !isClaimingPromo else { return }
-        let code = normalizedPromoCode
-        isClaimingPromo = true
-        promoStatusMessage = nil
+    private func claimRedeemCode() {
+        guard !normalizedRedeemCode.isEmpty, !isRedeemingCode else { return }
+        let code = normalizedRedeemCode
+        isRedeemingCode = true
+        redeemStatusMessage = nil
 
         Task {
             do {
                 try await accessController.claimPromotionCode(code, for: accountController.currentUser)
-                promoStatusMessage = L10n.string("paywall.redeem.redeemed")
-                promoCode = ""
+                redeemStatusMessage = L10n.string("paywall.redeem.redeemed")
+                redeemCode = ""
                 isShowingRedeemCodeSheet = false
             } catch {
-                promoStatusMessage = error.localizedDescription
+                redeemStatusMessage = error.localizedDescription
             }
-            isClaimingPromo = false
+            isRedeemingCode = false
         }
+    }
+
+    private func sanitizedRedeemCodeInput(_ code: String) -> String {
+        var sanitized = ""
+        for character in code {
+            switch character {
+            case " ", "\n", "\t":
+                continue
+            case "\u{2010}", "\u{2011}", "\u{2012}", "\u{2013}", "\u{2014}", "\u{2015}", "\u{2212}", "\u{2018}", "\u{2019}":
+                sanitized.append("-")
+            case _ where isASCIIAlphanumeric(character) || character == "-" || character == "_":
+                sanitized.append(character)
+            default:
+                continue
+            }
+        }
+        return sanitized.uppercased()
+    }
+
+    private func isASCIIAlphanumeric(_ character: Character) -> Bool {
+        guard character.unicodeScalars.count == 1,
+              let value = character.unicodeScalars.first?.value else {
+            return false
+        }
+        return (48...57).contains(value) || (65...90).contains(value) || (97...122).contains(value)
     }
 
     private func restorePreviousPurchases() {

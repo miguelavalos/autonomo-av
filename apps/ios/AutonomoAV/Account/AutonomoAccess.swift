@@ -165,13 +165,7 @@ protocol AutonomoAccessProviding {
     func fetchMeAccess() async throws -> AutonomoMeAccessResponse
 }
 
-@MainActor
-protocol AutonomoPromotionCodeRedeeming {
-    func redeemPromotionCode(_ code: String) async throws -> AutonomoPromotionCodeRedemptionResponse
-}
-
 extension AutonomoAPIClient: AutonomoAccessProviding {}
-extension AutonomoAPIClient: AutonomoPromotionCodeRedeeming {}
 
 @MainActor
 private struct NoopAutonomoPromotionCodeRedeemer: AutonomoPromotionCodeRedeeming {
@@ -227,9 +221,7 @@ final class AutonomoAccessController {
     ) {
         self.apiClient = apiClient
         self.subscriptionPurchasing = subscriptionPurchasing
-        self.promotionCodeRedeemer = promotionCodeRedeemer
-            ?? (apiClient as? AutonomoPromotionCodeRedeeming)
-            ?? NoopAutonomoPromotionCodeRedeemer()
+        self.promotionCodeRedeemer = promotionCodeRedeemer ?? NoopAutonomoPromotionCodeRedeemer()
         self.debugForceProModeProvider = debugForceProModeProvider
         self.subscriptionReconciliationRetryDelaysNanoseconds = subscriptionReconciliationRetryDelaysNanoseconds
         self.sleepNanoseconds = sleepNanoseconds

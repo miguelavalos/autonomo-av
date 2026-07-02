@@ -136,7 +136,15 @@ private final class StubAutonomoPromotionCodeRedeemer: AutonomoPromotionCodeRede
             userId: "apps-av-user-1",
             code: code,
             campaignId: "campaign-1",
-            redemptionId: "redemption-1"
+            redemptionId: "redemption-1",
+            entitlement: AutonomoPromoCodeEntitlement(
+                appId: AutonomoAPIClient.appIdentifier,
+                userId: "apps-av-user-1",
+                planTier: "pro",
+                accessMode: "signedInPro",
+                status: "active",
+                source: "promo"
+            )
         )
     }
 }
