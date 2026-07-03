@@ -1,3 +1,4 @@
+import AVDiagnosticsFoundation
 import AVSettingsFoundation
 import SwiftUI
 
@@ -9,6 +10,7 @@ struct AutonomoAVApp: App {
 
     init() {
         AppConfig.configureAccountAVIfPossible()
+        AVDiagnostics.configure(AppConfig.diagnosticsConfiguration)
         let accountService = DefaultAutonomoAccountService()
         let apiClient = AutonomoAPIClient(
             tokenProvider: { try await accountService.getToken() }

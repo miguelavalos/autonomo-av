@@ -45,8 +45,8 @@ scripts/check-ios-signing-readiness.sh --env dev --mode device-dev
 xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
-Private API URLs, Clerk keys, and Apple team values must stay in ignored local
-config files.
+Private API URLs, Clerk keys, Apple team values, and Sentry DSNs must stay in
+ignored local config files.
 
 ## Web Runtime Modes
 

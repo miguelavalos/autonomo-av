@@ -28,6 +28,8 @@
 	<string>$(AUTONOMOAV_REVENUECAT_OFFERING_ID)</string>
 	<key>AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY</key>
 	<string>$(AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY)</string>
+	<key>AUTONOMOAV_IOS_SENTRY_DSN</key>
+	<string>$(AUTONOMOAV_IOS_SENTRY_DSN)</string>
 	<key>AUTONOMOAV_TERMS_URL</key>
 	<string>$(AUTONOMOAV_TERMS_URL)</string>
 	<key>CFBundleDevelopmentRegion</key>

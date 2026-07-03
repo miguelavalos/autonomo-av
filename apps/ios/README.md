@@ -20,7 +20,9 @@ xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generi
 
 Use `scripts/generate-ios-local-xcconfig.sh --env dev` from this folder when
 private local Account AV/API values are available. The generated
-`Config/Local.xcconfig` file is ignored and must stay out of git.
+`Config/Local.xcconfig` file is ignored and must stay out of git. When present,
+the generated config includes `AUTONOMOAV_IOS_SENTRY_DSN`; never print or commit
+the DSN value.
 
 Before any signed device, TestFlight, or App Store work, run the private
 AVALSYS preflight from `private/avalsys-suite` and then run the local iOS
@@ -48,7 +50,8 @@ The signing readiness check also does not archive, export, upload, or contact
 App Store Connect. It only verifies that this Mac has the expected Apple signing
 identity and local provisioning profiles for the app and Share Extension.
 
-The release archive script creates and verifies a signed `.xcarchive`, but it
+The release archive script creates a signed `.xcarchive`, repairs
+`Sentry.framework.dSYM` when Sentry is embedded, and verifies the archive. It
 intentionally does not export, upload, or contact App Store Connect. Add
 `--allow-provisioning-updates` only when the release Mac is signed into the
 correct Apple Developer team and Xcode should repair local profiles.

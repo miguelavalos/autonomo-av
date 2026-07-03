@@ -89,6 +89,7 @@ keychain_access_group="$(setting ACCOUNTAV_KEYCHAIN_ACCESS_GROUP)"
 revenuecat_public_api_key="$(setting AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY)"
 revenuecat_offering_id="$(setting AUTONOMOAV_REVENUECAT_OFFERING_ID)"
 revenuecat_monthly_package_id="$(setting AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID)"
+autonomoav_ios_sentry_dsn="$(setting AUTONOMOAV_IOS_SENTRY_DSN)"
 debug_force_pro_mode="$(setting AUTONOMOAV_DEBUG_FORCE_PRO_MODE)"
 development_team="$(setting DEVELOPMENT_TEAM)"
 debug_force_pro_mode_normalized="$(printf '%s' "$debug_force_pro_mode" | tr '[:upper:]' '[:lower:]')"
@@ -104,6 +105,7 @@ if [ "$env_name" = "prod" ]; then
   require_present "AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY" "$revenuecat_public_api_key"
   require_present "AUTONOMOAV_REVENUECAT_OFFERING_ID" "$revenuecat_offering_id"
   require_present "AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID" "$revenuecat_monthly_package_id"
+  require_present "AUTONOMOAV_IOS_SENTRY_DSN" "$autonomoav_ios_sentry_dsn"
   [ "$product_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod bundle must be com.avalsys.autonomoav"
   [ "$autonomo_bundle_identifier" = "com.avalsys.autonomoav" ] || fail "prod AUTONOMOAV_BUNDLE_IDENTIFIER must be com.avalsys.autonomoav"
   [ "$app_group_identifier" = "group.com.avalsys.autonomoav" ] || fail "prod app group mismatch"
@@ -131,6 +133,9 @@ fi
 if [ -n "$revenuecat_monthly_package_id" ] && [ "$revenuecat_monthly_package_id" != '$(inherited)' ]; then
   [ "$revenuecat_monthly_package_id" = '$rc_monthly' ] || fail "AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID must be literal \$rc_monthly, got $revenuecat_monthly_package_id"
 fi
+if [ -n "$autonomoav_ios_sentry_dsn" ] && [ "$autonomoav_ios_sentry_dsn" != '$(inherited)' ]; then
+  [[ "$autonomoav_ios_sentry_dsn" == https://*@*/[0-9]* ]] || fail "AUTONOMOAV_IOS_SENTRY_DSN must look like a Sentry DSN"
+fi
 
 for url in "$api_base_url" "$autonomo_api_base_url"; do
   if [ -n "$url" ] && [ "$url" != '$(inherited)' ]; then
@@ -148,6 +153,10 @@ redacted_revenuecat_key="$revenuecat_public_api_key"
 if [ -n "$revenuecat_public_api_key" ] && [ "$revenuecat_public_api_key" != '$(inherited)' ]; then
   redacted_revenuecat_key="${revenuecat_public_api_key:0:8}...${#revenuecat_public_api_key}"
 fi
+sentry_status="$autonomoav_ios_sentry_dsn"
+if [ -n "$autonomoav_ios_sentry_dsn" ] && [ "$autonomoav_ios_sentry_dsn" != '$(inherited)' ]; then
+  sentry_status="configured:${#autonomoav_ios_sentry_dsn}"
+fi
 
 cat <<EOF
 Autonomo AV iOS runtime config ($env_name)
@@ -163,6 +172,7 @@ Autonomo AV iOS runtime config ($env_name)
   RevenueCat key: $redacted_revenuecat_key
   RevenueCat offering: $revenuecat_offering_id
   RevenueCat monthly package: $revenuecat_monthly_package_id
+  Sentry DSN: $sentry_status
   debug force Pro mode: ${debug_force_pro_mode:-unset}
 EOF
 

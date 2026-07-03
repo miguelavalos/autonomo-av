@@ -21,7 +21,7 @@ Validates the final Autonomo AV iOS release archive before any upload:
 - signing team metadata;
 - app group entitlements on both signed products;
 - arm64 archive architecture;
-- app and Share Extension dSYM UUIDs.
+- app, Share Extension, and Sentry.framework dSYM UUIDs.
 
 This script does not export, upload, or contact App Store Connect.
 USAGE
@@ -174,6 +174,16 @@ share_dsym="$(find_dsym_matching_uuid "$share_uuid" || true)"
 [ -n "$app_dsym" ] || fail "matching app dSYM is missing for UUID $app_uuid"
 [ -n "$share_dsym" ] || fail "matching Share Extension dSYM is missing for UUID $share_uuid"
 
+sentry_binary="$app_path/Frameworks/Sentry.framework/Sentry"
+sentry_report="not embedded"
+if [ -f "$sentry_binary" ]; then
+  sentry_uuid="$(uuid_for "$sentry_binary")"
+  [ -n "$sentry_uuid" ] || fail "could not read Sentry framework UUID"
+  sentry_dsym="$(find_dsym_matching_uuid "$sentry_uuid" || true)"
+  [ -n "$sentry_dsym" ] || fail "matching Sentry.framework dSYM is missing for UUID $sentry_uuid"
+  sentry_report="$sentry_uuid"
+fi
+
 cat <<REPORT
 Autonomo AV iOS release archive passed.
   archive: $archive_path
@@ -185,4 +195,5 @@ Autonomo AV iOS release archive passed.
   team id: $app_codesign_team
   app UUID: $app_uuid
   share UUID: $share_uuid
+  Sentry UUID: $sentry_report
 REPORT

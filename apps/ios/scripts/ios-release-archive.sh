@@ -153,6 +153,9 @@ else
   echo "$archive_path"
 fi
 
+run_step "Repair Sentry.framework dSYM in final archive"
+"$ios_root/scripts/repair-ios-archive-sentry-dsym.sh" --archive "$archive_path"
+
 run_step "Verify final iOS release archive"
 "$ios_root/scripts/check-ios-release-archive.sh" \
   --archive "$archive_path" \

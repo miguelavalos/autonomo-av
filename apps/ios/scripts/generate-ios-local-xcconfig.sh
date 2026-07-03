@@ -66,7 +66,14 @@ read_optional_config() {
     return 0
   fi
   if [ -x "$varlock_bin" ]; then
-    "$varlock_bin" printenv --path "$suite_root/services/api" "$name" 2>/dev/null || true
+    value="$("$varlock_bin" printenv --path "$suite_root/services/api" "$name" 2>/dev/null || true)"
+    if [ -n "$value" ]; then
+      printf '%s' "$value"
+      return 0
+    fi
+  fi
+  if [ -x "$suite_root/scripts/resolve-infisical-optional-secret.sh" ]; then
+    "$suite_root/scripts/resolve-infisical-optional-secret.sh" "$profile" "$name" 2>/dev/null || true
   fi
 }
 
@@ -122,6 +129,7 @@ keychain_access_group="$(read_optional_config ACCOUNTAV_KEYCHAIN_ACCESS_GROUP)"
 revenuecat_public_api_key="$(read_optional_config AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY)"
 revenuecat_offering_id="$(read_optional_config AUTONOMOAV_REVENUECAT_OFFERING_ID)"
 revenuecat_monthly_package_id="$(read_optional_config AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID)"
+autonomoav_ios_sentry_dsn="$(read_optional_config AUTONOMOAV_IOS_SENTRY_DSN)"
 
 if [ "$env_name" = "dev" ]; then
   case "$api_base_url" in
@@ -165,6 +173,10 @@ if [ "$env_name" = "prod" ]; then
     echo "AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID is required for prod." >&2
     exit 1
   fi
+  if [ -z "$autonomoav_ios_sentry_dsn" ]; then
+    echo "AUTONOMOAV_IOS_SENTRY_DSN is required for prod." >&2
+    exit 1
+  fi
 fi
 
 if [ -n "$revenuecat_public_api_key" ]; then
@@ -203,6 +215,7 @@ AUTONOMOAV_PRIVACY_URL = $(escape_xcconfig_url "https://autonomo-av.avalsys.com/
 AUTONOMOAV_REVENUECAT_PUBLIC_API_KEY = $revenuecat_public_api_key
 AUTONOMOAV_REVENUECAT_OFFERING_ID = $revenuecat_offering_id
 AUTONOMOAV_REVENUECAT_MONTHLY_PACKAGE_ID = $revenuecat_monthly_package_id
+AUTONOMOAV_IOS_SENTRY_DSN = $(escape_xcconfig_url "$autonomoav_ios_sentry_dsn")
 EOF
 )"
 
