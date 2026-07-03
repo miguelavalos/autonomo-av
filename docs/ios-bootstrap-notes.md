@@ -108,3 +108,26 @@ The next release step is to wait for Apple processing, resolve any processing
 email from App Store Connect if it appears, and enable the build for internal
 TestFlight testing. Future automation should use an App Store Connect API key
 once that credential is available.
+
+## Local TestFlight Export Refresh - 2026-07-04
+
+Checks run from `apps/ios` after regenerating production local config:
+
+- `scripts/ios-release-archive.sh --allow-provisioning-updates` passed and
+  produced a verified local archive
+  `.derived-data/release-archives/AutonomoAV-0.1.0-2-2026-07-04-011747.xcarchive`.
+- The archive verification confirmed version `0.1.0`, build `2`, bundle id
+  `com.avalsys.autonomoav`, Share Extension bundle id
+  `com.avalsys.autonomoav.share`, app group
+  `group.com.avalsys.autonomoav`, team `935PM55U6R`, and matching app/share
+  dSYM UUIDs plus repaired `Sentry.framework.dSYM`.
+- `scripts/ios-export-testflight-ipa.sh --archive <archive>
+  --allow-provisioning-updates` passed and produced a verified local
+  App Store Connect `.ipa` without uploading.
+- `scripts/check-ios-signing-readiness.sh --env prod --mode testflight` now
+  passes locally with App Store/TestFlight provisioning profiles for both the
+  app and Share Extension.
+
+This did not upload build `2`. App Store Connect processing/internal TestFlight
+verification for the already uploaded build `0.1.0 (1)` remains the next store
+step unless the owner chooses to upload a newer build.
