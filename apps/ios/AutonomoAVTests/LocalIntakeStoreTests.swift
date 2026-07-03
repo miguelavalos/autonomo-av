@@ -136,6 +136,30 @@ final class LocalIntakeStoreTests: XCTestCase {
     }
 
     @MainActor
+    func testIntakeStoreDoesNotStageFilesWithoutProAccess() async throws {
+        let rootURL = FileManager.default.temporaryDirectory
+            .appending(path: "AutonomoAVTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        defer { try? FileManager.default.removeItem(at: rootURL) }
+
+        try FileManager.default.createDirectory(at: rootURL, withIntermediateDirectories: true)
+        let sourceURL = rootURL.appending(path: "source.pdf")
+        try Data("pdf".utf8).write(to: sourceURL)
+
+        let persistence = LocalIntakePersistence(rootURL: rootURL.appending(path: "LocalQueue", directoryHint: .isDirectory))
+        let store = IntakeStore(
+            client: AutonomoAPIClient(baseURLProvider: { nil }, tokenProvider: { nil }, retryPolicy: .disabled),
+            persistence: persistence,
+            sharedInbox: SharedIntakeInbox(rootURL: nil)
+        )
+
+        await store.importFiles(from: [sourceURL])
+
+        XCTAssertTrue(store.localItems.isEmpty)
+        XCTAssertTrue(persistence.loadItems().isEmpty)
+        XCTAssertEqual(store.lastErrorMessage, "Autonomo AV Pro is required before importing or uploading documents.")
+    }
+
+    @MainActor
     func testSharedInboxDropsTooLargeFilesBeforeQueue() async throws {
         let fileManager = FileManager.default
         let rootURL = fileManager.temporaryDirectory
@@ -154,7 +178,8 @@ final class LocalIntakeStoreTests: XCTestCase {
         let store = IntakeStore(
             client: AutonomoAPIClient(baseURLProvider: { nil }, tokenProvider: { nil }, retryPolicy: .disabled),
             persistence: persistence,
-            sharedInbox: SharedIntakeInbox(rootURL: rootURL, fileManager: fileManager)
+            sharedInbox: SharedIntakeInbox(rootURL: rootURL, fileManager: fileManager),
+            canUseIntakeProvider: { true }
         )
 
         await store.importSharedInboxItems()

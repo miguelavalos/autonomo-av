@@ -39,6 +39,7 @@ final class IntakeStore {
     private let uploader: AutonomoPreparedDocumentUploader
     private let persistence: LocalIntakePersistence
     private let sharedInbox: SharedIntakeInbox
+    private let canUseIntakeProvider: () -> Bool
 
     private(set) var localItems: [LocalIntakeItem]
     private(set) var remoteDocuments: [AutonomoDocumentSummary] = []
@@ -51,12 +52,14 @@ final class IntakeStore {
     init(
         client: AutonomoAPIClient,
         persistence: LocalIntakePersistence = LocalIntakePersistence(),
-        sharedInbox: SharedIntakeInbox = SharedIntakeInbox()
+        sharedInbox: SharedIntakeInbox = SharedIntakeInbox(),
+        canUseIntakeProvider: @escaping () -> Bool = { false }
     ) {
         self.client = client
         self.uploader = AutonomoPreparedDocumentUploader(backend: client)
         self.persistence = persistence
         self.sharedInbox = sharedInbox
+        self.canUseIntakeProvider = canUseIntakeProvider
 
         let normalizedItems = AutonomoLocalIntakeQueue.normalizeLoadedItems(persistence.loadItems())
         self.localItems = normalizedItems.items.sorted { $0.createdAt > $1.createdAt }
@@ -74,6 +77,9 @@ final class IntakeStore {
     }
 
     func importFiles(from urls: [URL], source: AutonomoUploadSource = .iosFiles) async {
+        guard !urls.isEmpty else { return }
+        guard requireIntakeAccess() else { return }
+
         do {
             var importedItems: [LocalIntakeItem] = []
             var rejectedCount = 0
@@ -115,6 +121,9 @@ final class IntakeStore {
     }
 
     func importScannedPages(_ pages: [ScannedDocumentPage]) async {
+        guard !pages.isEmpty else { return }
+        guard requireIntakeAccess() else { return }
+
         do {
             let items = try pages.map { try persistence.storeScannedPage($0) }
             localItems.insert(contentsOf: items, at: 0)
@@ -126,6 +135,7 @@ final class IntakeStore {
     }
 
     func importSharedInboxItems() async {
+        guard requireIntakeAccess() else { return }
         guard !isImportingSharedInbox else { return }
         isImportingSharedInbox = true
         defer { isImportingSharedInbox = false }
@@ -174,6 +184,7 @@ final class IntakeStore {
     }
 
     func retry(_ item: LocalIntakeItem) async {
+        guard requireIntakeAccess() else { return }
         updateItem(id: item.id) { current in
             current.markPendingForRetry()
         }
@@ -182,6 +193,7 @@ final class IntakeStore {
     }
 
     func uploadPending() async {
+        guard requireIntakeAccess() else { return }
         guard !isUploading else { return }
         isUploading = true
         defer { isUploading = false }
@@ -199,6 +211,7 @@ final class IntakeStore {
     }
 
     func refreshRemoteDocuments() async {
+        guard requireIntakeAccess() else { return }
         guard client.isConfigured else {
             lastErrorMessage = L10n.string("account.apiMissing")
             return
@@ -214,6 +227,11 @@ final class IntakeStore {
         } catch {
             lastErrorMessage = error.localizedDescription
         }
+    }
+
+    func clearBackendStateForLockedAccess() {
+        remoteDocuments = []
+        workspaceBootstrapped = false
     }
 
     private func upload(_ item: LocalIntakeItem) async {
@@ -263,5 +281,13 @@ final class IntakeStore {
 
     private func save() throws {
         try persistence.saveItems(localItems)
+    }
+
+    private func requireIntakeAccess() -> Bool {
+        guard canUseIntakeProvider() else {
+            lastErrorMessage = L10n.string("intake.proRequired")
+            return false
+        }
+        return true
     }
 }

@@ -67,6 +67,12 @@ final class ShareViewController: NSViewController {
             return
         }
 
+        guard AutonomoAVAccessSnapshotStore.loadFreshProSnapshot() != nil else {
+            shareExtensionLogger.info("Share extension blocked because no fresh Pro access snapshot was available")
+            detailLabel.stringValue = "Open Autonomo AV, sign in, and activate Pro before sending documents."
+            return
+        }
+
         let pendingURL: URL
         do {
             pendingURL = try AutonomoAVShareExtensionInboxWriter.preparePendingURL()

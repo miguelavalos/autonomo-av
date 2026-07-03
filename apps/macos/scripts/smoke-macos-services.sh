@@ -15,8 +15,9 @@ Usage:
 
 Runs a local signed macOS Services smoke without archiving, exporting, uploading,
 or contacting App Store Connect. By default it requires the launched app to
-restore signed-out before invoking the service, so the imported synthetic PDF
-stays in the isolated local queue and is not uploaded.
+remain intake-locked before invoking the service, so the synthetic PDF is
+rejected before it enters the isolated local queue. Use --allow-signed-in only
+for an intentional signed-in Pro smoke where backend mutation may occur.
 USAGE
 }
 
@@ -117,11 +118,15 @@ for _ in $(seq 1 20); do
 done
 
 if [ "$account_state" = "signed-in" ] && [ "$allow_signed_in" -eq 0 ]; then
-  echo "App restored a signed-in account. Re-run with --allow-signed-in only when upload/backend mutation is intentional." >&2
+  echo "App restored signed-in Pro access. Re-run with --allow-signed-in only when upload/backend mutation is intentional." >&2
   exit 1
 fi
 if [ "$account_state" != "signed-out" ] && [ "$allow_signed_in" -eq 0 ]; then
-  echo "Could not prove signed-out account state from unified logs; refusing no-upload Services smoke." >&2
+  echo "Could not prove locked account state from unified logs; refusing default Services smoke." >&2
+  exit 1
+fi
+if [ "$allow_signed_in" -eq 1 ] && [ "$account_state" != "signed-in" ]; then
+  echo "Could not prove signed-in Pro access from unified logs; refusing Pro Services smoke." >&2
   exit 1
 fi
 
@@ -151,48 +156,85 @@ if ! printf '%s\n' "$service_output" | grep -Fq "servicePerformed=true"; then
   exit 1
 fi
 
+if [ "$allow_signed_in" -eq 1 ]; then
+  for _ in $(seq 1 20); do
+    if [ -f "$smoke_root/intake-items.json" ]; then
+      break
+    fi
+    sleep 1
+  done
+
+  if [ ! -f "$smoke_root/intake-items.json" ]; then
+    echo "Service smoke failed: missing intake-items.json at $smoke_root/intake-items.json" >&2
+    exit 1
+  fi
+
+  node -e '
+const fs = require("node:fs");
+const itemsPath = process.argv[1];
+const expectedName = process.argv[2];
+const allowedStatuses = new Set(["pending", "uploading", "uploaded", "failed"]);
+const items = JSON.parse(fs.readFileSync(itemsPath, "utf8"));
+const match = items.find((item) =>
+  item.source === "macos_service" &&
+  allowedStatuses.has(item.status) &&
+  item.mimeType === "application/pdf" &&
+  item.fileName === expectedName
+);
+if (!match) {
+  console.error(`Service smoke failed: expected macos_service PDF queue item in ${itemsPath}`);
+  console.error(JSON.stringify(items, null, 2));
+  process.exit(1);
+}
+console.log(`Service smoke queue item: id=${match.id} source=${match.source} status=${match.status} bytes=${match.byteSize}`);
+  ' "$smoke_root/intake-items.json" "service-smoke.pdf"
+fi
+
 for _ in $(seq 1 20); do
-  if [ -f "$smoke_root/intake-items.json" ]; then
+  /usr/bin/log show --start "$start_stamp" --info \
+    --predicate "subsystem == \"$app_bundle_id\" && (category == \"Services\" || category == \"Intake\" || category == \"App\")" \
+    > "$logs_file" 2>/dev/null || true
+
+  if [ "$allow_signed_in" -eq 1 ] && grep -Fq "Import completed source=macos_service imported=1 failed=0 rejected=0" "$logs_file"; then
+    break
+  fi
+  if [ "$allow_signed_in" -eq 0 ] && {
+    grep -Fq "Intake blocked: signed out" "$logs_file" || grep -Fq "Intake blocked: Pro access required" "$logs_file"
+  }; then
     break
   fi
   sleep 1
 done
 
-if [ ! -f "$smoke_root/intake-items.json" ]; then
-  echo "Service smoke failed: missing intake-items.json at $smoke_root/intake-items.json" >&2
-  exit 1
-fi
-
-node -e '
-const fs = require("node:fs");
-const itemsPath = process.argv[1];
-const expectedName = process.argv[2];
-const items = JSON.parse(fs.readFileSync(itemsPath, "utf8"));
-const match = items.find((item) =>
-  item.source === "macos_service" &&
-  item.status === "pending" &&
-  item.mimeType === "application/pdf" &&
-  item.fileName === expectedName
-);
-if (!match) {
-  console.error(`Service smoke failed: expected pending macos_service PDF item in ${itemsPath}`);
-  console.error(JSON.stringify(items, null, 2));
-  process.exit(1);
-}
-console.log(`Service smoke queue item: id=${match.id} source=${match.source} status=${match.status} bytes=${match.byteSize}`);
-' "$smoke_root/intake-items.json" "service-smoke.pdf"
-
-/usr/bin/log show --start "$start_stamp" --info \
-  --predicate "subsystem == \"$app_bundle_id\" && (category == \"Services\" || category == \"Intake\" || category == \"App\")" \
-  > "$logs_file" 2>/dev/null || true
-
 if ! grep -Fq "Services request accepted count=1" "$logs_file"; then
   echo "Service smoke failed: missing Services acceptance log." >&2
   exit 1
 fi
-if [ "$account_state" = "signed-out" ] && ! grep -Fq "Upload pending blocked: signed out" "$logs_file"; then
-  echo "Service smoke failed: signed-out no-upload guard was not observed." >&2
-  exit 1
+if [ "$allow_signed_in" -eq 1 ]; then
+  if ! grep -Fq "Import completed source=macos_service imported=1 failed=0 rejected=0" "$logs_file"; then
+    echo "Service smoke failed: missing successful macos_service import log." >&2
+    exit 1
+  fi
+else
+  if [ -f "$smoke_root/intake-items.json" ]; then
+    node -e '
+const fs = require("node:fs");
+const itemsPath = process.argv[1];
+const expectedName = process.argv[2];
+const items = JSON.parse(fs.readFileSync(itemsPath, "utf8"));
+const match = items.find((item) => item.source === "macos_service" && item.fileName === expectedName);
+if (match) {
+  console.error(`Service smoke failed: locked access still staged ${expectedName}`);
+  console.error(JSON.stringify(items, null, 2));
+  process.exit(1);
+}
+    ' "$smoke_root/intake-items.json" "service-smoke.pdf"
+  fi
+
+  if ! grep -Fq "Intake blocked: signed out" "$logs_file" && ! grep -Fq "Intake blocked: Pro access required" "$logs_file"; then
+    echo "Service smoke failed: locked intake guard was not observed." >&2
+    exit 1
+  fi
 fi
 
 cat <<EOF

@@ -15,8 +15,9 @@ Usage:
 
 Runs a local signed Finder/Open With smoke without archiving, exporting,
 uploading, or contacting App Store Connect. By default it first requires the
-launched app to restore signed-out, so the synthetic PDF remains pending in an
-isolated local queue and is not uploaded.
+launched app to remain intake-locked, so the synthetic PDF is rejected before it
+enters the isolated local queue. Use --allow-signed-in only for an intentional
+signed-in Pro smoke where backend mutation may occur.
 USAGE
 }
 
@@ -117,58 +118,95 @@ for _ in $(seq 1 20); do
 done
 
 if [ "$account_state" = "signed-in" ] && [ "$allow_signed_in" -eq 0 ]; then
-  echo "App restored a signed-in account. Re-run with --allow-signed-in only when upload/backend mutation is intentional." >&2
+  echo "App restored signed-in Pro access. Re-run with --allow-signed-in only when upload/backend mutation is intentional." >&2
   exit 1
 fi
 if [ "$account_state" != "signed-out" ] && [ "$allow_signed_in" -eq 0 ]; then
-  echo "Could not prove signed-out account state from unified logs; refusing no-upload Finder/Open With smoke." >&2
+  echo "Could not prove locked account state from unified logs; refusing default Finder/Open With smoke." >&2
+  exit 1
+fi
+if [ "$allow_signed_in" -eq 1 ] && [ "$account_state" != "signed-in" ]; then
+  echo "Could not prove signed-in Pro access from unified logs; refusing Pro Finder/Open With smoke." >&2
   exit 1
 fi
 
 open -g -a "$app_path" "$smoke_file"
 
+if [ "$allow_signed_in" -eq 1 ]; then
+  for _ in $(seq 1 20); do
+    if [ -f "$smoke_root/intake-items.json" ]; then
+      break
+    fi
+    sleep 1
+  done
+
+  if [ ! -f "$smoke_root/intake-items.json" ]; then
+    echo "Finder/Open With smoke failed: missing intake-items.json at $smoke_root/intake-items.json" >&2
+    exit 1
+  fi
+
+  node -e '
+const fs = require("node:fs");
+const itemsPath = process.argv[1];
+const expectedName = process.argv[2];
+const allowedStatuses = new Set(["pending", "uploading", "uploaded", "failed"]);
+const items = JSON.parse(fs.readFileSync(itemsPath, "utf8"));
+const match = items.find((item) =>
+  item.source === "macos_files" &&
+  allowedStatuses.has(item.status) &&
+  item.mimeType === "application/pdf" &&
+  item.fileName === expectedName
+);
+if (!match) {
+  console.error(`Finder/Open With smoke failed: expected macos_files PDF queue item in ${itemsPath}`);
+  console.error(JSON.stringify(items, null, 2));
+  process.exit(1);
+}
+console.log(`Finder/Open With queue item: id=${match.id} source=${match.source} status=${match.status} bytes=${match.byteSize}`);
+  ' "$smoke_root/intake-items.json" "open-with-smoke.pdf"
+fi
+
 for _ in $(seq 1 20); do
-  if [ -f "$smoke_root/intake-items.json" ]; then
+  /usr/bin/log show --start "$start_stamp" --info \
+    --predicate "subsystem == \"$app_bundle_id\" && (category == \"Intake\" || category == \"App\")" \
+    > "$logs_file" 2>/dev/null || true
+
+  if [ "$allow_signed_in" -eq 1 ] && grep -Fq "Import completed source=macos_files imported=1 failed=0 rejected=0" "$logs_file"; then
+    break
+  fi
+  if [ "$allow_signed_in" -eq 0 ] && {
+    grep -Fq "Intake blocked: signed out" "$logs_file" || grep -Fq "Intake blocked: Pro access required" "$logs_file"
+  }; then
     break
   fi
   sleep 1
 done
 
-if [ ! -f "$smoke_root/intake-items.json" ]; then
-  echo "Finder/Open With smoke failed: missing intake-items.json at $smoke_root/intake-items.json" >&2
-  exit 1
-fi
-
-node -e '
+if [ "$allow_signed_in" -eq 1 ]; then
+  if ! grep -Fq "Import completed source=macos_files imported=1 failed=0 rejected=0" "$logs_file"; then
+    echo "Finder/Open With smoke failed: missing successful macos_files import log." >&2
+    exit 1
+  fi
+else
+  if [ -f "$smoke_root/intake-items.json" ]; then
+    node -e '
 const fs = require("node:fs");
 const itemsPath = process.argv[1];
 const expectedName = process.argv[2];
 const items = JSON.parse(fs.readFileSync(itemsPath, "utf8"));
-const match = items.find((item) =>
-  item.source === "macos_files" &&
-  item.status === "pending" &&
-  item.mimeType === "application/pdf" &&
-  item.fileName === expectedName
-);
-if (!match) {
-  console.error(`Finder/Open With smoke failed: expected pending macos_files PDF item in ${itemsPath}`);
+const match = items.find((item) => item.source === "macos_files" && item.fileName === expectedName);
+if (match) {
+  console.error(`Finder/Open With smoke failed: locked access still staged ${expectedName}`);
   console.error(JSON.stringify(items, null, 2));
   process.exit(1);
 }
-console.log(`Finder/Open With queue item: id=${match.id} source=${match.source} status=${match.status} bytes=${match.byteSize}`);
-' "$smoke_root/intake-items.json" "open-with-smoke.pdf"
+    ' "$smoke_root/intake-items.json" "open-with-smoke.pdf"
+  fi
 
-/usr/bin/log show --start "$start_stamp" --info \
-  --predicate "subsystem == \"$app_bundle_id\" && (category == \"Intake\" || category == \"App\")" \
-  > "$logs_file" 2>/dev/null || true
-
-if ! grep -Fq "Import completed source=macos_files imported=1 failed=0 rejected=0" "$logs_file"; then
-  echo "Finder/Open With smoke failed: missing successful macos_files import log." >&2
-  exit 1
-fi
-if [ "$account_state" = "signed-out" ] && ! grep -Fq "Upload pending blocked: signed out" "$logs_file"; then
-  echo "Finder/Open With smoke failed: signed-out no-upload guard was not observed." >&2
-  exit 1
+  if ! grep -Fq "Intake blocked: signed out" "$logs_file" && ! grep -Fq "Intake blocked: Pro access required" "$logs_file"; then
+    echo "Finder/Open With smoke failed: locked intake guard was not observed." >&2
+    exit 1
+  fi
 fi
 
 cat <<EOF

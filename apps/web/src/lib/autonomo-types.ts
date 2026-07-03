@@ -61,6 +61,35 @@ export type AutonomoRecommendedAction =
   | "ask_user"
   | "ignore_or_spam";
 
+export type AutonomoAccessMode = "guest" | "signedInFree" | "signedInPro";
+export type AutonomoPlanTier = "free" | "pro";
+
+export interface AutonomoAccessCapabilities {
+  isSignedIn: boolean;
+  canUseBackend: boolean;
+  canUsePremiumFeatures: boolean;
+  canUseCloudSync: boolean;
+  canManagePlan: boolean;
+}
+
+export interface AutonomoAppAccess {
+  appId: "autonomoav" | string;
+  accessMode: AutonomoAccessMode;
+  planTier: AutonomoPlanTier;
+  capabilities: AutonomoAccessCapabilities;
+  limits: Record<string, unknown>;
+}
+
+export interface AutonomoMeAccessResponse {
+  viewer: {
+    isAuthenticated: boolean;
+    userId: string | null;
+    identityProvider: string | null;
+  };
+  apps: AutonomoAppAccess[];
+  generatedAt: string;
+}
+
 export interface AutonomoWorkspaceSummary {
   workspaceId: string;
   ownerUserId: string;

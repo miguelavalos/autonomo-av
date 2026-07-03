@@ -33,6 +33,7 @@ import {
   autonomoNavLinks,
   autonomoProductConfig,
   autonomoShellLabels,
+  getAutonomoAccountManagementUrl,
   getAutonomoApiBaseUrl,
   getEmailIntakeSettings,
   useAutonomoFixtures
@@ -56,6 +57,7 @@ import {
 } from "@/lib/autonomo-display";
 import {
   autonomoUploadContentTypeValues,
+  type AutonomoAppAccess,
   type AutonomoCounterpartyKind,
   type AutonomoCounterpartyResponse,
   type AutonomoCounterpartySummary,
@@ -332,6 +334,19 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
     [authSession.getToken, useFixtures]
   );
   const appRoute: SignedInRoute = route === "sign-in" || isPublicRoute(route) ? "inbox" : route;
+  const shouldLoadAccess =
+    !isPublicRoute(route)
+    && authSession.isLoaded
+    && authSession.authMode !== "missing-config"
+    && (useFixtures || authSession.isSignedIn);
+  const accessQuery = useQuery({
+    enabled: shouldLoadAccess,
+    queryFn: () => client.fetchMeAccess(),
+    queryKey: ["autonomo-av", "access", authSession.sessionId, useFixtures],
+    staleTime: 60_000
+  });
+  const autonomoAccess = accessQuery.data?.apps.find((app: AutonomoAppAccess) => app.appId === "autonomoav");
+  const hasProAccess = useFixtures || hasAutonomoProAccess(autonomoAccess);
 
   if (isPublicRoute(route)) {
     return (
@@ -355,8 +370,32 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
     return <AuthConfigurationMissing />;
   }
 
-  if (!useFixtures && (!authSession.isSignedIn || route === "sign-in")) {
+  if (!useFixtures && !authSession.isSignedIn) {
     return <AutonomoSignInScreen authSession={authSession} route={route} />;
+  }
+
+  if (shouldLoadAccess && accessQuery.isLoading) {
+    return <AuthSkeleton />;
+  }
+
+  if (!hasProAccess) {
+    return (
+      <AppShell
+        currentPath={pathForRoute(appRoute)}
+        footerLabels={autonomoFooterLabels}
+        labels={autonomoShellLabels}
+        navLinks={autonomoNavLinks}
+        product={autonomoProductConfig}
+      >
+        <AutonomoProRequiredScreen
+          access={autonomoAccess}
+          authSession={authSession}
+          error={accessQuery.error instanceof Error ? accessQuery.error : null}
+          isRefreshing={accessQuery.isFetching}
+          onRefresh={() => void accessQuery.refetch()}
+        />
+      </AppShell>
+    );
   }
 
   return (
@@ -369,6 +408,16 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
     >
       <AutonomoSurface authSession={authSession} client={client} emailIntake={emailIntake} route={appRoute} useFixtures={useFixtures} />
     </AppShell>
+  );
+}
+
+function hasAutonomoProAccess(access: AutonomoAppAccess | undefined) {
+  return Boolean(
+    access
+      && access.accessMode === "signedInPro"
+      && access.planTier === "pro"
+      && access.capabilities.canUseBackend
+      && access.capabilities.canUsePremiumFeatures
   );
 }
 
@@ -598,6 +647,56 @@ function AuthConfigurationMissing() {
           <div><dt>Required for live backend</dt><dd>VITE_AUTONOMOAV_API_BASE_URL and VITE_AUTONOMOAV_USE_FIXTURES=false</dd></div>
           <div><dt>Temporary local fallback</dt><dd>VITE_AUTONOMOAV_DEV_BEARER_TOKEN</dd></div>
         </dl>
+      </section>
+    </main>
+  );
+}
+
+function AutonomoProRequiredScreen({
+  access,
+  authSession,
+  error,
+  isRefreshing,
+  onRefresh
+}: {
+  access: AutonomoAppAccess | undefined;
+  authSession: AutonomoAuthSession;
+  error: Error | null;
+  isRefreshing: boolean;
+  onRefresh: () => void;
+}) {
+  const managementUrl = getAutonomoAccountManagementUrl("/apps/autonomoav")
+    ?? getAutonomoAccountManagementUrl()
+    ?? autonomoProductConfig.links.suite?.href;
+
+  return (
+    <main className="autonomo-auth-page">
+      <section className="auth-panel" aria-labelledby="pro-required-title">
+        <div className="auth-mark" aria-hidden="true">
+          <AlertTriangle className="size-5" />
+        </div>
+        <Badge tone={error ? "danger" : "warning"}>{error ? "Access check failed" : "Pro required"}</Badge>
+        <h1 id="pro-required-title">Autonomo AV Pro is required</h1>
+        <p>
+          {error
+            ? error.message
+            : "Your Account AV session is signed in, but this workspace only opens after Autonomo AV Pro is active."}
+        </p>
+        <dl className="auth-config-list">
+          <div><dt>Session</dt><dd>{authSession.statusLabel}</dd></div>
+          <div><dt>Access</dt><dd>{access ? labelFor(access.accessMode) : "Not available"}</dd></div>
+        </dl>
+        <div className="auth-actions-row">
+          {managementUrl ? (
+            <a className="primary-button auth-action" href={managementUrl}>
+              Manage Pro
+            </a>
+          ) : null}
+          <button className="secondary-button auth-action" type="button" onClick={onRefresh} disabled={isRefreshing}>
+            {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+            Refresh access
+          </button>
+        </div>
       </section>
     </main>
   );

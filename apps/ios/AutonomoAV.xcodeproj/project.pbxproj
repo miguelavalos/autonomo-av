@@ -22,6 +22,7 @@
 		2D23F3C0CAE49C176003CF95 /* AVProductAccountFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = EB0392E8255C4B1B3743E10D /* AVProductAccountFoundation */; };
 		321FF27E9144AB73A88FC54F /* AutonomoAccessControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD99A9562089C27A2040337 /* AutonomoAccessControllerTests.swift */; };
 		3488B40733B3F0223BD089D1 /* LocalIntakeStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4D41DD61C3AF6AC0EE18697 /* LocalIntakeStoreTests.swift */; };
+		3950EA10A5A9354BB9A11A7A /* AutonomoAVAccessSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C0DAA3EDBEAF2A5FCEC857 /* AutonomoAVAccessSnapshot.swift */; };
 		3A094D17CFD409C017AB91FA /* AccountSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0652BB494C48241575D4DBB1 /* AccountSheet.swift */; };
 		4214774481319311D68D924B /* AutonomoAPIClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0584248BA8FEF9B42DE805 /* AutonomoAPIClientTests.swift */; };
 		4774C36763E67D8846AAEB78 /* AutonomoAVLocalIntakeQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2522F78A286D8057D95A247A /* AutonomoAVLocalIntakeQueue.swift */; };
@@ -36,6 +37,7 @@
 		A60BAC15058B8B71D2D4AE38 /* SharedIntakeInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4493D7A040D1FE587BCE612 /* SharedIntakeInbox.swift */; };
 		A734905FBF64E922CA08AEA0 /* AutonomoAVShareExtensionInboxWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095CC9108CE5A8CCE0071081 /* AutonomoAVShareExtensionInboxWriter.swift */; };
 		A84E8B82073C5CF879482C1B /* AVSettingsFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 429C4E2D8F2D89E5CA67407F /* AVSettingsFoundation */; };
+		A9F490C054332A361E167AA4 /* AutonomoAVAccessSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C0DAA3EDBEAF2A5FCEC857 /* AutonomoAVAccessSnapshot.swift */; };
 		AAC9D172A3DFF0758AB0E41A /* PreviewSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2EE1B08FDA7CA57C605D01F /* PreviewSupport.swift */; };
 		B4D0B61245E800213AC7DC99 /* AutonomoAVBundleConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE0C64E0B5433D869CF0AC02 /* AutonomoAVBundleConfig.swift */; };
 		B67D909EFD53D5AB56C3F945 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = 70E5450FF006CD6646EB03C4 /* RevenueCat */; };
@@ -99,6 +101,7 @@
 		491F42A561AB154CB8856985 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		55513D91774B563A79703D23 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
 		5C82A695A4D13BA44D23E36F /* AutonomoAVShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AutonomoAVShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		60C0DAA3EDBEAF2A5FCEC857 /* AutonomoAVAccessSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVAccessSnapshot.swift; sourceTree = "<group>"; };
 		656717F772CB1282AB36942D /* AutonomoAVAccessClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVAccessClient.swift; sourceTree = "<group>"; };
 		6723BF1471E6EAA468BCB354 /* AutonomoAVDocumentIntakeSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVDocumentIntakeSupport.swift; sourceTree = "<group>"; };
 		675A92E6EACECBB54914341A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -161,6 +164,7 @@
 			isa = PBXGroup;
 			children = (
 				656717F772CB1282AB36942D /* AutonomoAVAccessClient.swift */,
+				60C0DAA3EDBEAF2A5FCEC857 /* AutonomoAVAccessSnapshot.swift */,
 				6723BF1471E6EAA468BCB354 /* AutonomoAVDocumentIntakeSupport.swift */,
 				2522F78A286D8057D95A247A /* AutonomoAVLocalIntakeQueue.swift */,
 				2C71340CFE1A13DB034747D3 /* AutonomoAVPreparedUploadWorkflow.swift */,
@@ -438,6 +442,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3950EA10A5A9354BB9A11A7A /* AutonomoAVAccessSnapshot.swift in Sources */,
 				F7E496C83208AFF193E40749 /* AutonomoAVShareExtensionInboxWriter.swift in Sources */,
 				597CC13B57AFAEA5CA508CCB /* ShareViewController.swift in Sources */,
 			);
@@ -451,6 +456,7 @@
 				7DF4F695F4EE489E0CEF9744 /* AuthGateView.swift in Sources */,
 				D4DFB849E8FAB2B5530D49B7 /* AutonomoAPIClient.swift in Sources */,
 				F35F545888BF9C5161CDCC6C /* AutonomoAVAccessClient.swift in Sources */,
+				A9F490C054332A361E167AA4 /* AutonomoAVAccessSnapshot.swift in Sources */,
 				D6B63B5189EF3DF52997C27E /* AutonomoAVApp.swift in Sources */,
 				B4D0B61245E800213AC7DC99 /* AutonomoAVBundleConfig.swift in Sources */,
 				0879C7B786F32399AD543C17 /* AutonomoAVDocumentIntakeSupport.swift in Sources */,

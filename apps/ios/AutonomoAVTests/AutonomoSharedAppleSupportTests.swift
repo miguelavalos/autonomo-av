@@ -122,6 +122,42 @@ final class AutonomoSharedAppleSupportTests: XCTestCase {
         XCTAssertFalse(AutonomoUploadSource.allCases.map(\.rawValue).contains("mail_message"))
     }
 
+    func testAccessSnapshotOnlyGrantsFreshProIntake() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let proSnapshot = AutonomoAVAccessSnapshot(
+            platformUserId: "apps-user-1",
+            accessMode: "signedInPro",
+            planTier: "pro",
+            isSignedIn: true,
+            canUseIntake: true,
+            verifiedAt: now,
+            environment: "test"
+        )
+        let freeSnapshot = AutonomoAVAccessSnapshot(
+            platformUserId: "apps-user-1",
+            accessMode: "signedInFree",
+            planTier: "free",
+            isSignedIn: true,
+            canUseIntake: false,
+            verifiedAt: now,
+            environment: "test"
+        )
+        let staleSnapshot = AutonomoAVAccessSnapshot(
+            platformUserId: "apps-user-1",
+            accessMode: "signedInPro",
+            planTier: "pro",
+            isSignedIn: true,
+            canUseIntake: true,
+            verifiedAt: now.addingTimeInterval(-AutonomoAVAccessSnapshotStore.defaultMaxAge - 1),
+            environment: "test"
+        )
+
+        XCTAssertTrue(proSnapshot.grantsIntake)
+        XCTAssertTrue(proSnapshot.isFresh(now: now))
+        XCTAssertFalse(freeSnapshot.grantsIntake)
+        XCTAssertFalse(staleSnapshot.isFresh(now: now))
+    }
+
     func testDocumentAssetSupportBuildsChecksumAndIdempotencyKey() {
         let id = UUID(uuidString: "F4F21B55-5E1C-49B2-89EF-3E1A5A8DD08B")!
 
