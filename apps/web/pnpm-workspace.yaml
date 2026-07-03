@@ -1,3 +1,8 @@
+allowBuilds:
+  '@clerk/shared': true
+packages:
+  - "."
+
 minimumReleaseAgeExclude:
   - '@voidzero-dev/vite-plus-core@0.2.2'
   - '@voidzero-dev/vite-plus-darwin-arm64@0.2.2'
@@ -9,3 +14,5 @@ minimumReleaseAgeExclude:
   - '@voidzero-dev/vite-plus-win32-arm64-msvc@0.2.2'
   - '@voidzero-dev/vite-plus-win32-x64-msvc@0.2.2'
   - vite-plus@0.2.2
+onlyBuiltDependencies:
+  - '@clerk/shared'
