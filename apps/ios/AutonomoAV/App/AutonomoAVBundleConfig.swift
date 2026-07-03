@@ -110,6 +110,10 @@ enum AppConfig {
         AutonomoAVBundleConfig.boolValue(for: "AUTONOMOAV_DEBUG_FORCE_PRO_MODE")
     }
 
+    static var environmentName: String {
+        AutonomoAVBundleConfig.nonEmptyStringValue(for: "AUTONOMOAV_CONFIG_ENVIRONMENT") ?? "Local"
+    }
+
     static var diagnosticsConfiguration: AVDiagnosticsConfiguration {
         AVDiagnosticsConfiguration(
             dsn: diagnosticsDSN,

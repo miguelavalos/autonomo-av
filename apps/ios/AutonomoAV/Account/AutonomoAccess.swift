@@ -275,6 +275,7 @@ final class AutonomoAccessController {
         capabilities = resolvedAccess.capabilities
         limits = resolvedAccess.limits
         platformUserId = resolvedAccess.platformUserId
+        publishAccessSnapshot(for: resolvedAccess)
 
         if resolvedAccess.accessMode == .guest {
             clearSubscriptionState()
@@ -294,6 +295,23 @@ final class AutonomoAccessController {
     private func clearSubscriptionReconciliationState() {
         isWaitingForSubscriptionReconciliation = false
         subscriptionReconciliationSource = nil
+    }
+
+    private func publishAccessSnapshot(for resolvedAccess: AutonomoResolvedAccess) {
+        guard resolvedAccess.accessMode == .signedInPro, resolvedAccess.capabilities.canUseIntake else {
+            AutonomoAVAccessSnapshotStore.clear()
+            return
+        }
+
+        let snapshot = AutonomoAVAccessSnapshot(
+            platformUserId: resolvedAccess.platformUserId,
+            accessMode: resolvedAccess.accessMode.rawValue,
+            planTier: resolvedAccess.planTier.rawValue,
+            isSignedIn: resolvedAccess.capabilities.isSignedIn,
+            canUseIntake: resolvedAccess.capabilities.canUseIntake,
+            environment: AppConfig.environmentName
+        )
+        try? AutonomoAVAccessSnapshotStore.write(snapshot)
     }
 
     private func subscriptionAccountUser(from user: AutonomoAccountUser?) -> AutonomoAccountUser? {

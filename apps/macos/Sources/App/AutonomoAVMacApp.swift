@@ -26,7 +26,12 @@ struct AutonomoAVMacApp: App {
                 .onChange(of: scenePhase) { _, newPhase in
                     guard newPhase == .active else { return }
                     AutonomoAVMacTelemetry.app.info("Scene became active")
-                    Task { await model.syncSignedInIntake() }
+                    Task {
+                        await model.refreshAccess()
+                        if model.hasProAccess {
+                            await model.syncSignedInIntake()
+                        }
+                    }
                 }
                 .onOpenURL { url in
                     guard url.isFileURL else { return }
@@ -43,19 +48,21 @@ struct AutonomoAVMacApp: App {
                     Task { await model.pickAndImportFiles(source: .macosFiles) }
                 }
                 .keyboardShortcut("o", modifiers: [.command])
+                .disabled(!model.hasProAccess)
 
                 Button("Upload Pending") {
                     AutonomoAVMacTelemetry.intake.info("Upload pending command selected")
                     Task { await model.uploadPending() }
                 }
                 .keyboardShortcut("u", modifiers: [.command])
-                .disabled(!model.hasUploadableItems)
+                .disabled(!model.hasUploadableItems || !model.hasProAccess)
 
                 Button("Refresh Inbox") {
                     AutonomoAVMacTelemetry.intake.info("Refresh inbox command selected")
                     Task { await model.syncSignedInIntake() }
                 }
                 .keyboardShortcut("r", modifiers: [.command])
+                .disabled(!model.hasProAccess)
             }
         }
 

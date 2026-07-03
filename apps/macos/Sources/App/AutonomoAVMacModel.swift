@@ -2,10 +2,20 @@ import Foundation
 import Observation
 
 @MainActor
+protocol AutonomoAVMacAccessProviding {
+    var isConfigured: Bool { get }
+
+    func fetchMeAccess() async throws -> AutonomoMeAccessResponse
+}
+
+extension AutonomoAPIClient: AutonomoAVMacAccessProviding {}
+
+@MainActor
 @Observable
 final class AutonomoAVMacModel {
     private let accountService: AutonomoAccountServicing
     private let apiClient: AutonomoAPIClient
+    private let accessProvider: AutonomoAVMacAccessProviding
     private let uploader: AutonomoPreparedDocumentUploader
     private let persistence: LocalIntakePersistence
     private let sharedInbox: SharedIntakeInbox
@@ -17,6 +27,11 @@ final class AutonomoAVMacModel {
     private(set) var isImportingSharedInbox = false
     private(set) var isUploading = false
     private(set) var isRefreshingRemoteDocuments = false
+    private(set) var isRefreshingAccess = false
+    private(set) var accessMode: AutonomoAccessMode = .guest
+    private(set) var planTier: AutonomoPlanTier = .free
+    private(set) var accessCapabilities = AutonomoAccessCapabilities.forMode(.guest)
+    private(set) var platformUserId: String?
     var lastErrorMessage: String?
     private var workspaceBootstrapped = false
 
@@ -35,6 +50,7 @@ final class AutonomoAVMacModel {
         self.sharedInbox = sharedInbox
         let apiClient = AutonomoAPIClient(tokenProvider: { try await accountService.getToken() })
         self.apiClient = apiClient
+        self.accessProvider = apiClient
         self.uploader = AutonomoPreparedDocumentUploader(backend: apiClient)
         self.accountController = AccountController(
             accountService: accountService,
@@ -57,6 +73,10 @@ final class AutonomoAVMacModel {
         accountController.state.isSignedIn
     }
 
+    var hasProAccess: Bool {
+        accessMode == .signedInPro && accessCapabilities.isSignedIn && accessCapabilities.canUseIntake
+    }
+
     var accountStatusText: String {
         switch accountController.state {
         case .restoring:
@@ -67,6 +87,21 @@ final class AutonomoAVMacModel {
             return user == nil ? "Account unavailable" : "Using last account"
         case .signedIn(let user):
             return user.emailAddress ?? user.displayName
+        }
+    }
+
+    var accessStatusText: String {
+        guard accountIsSignedIn else {
+            return "Sign in required"
+        }
+
+        switch accessMode {
+        case .guest:
+            return "Checking access"
+        case .signedInFree:
+            return "Pro required"
+        case .signedInPro:
+            return "Pro active"
         }
     }
 
@@ -89,7 +124,8 @@ final class AutonomoAVMacModel {
     func restoreAccount() async {
         AutonomoAVMacTelemetry.app.info("Account restore requested")
         await accountController.restore()
-        if accountIsSignedIn {
+        await refreshAccess()
+        if hasProAccess {
             AutonomoAVMacTelemetry.app.info("Account restore resolved signed-in user")
             await syncSignedInIntake()
         } else {
@@ -100,7 +136,8 @@ final class AutonomoAVMacModel {
     func signInWithApple() async {
         AutonomoAVMacTelemetry.app.info("Apple sign-in requested")
         await accountController.signInWithApple()
-        if accountIsSignedIn {
+        await refreshAccess()
+        if hasProAccess {
             AutonomoAVMacTelemetry.app.info("Apple sign-in resolved signed-in user")
             await syncSignedInIntake()
         }
@@ -109,7 +146,8 @@ final class AutonomoAVMacModel {
     func signInWithGoogle() async {
         AutonomoAVMacTelemetry.app.info("Google sign-in requested")
         await accountController.signInWithGoogle()
-        if accountIsSignedIn {
+        await refreshAccess()
+        if hasProAccess {
             AutonomoAVMacTelemetry.app.info("Google sign-in resolved signed-in user")
             await syncSignedInIntake()
         }
@@ -118,11 +156,13 @@ final class AutonomoAVMacModel {
     func signOut() async {
         AutonomoAVMacTelemetry.app.info("Sign-out requested")
         await accountController.signOut()
+        applyResolvedAccess(.guest)
         remoteDocuments = []
         workspaceBootstrapped = false
     }
 
     func pickAndImportFiles(source: AutonomoUploadSource) async {
+        guard requireIntakeAccess() else { return }
         guard let urls = AutonomoAVMacFilePicker.pickDocuments() else {
             AutonomoAVMacTelemetry.intake.info("File picker cancelled")
             return
@@ -132,6 +172,7 @@ final class AutonomoAVMacModel {
 
     func importFiles(_ urls: [URL], source: AutonomoUploadSource) async {
         guard !urls.isEmpty else { return }
+        guard requireIntakeAccess() else { return }
         AutonomoAVMacTelemetry.intake.info("Import requested source=\(source.rawValue, privacy: .public) count=\(urls.count, privacy: .public)")
         isImporting = true
         defer { isImporting = false }
@@ -173,7 +214,7 @@ final class AutonomoAVMacModel {
     }
 
     func syncSignedInIntake() async {
-        guard accountIsSignedIn else { return }
+        guard requireIntakeAccess() else { return }
         AutonomoAVMacTelemetry.intake.info("Signed-in intake sync requested")
         await importSharedInboxItems()
         await uploadPending()
@@ -181,6 +222,7 @@ final class AutonomoAVMacModel {
     }
 
     func retry(_ item: LocalIntakeItem) async {
+        guard requireIntakeAccess() else { return }
         AutonomoAVMacTelemetry.intake.info("Retry requested itemID=\(item.id.uuidString, privacy: .public)")
         updateItem(id: item.id) { current in
             current.markPendingForRetry()
@@ -190,15 +232,13 @@ final class AutonomoAVMacModel {
     }
 
     func uploadPending() async {
-        guard !isUploading else {
-            AutonomoAVMacTelemetry.intake.info("Upload pending skipped because upload is already active")
+        guard requireIntakeAccess() else { return }
+        guard hasUploadableItems else {
+            AutonomoAVMacTelemetry.intake.info("Upload pending skipped because there are no uploadable items")
             return
         }
-        guard accountIsSignedIn else {
-            if hasUploadableItems {
-                lastErrorMessage = "Sign in with Account AV to upload pending documents."
-                AutonomoAVMacTelemetry.intake.info("Upload pending blocked: signed out pending=\(self.pendingCount, privacy: .public) failed=\(self.failedCount, privacy: .public)")
-            }
+        guard !isUploading else {
+            AutonomoAVMacTelemetry.intake.info("Upload pending skipped because upload is already active")
             return
         }
 
@@ -221,6 +261,7 @@ final class AutonomoAVMacModel {
     }
 
     func importSharedInboxItems() async {
+        guard requireIntakeAccess() else { return }
         guard !isImportingSharedInbox else {
             AutonomoAVMacTelemetry.intake.info("Share inbox import skipped because import is already active")
             return
@@ -276,7 +317,7 @@ final class AutonomoAVMacModel {
     }
 
     func refreshRemoteDocuments() async {
-        guard accountIsSignedIn else { return }
+        guard requireIntakeAccess() else { return }
         guard apiClient.isConfigured else {
             lastErrorMessage = L10n.string("account.apiMissing")
             AutonomoAVMacTelemetry.intake.info("Remote document refresh skipped: API base URL missing")
@@ -297,6 +338,48 @@ final class AutonomoAVMacModel {
             AutonomoAVMacTelemetry.intake.error("Remote document refresh failed")
         }
     }
+
+    func refreshAccess() async {
+        guard accountIsSignedIn else {
+            applyResolvedAccess(.guest)
+            return
+        }
+
+        guard accessProvider.isConfigured else {
+            AutonomoAVMacTelemetry.app.error("Access refresh skipped: API base URL missing")
+            applyResolvedAccess(.localFallback(for: .signedInFree))
+            return
+        }
+
+        isRefreshingAccess = true
+        defer { isRefreshingAccess = false }
+
+        do {
+            let payload = try await accessProvider.fetchMeAccess()
+            guard let appAccess = payload.apps.first(where: { $0.appId == AutonomoAPIClient.appIdentifier }) else {
+                AutonomoAVMacTelemetry.app.error("Access refresh did not include autonomoav")
+                applyResolvedAccess(.localFallback(for: .signedInFree))
+                return
+            }
+
+            applyResolvedAccess(AutonomoResolvedAccess(
+                platformUserId: payload.viewer?.userId,
+                planTier: appAccess.planTier,
+                accessMode: appAccess.accessMode,
+                capabilities: appAccess.capabilities,
+                limits: appAccess.limits
+            ))
+        } catch {
+            AutonomoAVMacTelemetry.app.error("Access refresh failed")
+            applyResolvedAccess(.localFallback(for: .signedInFree))
+        }
+    }
+
+    #if DEBUG
+    func enableProAccessForTesting() {
+        applyResolvedAccess(.localFallback(for: .signedInPro), publishSnapshot: false)
+    }
+    #endif
 
     private func upload(_ item: LocalIntakeItem) async {
         AutonomoAVMacTelemetry.intake.info("Upload item started source=\(item.source.rawValue, privacy: .public) itemID=\(item.id.uuidString, privacy: .public)")
@@ -347,6 +430,50 @@ final class AutonomoAVMacModel {
 
     private func save() throws {
         try persistence.saveItems(localItems)
+    }
+
+    private func requireIntakeAccess() -> Bool {
+        guard accessMode != .guest else {
+            AutonomoAVMacTelemetry.intake.info("Intake blocked: signed out pending=\(self.pendingCount, privacy: .public) failed=\(self.failedCount, privacy: .public)")
+            lastErrorMessage = "Sign in with Account AV before sending documents."
+            return false
+        }
+
+        guard hasProAccess else {
+            AutonomoAVMacTelemetry.intake.info("Intake blocked: Pro access required")
+            lastErrorMessage = "Autonomo AV Pro is required before importing or uploading documents."
+            return false
+        }
+
+        return true
+    }
+
+    private func applyResolvedAccess(_ resolvedAccess: AutonomoResolvedAccess, publishSnapshot: Bool = true) {
+        accessMode = resolvedAccess.accessMode
+        planTier = resolvedAccess.planTier
+        accessCapabilities = resolvedAccess.capabilities
+        platformUserId = resolvedAccess.platformUserId
+
+        guard publishSnapshot else {
+            return
+        }
+
+        guard resolvedAccess.accessMode == .signedInPro, resolvedAccess.capabilities.canUseIntake else {
+            AutonomoAVAccessSnapshotStore.clear()
+            remoteDocuments = []
+            workspaceBootstrapped = false
+            return
+        }
+
+        let snapshot = AutonomoAVAccessSnapshot(
+            platformUserId: resolvedAccess.platformUserId,
+            accessMode: resolvedAccess.accessMode.rawValue,
+            planTier: resolvedAccess.planTier.rawValue,
+            isSignedIn: resolvedAccess.capabilities.isSignedIn,
+            canUseIntake: resolvedAccess.capabilities.canUseIntake,
+            environment: AppConfig.environmentName
+        )
+        try? AutonomoAVAccessSnapshotStore.write(snapshot)
     }
 
     private func importSurfaceLabel(for source: AutonomoUploadSource) -> String {

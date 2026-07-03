@@ -54,6 +54,10 @@ export function getAutonomoAccountPublishableKey() {
   return import.meta.env.VITE_ACCOUNTAV_PUBLISHABLE_KEY as string | undefined;
 }
 
+export function getAutonomoAccountManagementUrl(path = "") {
+  return accountManagementUrl(path);
+}
+
 export function useAutonomoFixtures() {
   return import.meta.env.VITE_AUTONOMOAV_USE_FIXTURES !== "false";
 }

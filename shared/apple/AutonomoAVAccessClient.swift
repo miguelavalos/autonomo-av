@@ -53,7 +53,7 @@ struct AutonomoAccessCapabilities: Codable, Equatable {
         case .guest:
             AutonomoAccessCapabilities(
                 isSignedIn: false,
-                canUseBackend: true,
+                canUseBackend: false,
                 canUsePremiumFeatures: false,
                 canUseCloudSync: false,
                 canManagePlan: false
@@ -61,7 +61,7 @@ struct AutonomoAccessCapabilities: Codable, Equatable {
         case .signedInFree:
             AutonomoAccessCapabilities(
                 isSignedIn: true,
-                canUseBackend: true,
+                canUseBackend: false,
                 canUsePremiumFeatures: false,
                 canUseCloudSync: false,
                 canManagePlan: true
@@ -94,7 +94,7 @@ struct AutonomoAccessCapabilities: Codable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         isSignedIn = try container.decodeIfPresent(Bool.self, forKey: .isSignedIn) ?? false
-        canUseBackend = try container.decodeIfPresent(Bool.self, forKey: .canUseBackend) ?? true
+        canUseBackend = try container.decodeIfPresent(Bool.self, forKey: .canUseBackend) ?? false
         canUsePremiumFeatures = try container.decodeIfPresent(Bool.self, forKey: .canUsePremiumFeatures) ?? false
         canUseCloudSync = try container.decodeIfPresent(Bool.self, forKey: .canUseCloudSync) ?? false
         canManagePlan = try container.decodeIfPresent(Bool.self, forKey: .canManagePlan) ?? isSignedIn

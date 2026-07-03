@@ -33,10 +33,32 @@ struct AutonomoAVMacSidebarView: View {
                 }
             }
 
-            Section("Queue") {
-                Label("\(model.pendingCount) pending", systemImage: "clock")
-                Label("\(model.uploadedCount) uploaded", systemImage: "checkmark.circle")
-                Label("\(model.failedCount) failed", systemImage: "exclamationmark.triangle")
+            Section("Access") {
+                Label(model.accessStatusText, systemImage: model.hasProAccess ? "checkmark.seal" : "lock")
+                    .lineLimit(1)
+
+                if model.accountIsSignedIn, !model.hasProAccess {
+                    if let url = AppConfig.accountManagementURL {
+                        Link(destination: url) {
+                            Label("Manage Pro", systemImage: "creditcard")
+                        }
+                    }
+
+                    Button {
+                        Task { await model.refreshAccess() }
+                    } label: {
+                        Label("Refresh Access", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(model.isRefreshingAccess)
+                }
+            }
+
+            if model.hasProAccess {
+                Section("Queue") {
+                    Label("\(model.pendingCount) pending", systemImage: "clock")
+                    Label("\(model.uploadedCount) uploaded", systemImage: "checkmark.circle")
+                    Label("\(model.failedCount) failed", systemImage: "exclamationmark.triangle")
+                }
             }
 
             if let lastErrorMessage = model.lastErrorMessage {

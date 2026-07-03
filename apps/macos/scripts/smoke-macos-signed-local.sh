@@ -15,8 +15,8 @@ Usage:
 Runs the local signed macOS smoke set against an already built app:
   - Share Extension PlugInKit registration
   - Share Extension service discovery
-  - Finder/Open With no-upload import
-  - Services no-upload import
+  - Finder/Open With locked-access guard by default
+  - Services locked-access guard by default
 
 This script does not build, archive, export, upload, or contact App Store
 Connect. Build the app first with a repo-local -derivedDataPath.

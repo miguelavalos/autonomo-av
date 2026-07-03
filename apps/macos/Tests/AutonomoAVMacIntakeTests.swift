@@ -279,6 +279,7 @@ final class AutonomoAVMacIntakeTests: XCTestCase {
             ),
             sharedInbox: SharedIntakeInbox(rootURL: rootURL, fileManager: fileManager)
         )
+        model.enableProAccessForTesting()
 
         await model.importSharedInboxItems()
 
@@ -335,8 +336,37 @@ final class AutonomoAVMacIntakeTests: XCTestCase {
         XCTAssertEqual(model.currentAccountUser, lastKnownUser)
         XCTAssertFalse(model.accountIsSignedIn)
         XCTAssertEqual(model.localItems.first?.status, .pending)
-        XCTAssertEqual(model.lastErrorMessage, "Sign in with Account AV to upload pending documents.")
+        XCTAssertEqual(model.lastErrorMessage, "Sign in with Account AV before sending documents.")
         XCTAssertEqual(accountService.tokenRequestCount, 0)
+    }
+
+    @MainActor
+    func testMacModelDoesNotStageFilesWithoutProAccess() async throws {
+        let fileManager = FileManager.default
+        let rootURL = fileManager.temporaryDirectory
+            .appending(path: "AutonomoAVMacProGateTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        defer { try? fileManager.removeItem(at: rootURL) }
+
+        try fileManager.createDirectory(at: rootURL, withIntermediateDirectories: true)
+        let sourceURL = rootURL.appending(path: "invoice.pdf")
+        try Data("pdf".utf8).write(to: sourceURL)
+
+        let persistence = LocalIntakePersistence(
+            rootURL: rootURL.appending(path: "LocalQueue", directoryHint: .isDirectory),
+            fileManager: fileManager,
+            idempotencyKeyPrefix: "macos",
+            sharedInboxSource: .macosShare
+        )
+        let model = AutonomoAVMacModel(
+            persistence: persistence,
+            sharedInbox: SharedIntakeInbox(rootURL: rootURL, fileManager: fileManager)
+        )
+
+        await model.importFiles([sourceURL], source: .macosFiles)
+
+        XCTAssertTrue(model.localItems.isEmpty)
+        XCTAssertTrue(persistence.loadItems().isEmpty)
+        XCTAssertEqual(model.lastErrorMessage, "Sign in with Account AV before sending documents.")
     }
 
     func testMacPersistenceImportsWithMacOSDefaults() throws {

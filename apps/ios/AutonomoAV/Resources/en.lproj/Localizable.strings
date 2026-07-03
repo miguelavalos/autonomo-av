@@ -55,6 +55,7 @@
 "intake.import.failed.message" = "The selected file could not be copied for upload.";
 "intake.import.partialFailure" = "Import finished with %d failed file(s) and %d unsupported or too-large file(s).";
 "intake.shareImport.partialFailure" = "Share import finished with %d failed file(s) and %d unsupported or too-large file(s).";
+"intake.proRequired" = "Autonomo AV Pro is required before importing or uploading documents.";
 "account.signedIn" = "Signed in";
 "account.signOut" = "Sign out";
 "account.temporary" = "Account temporarily unavailable";

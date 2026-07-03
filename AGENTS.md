@@ -32,5 +32,8 @@ preflight fails, fix the missing guard or stop and report the blocker.
   CI-equivalent local validation, use `scripts/macos-ci-test.sh`.
 - The Share Extension label is `Enviar a Autonomo AV Inbox`.
 - The macOS Share Extension label is `Autonomo AV Inbox`.
-- Share Extensions must not read or store Account AV bearer tokens. They hand
-  compatible files to the containing app through the configured App Group.
+- Share Extensions must not read or store Account AV bearer tokens. They may
+  read only the tokenless Autonomo AV access snapshot in the App Group; without
+  a fresh signed-in Pro snapshot they must reject the handoff before copying
+  files. The containing app drains compatible files from the App Group only
+  after Account AV login and Pro access are active.

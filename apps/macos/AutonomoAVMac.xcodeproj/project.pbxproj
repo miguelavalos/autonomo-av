@@ -17,6 +17,8 @@
 		3C45CBB8D698204FCC79A39E /* AutonomoAVMacModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B6BC975E9247642811D1F0 /* AutonomoAVMacModel.swift */; };
 		4D8824CFB83B2149B5C5D490 /* AutonomoAVMacFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 652C44597B637E5444F622A8 /* AutonomoAVMacFormatters.swift */; };
 		4F0BFFC504E1FE72EF61C27A /* AutonomoAVShareExtensionInboxWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E289776DA52ACB37D9CD44 /* AutonomoAVShareExtensionInboxWriter.swift */; };
+		5001D2BA4BC86C5F81629DD3 /* AutonomoAVAccessSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C616B1971526C72B98540A5 /* AutonomoAVAccessSnapshot.swift */; };
+		676F222B761275D5D650A3E3 /* AutonomoAVAccessSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C616B1971526C72B98540A5 /* AutonomoAVAccessSnapshot.swift */; };
 		779D1404935BA3D840E0CB19 /* AutonomoAVMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5FF2691691FB273EFABEB9 /* AutonomoAVMacApp.swift */; };
 		7A47A2EEE88F61816CD53AF4 /* AutonomoAVMacFilePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C54117BFFC2F26B05E2B42F /* AutonomoAVMacFilePicker.swift */; };
 		7F08C3A08BBEB2F15DC8D2CA /* AutonomoAVMacSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D776A325DA69DE527C1547F3 /* AutonomoAVMacSettingsView.swift */; };
@@ -74,6 +76,7 @@
 		2E66AFA5096466E175AD3396 /* AutonomoAVPreparedUploadWorkflow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVPreparedUploadWorkflow.swift; sourceTree = "<group>"; };
 		32B62619CDD170CDD30B3C89 /* AutonomoAVAccessClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVAccessClient.swift; sourceTree = "<group>"; };
 		45C34E408185E800E7EA26E6 /* AutonomoAVMacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacRootView.swift; sourceTree = "<group>"; };
+		4C616B1971526C72B98540A5 /* AutonomoAVAccessSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVAccessSnapshot.swift; sourceTree = "<group>"; };
 		52E05B2664E080B7787609EE /* AutonomoAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccount.swift; sourceTree = "<group>"; };
 		53B6BC975E9247642811D1F0 /* AutonomoAVMacModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacModel.swift; sourceTree = "<group>"; };
 		5B5FF2691691FB273EFABEB9 /* AutonomoAVMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacApp.swift; sourceTree = "<group>"; };
@@ -214,6 +217,7 @@
 			isa = PBXGroup;
 			children = (
 				32B62619CDD170CDD30B3C89 /* AutonomoAVAccessClient.swift */,
+				4C616B1971526C72B98540A5 /* AutonomoAVAccessSnapshot.swift */,
 				0146B19127C5F2254709A5AE /* AutonomoAVDocumentIntakeSupport.swift */,
 				8D31FD3647B00CDAD5CE327A /* AutonomoAVLocalIntakeQueue.swift */,
 				2E66AFA5096466E175AD3396 /* AutonomoAVPreparedUploadWorkflow.swift */,
@@ -393,6 +397,7 @@
 			files = (
 				17B033E5D9A1D64B3AAEA0BB /* AutonomoAPIClient.swift in Sources */,
 				20AFC0AF8C9E2874AC20530E /* AutonomoAVAccessClient.swift in Sources */,
+				5001D2BA4BC86C5F81629DD3 /* AutonomoAVAccessSnapshot.swift in Sources */,
 				81AFF5E45DACC5DDA85E75C6 /* AutonomoAVDocumentIntakeSupport.swift in Sources */,
 				8D777BCEB0FEF45DC759607C /* AutonomoAVLocalIntakeQueue.swift in Sources */,
 				779D1404935BA3D840E0CB19 /* AutonomoAVMacApp.swift in Sources */,
@@ -417,6 +422,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				676F222B761275D5D650A3E3 /* AutonomoAVAccessSnapshot.swift in Sources */,
 				D31065409694BC4F94068DC8 /* AutonomoAVShareExtensionInboxWriter.swift in Sources */,
 				D63E4010092D690082CB4132 /* ShareViewController.swift in Sources */,
 			);

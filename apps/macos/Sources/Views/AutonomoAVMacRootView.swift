@@ -14,30 +14,34 @@ struct AutonomoAVMacRootView: View {
 
                 Divider()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        AutonomoAVMacDropZone(
-                            isTargeted: isDropTargeted,
-                            importAction: {
-                                Task { await model.pickAndImportFiles(source: .macosFiles) }
+                if model.hasProAccess {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            AutonomoAVMacDropZone(
+                                isTargeted: isDropTargeted,
+                                importAction: {
+                                    Task { await model.pickAndImportFiles(source: .macosFiles) }
+                                }
+                            )
+                            .dropDestination(for: URL.self) { urls, _ in
+                                Task {
+                                    await model.importFiles(urls, source: .macosDragDrop)
+                                }
+                                return true
+                            } isTargeted: { targeted in
+                                isDropTargeted = targeted
                             }
-                        )
-                        .dropDestination(for: URL.self) { urls, _ in
-                            Task {
-                                await model.importFiles(urls, source: .macosDragDrop)
+
+                            AutonomoAVMacLocalQueueView(model: model)
+
+                            if !model.remoteDocuments.isEmpty {
+                                AutonomoAVMacRemoteInboxView(documents: model.remoteDocuments)
                             }
-                            return true
-                        } isTargeted: { targeted in
-                            isDropTargeted = targeted
                         }
-
-                        AutonomoAVMacLocalQueueView(model: model)
-
-                        if !model.remoteDocuments.isEmpty {
-                            AutonomoAVMacRemoteInboxView(documents: model.remoteDocuments)
-                        }
+                        .padding(24)
                     }
-                    .padding(24)
+                } else {
+                    AutonomoAVMacAccessGateView(model: model)
                 }
             }
             .background(.background)
@@ -53,7 +57,7 @@ private struct AutonomoAVMacHeaderView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Autonomo AV")
                     .font(.title2.weight(.semibold))
-                Text("\(model.pendingCount) pending · \(model.failedCount) failed")
+                Text(model.hasProAccess ? "\(model.pendingCount) pending · \(model.failedCount) failed" : model.accessStatusText)
                     .foregroundStyle(.secondary)
             }
 
@@ -64,7 +68,7 @@ private struct AutonomoAVMacHeaderView: View {
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
-            .disabled(!model.accountIsSignedIn || model.isRefreshingRemoteDocuments)
+            .disabled(!model.hasProAccess || model.isRefreshingRemoteDocuments)
 
             Button {
                 Task { await model.uploadPending() }
@@ -72,10 +76,75 @@ private struct AutonomoAVMacHeaderView: View {
                 Label("Upload Pending", systemImage: "arrow.up.circle")
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!model.hasUploadableItems || !model.accountIsSignedIn || model.isUploading)
+            .disabled(!model.hasUploadableItems || !model.hasProAccess || model.isUploading)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
+    }
+}
+
+private struct AutonomoAVMacAccessGateView: View {
+    let model: AutonomoAVMacModel
+
+    var body: some View {
+        VStack(spacing: 16) {
+            ContentUnavailableView {
+                Label(title, systemImage: systemImage)
+            } description: {
+                Text(detail)
+            } actions: {
+                HStack(spacing: 10) {
+                    if model.accountIsSignedIn {
+                        if let url = AppConfig.accountManagementURL {
+                            Link(destination: url) {
+                                Label("Manage Pro", systemImage: "creditcard")
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+
+                        Button {
+                            Task { await model.refreshAccess() }
+                        } label: {
+                            Label("Refresh Access", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(model.isRefreshingAccess)
+                    } else {
+                        Button {
+                            Task { await model.signInWithApple() }
+                        } label: {
+                            Label("Sign in with Apple", systemImage: "apple.logo")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(model.accountController.isAuthenticating)
+
+                        Button {
+                            Task { await model.signInWithGoogle() }
+                        } label: {
+                            Label("Sign in with Google", systemImage: "person.badge.key")
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(model.accountController.isAuthenticating)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(32)
+    }
+
+    private var title: String {
+        model.accountIsSignedIn ? "Autonomo AV Pro required" : "Sign in to Autonomo AV"
+    }
+
+    private var detail: String {
+        model.accountIsSignedIn
+            ? "Activate Pro before sending documents to the intake queue."
+            : "Sign in first, then activate Pro to send documents."
+    }
+
+    private var systemImage: String {
+        model.accountIsSignedIn ? "lock.fill" : "person.crop.circle.badge.plus"
     }
 }
 

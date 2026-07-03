@@ -14,16 +14,18 @@ struct AutonomoAVMacMenuBarView: View {
             openWindow(id: "main")
             Task { await model.pickAndImportFiles(source: .macosFiles) }
         }
+        .disabled(!model.hasProAccess || model.isImporting)
 
         Button("Upload Pending") {
             Task { await model.syncSignedInIntake() }
         }
-        .disabled(!model.accountIsSignedIn || model.isUploading || model.isImportingSharedInbox)
+        .disabled(!model.hasProAccess || model.isUploading || model.isImportingSharedInbox)
 
         Divider()
 
         Text("\(model.pendingCount) pending")
         Text(model.accountStatusText)
+        Text(model.accessStatusText)
 
         Divider()
 

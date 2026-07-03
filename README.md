@@ -15,17 +15,20 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
 
 - `apps/ios`
   Native SwiftUI iPhone intake app with Account AV sign-in boundary, scan/files
-  import, local retry state, backend upload client, and Share Extension scaffold
-  labeled `Enviar a Autonomo AV Inbox`.
+  import, local retry state, backend upload client, Pro access gate, and Share
+  Extension scaffold labeled `Enviar a Autonomo AV Inbox`.
 - `apps/macos`
   Native SwiftUI macOS intake app scaffold with MenuBarExtra, main inbox window,
   local retry queue reuse, Finder/Open With, Services, Share Extension,
   drag/drop and file picker import, and Account AV upload wiring through the
-  shared Apple upload core. The Share Extension writes only to the app group
-  inbox; the containing app drains and uploads after Account AV session restore.
+  shared Apple upload core. Import surfaces require Account AV login plus
+  Autonomo AV Pro before staging files. The Share Extension writes only to the
+  app group inbox after finding a fresh tokenless Pro access snapshot; the
+  containing app drains and uploads only while Pro access is active.
 - `apps/web`
   Minimal signed-in web app with inbox-first workflow, drag/drop upload,
-  review, quarter view, settings, fixture mode, and live backend client wiring.
+  review, quarter view, settings, fixture mode, live backend client wiring, and
+  a Pro gate before mounting product workflows.
 
 ## Docs
 
@@ -82,13 +85,14 @@ Share Extension/App Group handoff as proven only when
 is still useful for local Finder/Open With and menu bar smokes, but not for
 claiming the share handoff is fully provisioned.
 
-For local signed no-upload smokes, use the aggregate script. The Share Extension
-registration smoke validates the signed `.appex` through PlugInKit; the Share
-Extension discovery smoke stages the app under a temporary `~/Applications`
-folder and verifies that macOS lists `Autonomo AV Inbox` for a synthetic PDF.
-The Finder/Open With and Services scripts launch the signed app with an isolated
-local queue, require signed-out account restore by default, invoke the macOS
-intake surface with a synthetic PDF, and verify the expected pending source:
+For local signed locked-access smokes, use the aggregate script. The Share
+Extension registration smoke validates the signed `.appex` through PlugInKit;
+the Share Extension discovery smoke stages the app under a temporary
+`~/Applications` folder and verifies that macOS lists `Autonomo AV Inbox` for a
+synthetic PDF. The Finder/Open With and Services scripts launch the signed app
+with an isolated local queue, require locked access by default, invoke the macOS
+intake surface with a synthetic PDF, and verify that no file is staged before
+login plus Pro access:
 
 ```bash
 scripts/smoke-macos-signed-local.sh --env dev --app /path/to/Autonomo\ AV.app

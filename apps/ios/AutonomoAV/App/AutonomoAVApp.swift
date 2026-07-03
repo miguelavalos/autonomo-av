@@ -19,15 +19,19 @@ struct AutonomoAVApp: App {
             baseURL: AppConfig.autonomoAPIBaseURL,
             tokenProvider: { try await accountService.getToken() }
         )
+        let accessController = AutonomoAccessController(
+            apiClient: apiClient,
+            promotionCodeRedeemer: promoCodeClient
+        )
         _accountController = State(initialValue: AccountController(
             accountService: accountService,
             profileResolver: PlatformAccountProfileResolver(apiClient: apiClient)
         ))
-        _accessController = State(initialValue: AutonomoAccessController(
-            apiClient: apiClient,
-            promotionCodeRedeemer: promoCodeClient
+        _accessController = State(initialValue: accessController)
+        _intakeStore = State(initialValue: IntakeStore(
+            client: apiClient,
+            canUseIntakeProvider: { accessController.hasProAccess }
         ))
-        _intakeStore = State(initialValue: IntakeStore(client: apiClient))
     }
 
     var body: some Scene {

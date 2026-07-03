@@ -55,6 +55,11 @@ final class ShareViewController: UIViewController {
             return
         }
 
+        guard AutonomoAVAccessSnapshotStore.loadFreshProSnapshot() != nil else {
+            detailLabel.text = "Abre Autonomo AV, inicia sesion y activa Pro antes de enviar documentos."
+            return
+        }
+
         guard let pendingURL = try? AutonomoAVShareExtensionInboxWriter.preparePendingURL() else {
             detailLabel.text = "No se pudo abrir la bandeja compartida. Abre Autonomo AV para revisar la configuracion de la app."
             return

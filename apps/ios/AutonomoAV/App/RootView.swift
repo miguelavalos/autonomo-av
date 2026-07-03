@@ -34,7 +34,10 @@ struct RootView: View {
             await syncSignedInIntake()
         }
         .onChange(of: accessController.hasProAccess) { _, hasProAccess in
-            guard hasProAccess else { return }
+            guard hasProAccess else {
+                intakeStore.clearBackendStateForLockedAccess()
+                return
+            }
             Task {
                 await syncSignedInIntake()
                 await intakeStore.uploadPending()

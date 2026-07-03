@@ -8,6 +8,7 @@ import type {
   AutonomoDocumentListQuery,
   AutonomoDocumentManualReviewRequest,
   AutonomoDocumentsListResponse,
+  AutonomoMeAccessResponse,
   AutonomoPrepareUploadRequest,
   AutonomoPreparedUploadResponse,
   AutonomoQuarterSummaryResponse,
@@ -28,6 +29,13 @@ export class AutonomoApiClient {
     private readonly getToken: AutonomoTokenProvider,
     private readonly useFixtures: boolean
   ) {}
+
+  fetchMeAccess(): Promise<AutonomoMeAccessResponse> {
+    if (this.useFixtures) {
+      return Promise.resolve(fixtureAutonomoAccessResponse());
+    }
+    return this.fetchJson("/v1/me/access?appId=autonomoav");
+  }
 
   bootstrapWorkspace(): Promise<AutonomoWorkspaceBootstrapResponse> {
     if (this.useFixtures) return fixtureAutonomoApi.bootstrapWorkspace();
@@ -142,6 +150,8 @@ export class AutonomoApiClient {
       cache: "no-store",
       headers: {
         ...(options.body ? { "Content-Type": "application/json" } : {}),
+        "x-appsav-app-id": "autonomoav",
+        "x-appsav-platform": "web",
         Authorization: `Bearer ${token}`
       },
       body: options.body ? JSON.stringify(options.body) : undefined
@@ -159,6 +169,8 @@ export class AutonomoApiClient {
     const response = await fetch(`${this.requiredBaseUrl()}${path}`, {
       cache: "no-store",
       headers: {
+        "x-appsav-app-id": "autonomoav",
+        "x-appsav-platform": "web",
         Authorization: `Bearer ${token}`
       }
     });
@@ -188,6 +200,32 @@ export class AutonomoApiClient {
     }
     return token;
   }
+}
+
+function fixtureAutonomoAccessResponse(): AutonomoMeAccessResponse {
+  return {
+    viewer: {
+      isAuthenticated: true,
+      userId: "fixture-user",
+      identityProvider: "fixture"
+    },
+    apps: [
+      {
+        appId: "autonomoav",
+        accessMode: "signedInPro",
+        planTier: "pro",
+        capabilities: {
+          isSignedIn: true,
+          canUseBackend: true,
+          canUsePremiumFeatures: true,
+          canUseCloudSync: true,
+          canManagePlan: true
+        },
+        limits: {}
+      }
+    ],
+    generatedAt: new Date().toISOString()
+  };
 }
 
 export class AutonomoApiError extends Error {
