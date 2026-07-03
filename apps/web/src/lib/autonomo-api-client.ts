@@ -117,10 +117,12 @@ export class AutonomoApiClient {
     contentType: AutonomoUploadContentType
   ): Promise<AutonomoUploadCompletionResponse> {
     const baseUrl = this.requiredBaseUrl();
-    const uploadUrl = absoluteUrl(baseUrl, prepared.uploadUrl || `/v1/apps/autonomo/uploads/${encodeURIComponent(prepared.uploadId)}`);
-    const headers = preparedUploadHeaders(prepared.headers, contentType);
+    const uploadUrl = browserUploadUrl(baseUrl, prepared);
+    const headers = preparedUploadHeaders(prepared.headers, contentType, uploadUrl, baseUrl);
     if (shouldAuthorizePreparedUpload(uploadUrl, baseUrl)) {
       headers.set("Authorization", `Bearer ${await this.requiredToken()}`);
+      headers.set("x-appsav-app-id", "autonomoav");
+      headers.set("x-appsav-platform", "web");
     }
 
     const response = await fetch(uploadUrl, {
@@ -286,8 +288,19 @@ function absoluteUrl(baseUrl: string, value: string) {
   return `${baseUrl.replace(/\/$/, "")}${value.startsWith("/") ? value : `/${value}`}`;
 }
 
-function preparedUploadHeaders(preparedHeaders: Record<string, string>, fallbackContentType: string) {
-  const headers = new Headers(preparedHeaders);
+function browserUploadUrl(baseUrl: string, prepared: AutonomoPreparedUploadResponse) {
+  const apiUploadUrl = absoluteUrl(baseUrl, `/v1/apps/autonomo/uploads/${encodeURIComponent(prepared.uploadId)}`);
+  const preparedUrl = absoluteUrl(baseUrl, prepared.uploadUrl || apiUploadUrl);
+  return shouldAuthorizePreparedUpload(preparedUrl, baseUrl) ? preparedUrl : apiUploadUrl;
+}
+
+function preparedUploadHeaders(
+  preparedHeaders: Record<string, string>,
+  fallbackContentType: string,
+  uploadUrl: string,
+  baseUrl: string
+) {
+  const headers = new Headers(shouldAuthorizePreparedUpload(uploadUrl, baseUrl) ? {} : preparedHeaders);
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", fallbackContentType);
   }
