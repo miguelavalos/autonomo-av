@@ -6,6 +6,7 @@
 !.env.example
 Config/Local.xcconfig
 apps/ios/Config/Local.xcconfig
+apps/macos/Config/Local.xcconfig
 
 # Web
 node_modules/

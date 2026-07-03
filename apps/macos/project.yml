@@ -1,0 +1,175 @@
+name: AutonomoAVMac
+options:
+  bundleIdPrefix: com.avalsys
+  deploymentTarget:
+    macOS: "14.0"
+  xcodeVersion: "16.0"
+  postGenCommand: scripts/normalize-xcodegen-system-capabilities.sh
+
+settings:
+  base:
+    ARCHS: arm64
+    DEVELOPMENT_LANGUAGE: en
+    PRODUCT_NAME: Autonomo AV
+    SWIFT_VERSION: "6.0"
+
+packages:
+  AccountAV:
+    path: ../../../account-av
+
+schemes:
+  AutonomoAVMac:
+    build:
+      targets:
+        AutonomoAVMac: all
+        AutonomoAVMacShareExtension: all
+    run:
+      config: Debug
+      executable: AutonomoAVMac
+    test:
+      config: Debug
+      targets:
+        - AutonomoAVMacTests
+    analyze:
+      config: Debug
+    profile:
+      config: Release
+    archive:
+      config: Release
+    management:
+      shared: true
+
+targets:
+  AutonomoAVMac:
+    type: application
+    platform: macOS
+    attributes:
+      SystemCapabilities:
+        com.apple.ApplicationGroups.Mac:
+          enabled: 1
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    sources:
+      - path: Sources
+      - path: ../../shared/apple
+      - path: ../ios/AutonomoAV/Account/AutonomoAccount.swift
+      - path: ../ios/AutonomoAV/Network/AutonomoAPIClient.swift
+      - path: ../ios/AutonomoAV/Resources/en.lproj/Localizable.strings
+        buildPhase: resources
+    dependencies:
+      - package: AccountAV
+        product: AccountAV
+      - target: AutonomoAVMacShareExtension
+        embed: true
+    info:
+      path: Supporting/Info.plist
+      properties:
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        CFBundleDisplayName: $(AUTONOMOAV_DISPLAY_NAME)
+        CFBundleURLTypes:
+          - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
+            CFBundleURLSchemes:
+              - $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Autonomo AV Documents
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - com.adobe.pdf
+              - public.jpeg
+              - public.png
+              - org.webmproject.webp
+              - public.heic
+              - public.heif
+        NSServices:
+          - NSMenuItem:
+              default: Send to Autonomo AV
+            NSMessage: sendFilesToAutonomoAV
+            NSPortName: Autonomo AV
+            NSSendFileTypes:
+              - com.adobe.pdf
+              - public.jpeg
+              - public.png
+              - org.webmproject.webp
+              - public.heic
+              - public.heif
+            NSRequiredContext: {}
+            NSRestricted: false
+            NSServiceDescription: Send selected documents to Autonomo AV.
+        ACCOUNTAV_PUBLISHABLE_KEY: $(ACCOUNTAV_PUBLISHABLE_KEY)
+        ACCOUNTAV_KEYCHAIN_SERVICE: $(ACCOUNTAV_KEYCHAIN_SERVICE)
+        ACCOUNTAV_KEYCHAIN_ACCESS_GROUP: $(ACCOUNTAV_KEYCHAIN_ACCESS_GROUP)
+        ACCOUNTAV_API_BASE_URL: $(ACCOUNTAV_API_BASE_URL)
+        ACCOUNTAV_MANAGEMENT_URL: $(ACCOUNTAV_MANAGEMENT_URL)
+        AUTONOMOAV_API_BASE_URL: $(AUTONOMOAV_API_BASE_URL)
+        AUTONOMOAV_APP_GROUP_IDENTIFIER: $(AUTONOMOAV_APP_GROUP_IDENTIFIER)
+        AUTONOMOAV_CONFIG_ENVIRONMENT: $(AUTONOMOAV_CONFIG_ENVIRONMENT)
+        AUTONOMOAV_DELETE_ACCOUNT_URL: $(AUTONOMOAV_DELETE_ACCOUNT_URL)
+        AUTONOMOAV_MACOS_SENTRY_DSN: $(AUTONOMOAV_MACOS_SENTRY_DSN)
+        AUTONOMOAV_PRIVACY_URL: $(AUTONOMOAV_PRIVACY_URL)
+        AUTONOMOAV_TERMS_URL: $(AUTONOMOAV_TERMS_URL)
+        SUPPORT_EMAIL_TO: $(SUPPORT_EMAIL_TO)
+        SUPPORTAV_BASE_URL: $(SUPPORTAV_BASE_URL)
+        LSApplicationCategoryType: public.app-category.business
+    settings:
+      base:
+        CODE_SIGN_ENTITLEMENTS: Supporting/AutonomoAVMac.entitlements
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)"
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: Supporting/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: "$(PRODUCT_BUNDLE_IDENTIFIER)"
+        PRODUCT_MODULE_NAME: AutonomoAVMac
+        REGISTER_APP_GROUPS: YES
+
+  AutonomoAVMacShareExtension:
+    type: app-extension
+    platform: macOS
+    attributes:
+      SystemCapabilities:
+        com.apple.ApplicationGroups.Mac:
+          enabled: 1
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    sources:
+      - path: ShareExtension
+      - path: ../../shared/apple/AutonomoAVShareExtensionInboxWriter.swift
+    settings:
+      base:
+        APPLICATION_EXTENSION_API_ONLY: YES
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/AutonomoAVMacShareExtension.entitlements
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)"
+        ENABLE_APP_SANDBOX: YES
+        ENABLE_HARDENED_RUNTIME: YES
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: ShareExtension/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: "$(AUTONOMOAV_MACOS_BUNDLE_IDENTIFIER).share"
+        PRODUCT_MODULE_NAME: AutonomoAVMacShareExtension
+        PRODUCT_NAME: "Autonomo AV Inbox"
+        REGISTER_APP_GROUPS: YES
+        SKIP_INSTALL: YES
+
+  AutonomoAVMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    sources:
+      - path: Tests
+    dependencies:
+      - target: AutonomoAVMac
+    settings:
+      base:
+        CODE_SIGNING_ALLOWED: NO
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_NAME: AutonomoAVMacTests
+        PRODUCT_MODULE_NAME: AutonomoAVMacTests
+        PRODUCT_BUNDLE_IDENTIFIER: "$(AUTONOMOAV_MACOS_BUNDLE_IDENTIFIER).tests"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Autonomo AV.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Autonomo AV"

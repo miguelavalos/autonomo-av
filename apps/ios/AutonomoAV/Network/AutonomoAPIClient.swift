@@ -1,5 +1,4 @@
 import Foundation
-import CryptoKit
 import OSLog
 
 struct AccountSummaryResponse: Decodable, Equatable {
@@ -25,9 +24,19 @@ struct AccountSummaryResponse: Decodable, Equatable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let user = try container.decodeIfPresent(AccountSummaryUserResponse.self, forKey: .user)
-        id = try container.decodeIfPresent(String.self, forKey: .id)
-            ?? user?.id
-            ?? ""
+        let topLevelId = try container.decodeIfPresent(String.self, forKey: .id)
+        let resolvedId = [topLevelId, user?.id]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .first { !$0.isEmpty }
+        guard let resolvedId = resolvedId?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !resolvedId.isEmpty else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .id,
+                in: container,
+                debugDescription: "Missing Account AV internal user id."
+            )
+        }
+        id = resolvedId
         displayName = try container.decodeIfPresent(String.self, forKey: .displayName)
             ?? container.decodeIfPresent(String.self, forKey: .name)
             ?? user?.displayName
@@ -58,16 +67,6 @@ private struct AccountSummaryUserResponse: Decodable, Equatable {
         emailAddress = try container.decodeIfPresent(String.self, forKey: .emailAddress)
             ?? container.decodeIfPresent(String.self, forKey: .email)
     }
-}
-
-enum AutonomoUploadSource: String, Codable, CaseIterable {
-    case adminUpload = "admin_upload"
-    case iosCamera = "ios_camera"
-    case iosFiles = "ios_files"
-    case iosShare = "ios_share"
-    case webUpload = "web_upload"
-    case emailAttachment = "email_attachment"
-    case emailBody = "email_body"
 }
 
 enum AutonomoDocumentStatus: String, Codable, CaseIterable {
@@ -106,63 +105,6 @@ enum AutonomoDocumentStatus: String, Codable, CaseIterable {
             return L10n.string("intake.status.quarantined")
         }
     }
-}
-
-struct AutonomoPrepareUploadRequest: Encodable, Equatable {
-    let originalFilename: String
-    let contentType: String
-    let byteSize: Int
-    let sha256: String
-    let source: AutonomoUploadSource
-}
-
-struct AutonomoPrepareUploadResponse: Decodable, Equatable {
-    let uploadId: String
-    let uploadURL: URL?
-    let uploadMethod: String?
-    let maxBytes: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case uploadId
-        case uploadURL
-        case uploadUrl
-        case uploadMethod
-        case method
-        case maxBytes
-    }
-
-    init(
-        uploadId: String,
-        uploadURL: URL? = nil,
-        uploadMethod: String? = nil,
-        maxBytes: Int? = nil
-    ) {
-        self.uploadId = uploadId
-        self.uploadURL = uploadURL
-        self.uploadMethod = uploadMethod
-        self.maxBytes = maxBytes
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        uploadId = try container.decode(String.self, forKey: .uploadId)
-        uploadURL = try container.decodeIfPresent(URL.self, forKey: .uploadURL)
-            ?? container.decodeIfPresent(URL.self, forKey: .uploadUrl)
-        uploadMethod = try container.decodeIfPresent(String.self, forKey: .uploadMethod)
-            ?? container.decodeIfPresent(String.self, forKey: .method)
-        maxBytes = try container.decodeIfPresent(Int.self, forKey: .maxBytes)
-    }
-}
-
-struct AutonomoCompleteUploadRequest: Encodable, Equatable {
-    let source: AutonomoUploadSource
-    let idempotencyKey: String
-}
-
-struct AutonomoCompleteUploadResponse: Decodable, Equatable {
-    let documentId: String?
-    let queueItemId: String?
-    let status: AutonomoDocumentStatus?
 }
 
 struct AutonomoWorkspaceSummary: Decodable, Equatable {
@@ -251,7 +193,6 @@ enum AutonomoAPIClientError: LocalizedError, Equatable {
     case missingToken
     case missingBaseURL
     case requestFailed(statusCode: Int)
-    case unsupportedFile
 
     var errorDescription: String? {
         switch self {
@@ -261,14 +202,12 @@ enum AutonomoAPIClientError: LocalizedError, Equatable {
             L10n.string("upload.error.missingBaseURL")
         case .requestFailed(let statusCode):
             L10n.string("upload.error.requestFailed", statusCode)
-        case .unsupportedFile:
-            L10n.string("upload.error.unsupportedFile")
         }
     }
 }
 
 @MainActor
-final class AutonomoAPIClient {
+final class AutonomoAPIClient: AutonomoDocumentUploadBackend {
     nonisolated static let appIdentifier = AutonomoAVSharedConfig.appIdentifier
     nonisolated private static let appIdHeaderValue = appIdentifier
 
@@ -381,18 +320,15 @@ final class AutonomoAPIClient {
                 data,
                 uploadURL: uploadURL,
                 uploadMethod: preparedUpload.uploadMethod,
-                mimeType: mimeType
+                mimeType: mimeType,
+                headers: preparedUpload.headers
             )
         } else {
             try await uploadData(data, uploadId: preparedUpload.uploadId, mimeType: mimeType)
         }
     }
 
-    func completeUpload(
-        uploadId: String,
-        source: AutonomoUploadSource,
-        idempotencyKey: String
-    ) async throws -> AutonomoCompleteUploadResponse {
+    func completeUpload(uploadId: String) async throws -> AutonomoCompleteUploadResponse {
         try await request(path: "/v1/apps/autonomo/uploads/\(uploadId)/complete", method: "POST")
     }
 
@@ -488,7 +424,8 @@ final class AutonomoAPIClient {
         _ data: Data,
         uploadURL: URL,
         uploadMethod: String?,
-        mimeType: String
+        mimeType: String,
+        headers: [String: String] = [:]
     ) async throws {
         let baseURL = baseURLProvider()
         let resolvedUploadURL = Self.resolvedPreparedUploadURL(uploadURL, baseURL: baseURL)
@@ -496,7 +433,7 @@ final class AutonomoAPIClient {
         var request = URLRequest(url: resolvedUploadURL)
         request.httpMethod = method?.isEmpty == false ? method : "PUT"
         request.httpBody = data
-        request.setValue(mimeType, forHTTPHeaderField: "Content-Type")
+        Self.addPreparedUploadHeaders(to: &request, headers: headers, fallbackMimeType: mimeType)
         if Self.shouldAuthorizePreparedUpload(uploadURL: resolvedUploadURL, baseURL: baseURL) {
             guard let token = try await tokenProvider(), !token.isEmpty else {
                 throw AutonomoAPIClientError.missingToken
@@ -549,6 +486,23 @@ final class AutonomoAPIClient {
             uploadURL.port == baseURL.port
     }
 
+    nonisolated static func addPreparedUploadHeaders(
+        to request: inout URLRequest,
+        headers: [String: String],
+        fallbackMimeType: String
+    ) {
+        for (field, value) in headers {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
+
+        let hasPreparedContentType = headers.keys.contains {
+            $0.caseInsensitiveCompare("Content-Type") == .orderedSame
+        }
+        if !hasPreparedContentType {
+            request.setValue(fallbackMimeType, forHTTPHeaderField: "Content-Type")
+        }
+    }
+
     nonisolated static func addAuthenticatedHeaders(to request: inout URLRequest, bearerToken: String) {
         request.setValue("Bearer \(bearerToken)", forHTTPHeaderField: "Authorization")
         request.setValue(appIdHeaderValue, forHTTPHeaderField: "x-appsav-app-id")
@@ -556,9 +510,7 @@ final class AutonomoAPIClient {
     }
 
     nonisolated static func sha256Hex(_ data: Data) -> String {
-        SHA256.hash(data: data)
-            .map { String(format: "%02x", $0) }
-            .joined()
+        AutonomoDocumentAssetSupport.sha256Hex(data)
     }
 
     nonisolated static func decodeAutonomoDate(from decoder: Decoder) throws -> Date {

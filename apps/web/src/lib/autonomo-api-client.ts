@@ -93,7 +93,7 @@ export class AutonomoApiClient {
       source: "web_upload"
     });
 
-    return this.putPreparedUpload(prepared, file);
+    return this.putPreparedUpload(prepared, file, contentType);
   }
 
   private prepareUpload(payload: AutonomoPrepareUploadRequest): Promise<AutonomoPreparedUploadResponse> {
@@ -103,15 +103,21 @@ export class AutonomoApiClient {
     });
   }
 
-  private async putPreparedUpload(prepared: AutonomoPreparedUploadResponse, file: File): Promise<AutonomoUploadCompletionResponse> {
-    const token = await this.requiredToken();
-    const uploadUrl = absoluteUrl(this.baseUrl, prepared.uploadUrl || `/v1/apps/autonomo/uploads/${encodeURIComponent(prepared.uploadId)}`);
+  private async putPreparedUpload(
+    prepared: AutonomoPreparedUploadResponse,
+    file: File,
+    contentType: AutonomoUploadContentType
+  ): Promise<AutonomoUploadCompletionResponse> {
+    const baseUrl = this.requiredBaseUrl();
+    const uploadUrl = absoluteUrl(baseUrl, prepared.uploadUrl || `/v1/apps/autonomo/uploads/${encodeURIComponent(prepared.uploadId)}`);
+    const headers = preparedUploadHeaders(prepared.headers, contentType);
+    if (shouldAuthorizePreparedUpload(uploadUrl, baseUrl)) {
+      headers.set("Authorization", `Bearer ${await this.requiredToken()}`);
+    }
+
     const response = await fetch(uploadUrl, {
       method: prepared.method,
-      headers: {
-        "Content-Type": file.type || prepared.headers["content-type"] || prepared.headers["Content-Type"] || "application/octet-stream",
-        Authorization: `Bearer ${token}`
-      },
+      headers,
       body: file
     });
 
@@ -240,6 +246,22 @@ async function apiError(response: Response, fallbackMessage: string) {
 function absoluteUrl(baseUrl: string, value: string) {
   if (/^https?:\/\//i.test(value)) return value;
   return `${baseUrl.replace(/\/$/, "")}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
+function preparedUploadHeaders(preparedHeaders: Record<string, string>, fallbackContentType: string) {
+  const headers = new Headers(preparedHeaders);
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", fallbackContentType);
+  }
+  return headers;
+}
+
+function shouldAuthorizePreparedUpload(uploadUrl: string, baseUrl: string) {
+  try {
+    return new URL(uploadUrl).origin === new URL(baseUrl).origin;
+  } catch {
+    return false;
+  }
 }
 
 function filenameFromDisposition(header: string | null) {

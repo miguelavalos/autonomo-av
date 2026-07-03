@@ -57,8 +57,10 @@ import {
 import {
   autonomoUploadContentTypeValues,
   type AutonomoCounterpartyKind,
+  type AutonomoCounterpartyResponse,
   type AutonomoCounterpartySummary,
   type AutonomoDocumentDetailResponse,
+  type AutonomoDocumentFileDownload,
   type AutonomoDocumentDirection,
   type AutonomoDocumentListItem,
   type AutonomoDocumentStatus,
@@ -67,7 +69,8 @@ import {
   type AutonomoManualDocumentStatus,
   type AutonomoPriority,
   type AutonomoQuarterSummaryResponse,
-  type AutonomoReviewedDocumentType
+  type AutonomoReviewedDocumentType,
+  type AutonomoUploadCompletionResponse
 } from "@/lib/autonomo-types";
 
 const statuses: Array<AutonomoDocumentStatus | "all"> = [
@@ -84,7 +87,17 @@ const statuses: Array<AutonomoDocumentStatus | "all"> = [
 ];
 const directions: Array<AutonomoDocumentDirection | "all"> = ["all", "sale", "purchase", "unknown"];
 const documentTypes: Array<AutonomoDocumentType | "all"> = ["all", "invoice", "ticket", "receipt", "tax_document", "accountant_file", "other", "unknown"];
-const sources = ["all", "web_upload", "ios_camera", "ios_files", "ios_share", "email_attachment", "email_body"] as const;
+const sources = [
+  "all",
+  "web_upload",
+  "ios_camera",
+  "ios_files",
+  "ios_share",
+  "macos_files",
+  "macos_drag_drop",
+  "macos_share",
+  "macos_service"
+] as const;
 const priorities: Array<AutonomoPriority | "all"> = ["all", "low", "normal", "interesting", "urgent", "blocking"];
 const manualStatuses: AutonomoManualDocumentStatus[] = ["queued", "needs_review", "reviewed", "duplicate", "ignored", "failed"];
 const reviewedDocumentTypes: AutonomoReviewedDocumentType[] = ["invoice", "ticket", "receipt", "other"];
@@ -401,6 +414,7 @@ function AutonomoSurface({
       client.listDocuments({
         status: filters.status === "all" ? undefined : filters.status,
         quarter: filterText(filters.quarter),
+        source: filters.source === "all" ? undefined : filters.source,
         direction: filters.direction === "all" ? undefined : filters.direction,
         documentType: filters.documentType === "all" ? undefined : filters.documentType,
         counterpartyId: filters.counterpartyId === "all" ? undefined : filters.counterpartyId,
@@ -411,6 +425,7 @@ function AutonomoSurface({
       "documents",
       filters.status,
       filters.quarter,
+      filters.source,
       filters.direction,
       filters.documentType,
       filters.counterpartyId,
@@ -428,8 +443,8 @@ function AutonomoSurface({
     queryKey: ["autonomo-av", "quarter-summary", quarter]
   });
 
-  const documents = documentsQuery.data?.documents ?? [];
-  const counterparties = counterpartiesQuery.data?.counterparties ?? [];
+  const documents: AutonomoDocumentListItem[] = documentsQuery.data?.documents ?? [];
+  const counterparties: AutonomoCounterpartySummary[] = counterpartiesQuery.data?.counterparties ?? [];
   const visibleDocuments = useMemo(
     () =>
       documents.filter((document) => {
@@ -686,9 +701,9 @@ function UploadPanel({ client, onUploaded }: { client: AutonomoApiClient; onUplo
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const uploadMutation = useMutation({
+  const uploadMutation = useMutation<AutonomoUploadCompletionResponse, Error, File>({
     mutationFn: (file: File) => client.uploadFile(file),
-    onSuccess: async (response) => {
+    onSuccess: async (response: AutonomoUploadCompletionResponse) => {
       toast.success("Document queued", {
         description: `${response.documentId} is ready for Autonomo AV processing.`
       });
@@ -696,7 +711,7 @@ function UploadPanel({ client, onUploaded }: { client: AutonomoApiClient; onUplo
       if (inputRef.current) inputRef.current.value = "";
       await onUploaded();
     },
-    onError: (error) => toast.error("Upload failed", { description: error.message })
+    onError: (error: Error) => toast.error("Upload failed", { description: error.message })
   });
 
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -926,7 +941,7 @@ function ReviewColumn({
     return () => URL.revokeObjectURL(previewFile.url);
   }, [previewFile]);
 
-  const createCounterpartyMutation = useMutation({
+  const createCounterpartyMutation = useMutation<AutonomoCounterpartyResponse, Error, CounterpartyFormState>({
     mutationFn: (payload: CounterpartyFormState) =>
       client.createCounterparty({
         kind: payload.kind,
@@ -936,22 +951,22 @@ function ReviewColumn({
         country: optionalText(payload.country)?.toUpperCase() ?? null,
         notes: optionalText(payload.notes)
       }),
-    onSuccess: async (response) => {
+    onSuccess: async (response: AutonomoCounterpartyResponse) => {
       setForm((current) => ({ ...current, counterpartyId: response.counterparty.counterpartyId }));
       setCounterpartyForm(emptyCounterpartyForm);
       toast.success("Counterparty created", { description: response.counterparty.displayName });
       await queryClient.invalidateQueries({ queryKey: ["autonomo-av", "counterparties"] });
     },
-    onError: (error) => toast.error("Counterparty could not be created", { description: error.message })
+    onError: (error: Error) => toast.error("Counterparty could not be created", { description: error.message })
   });
 
-  const saveMutation = useMutation({
+  const saveMutation = useMutation<AutonomoDocumentDetailResponse, Error, AutonomoManualDocumentStatus>({
     mutationFn: (status: AutonomoManualDocumentStatus) => {
       if (!selectedDocumentId) throw new Error("Select a document first.");
       const payload = reviewPayloadFromForm(form, status);
       return client.saveDocumentReview(selectedDocumentId, payload);
     },
-    onSuccess: async (detail) => {
+    onSuccess: async (detail: AutonomoDocumentDetailResponse) => {
       toast.success("Review saved", { description: detail.document.title ?? detail.document.originalFilename });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["autonomo-av", "documents"] }),
@@ -960,25 +975,25 @@ function ReviewColumn({
         onSaved()
       ]);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       setFormError(error.message);
       toast.error("Review could not be saved", { description: error.message });
     }
   });
 
-  const fileMutation = useMutation({
+  const fileMutation = useMutation<AutonomoDocumentFileDownload, Error, void>({
     mutationFn: () => {
       if (!detailQuery.data) throw new Error("Load a document before previewing the file.");
       return client.getDocumentFile(detailQuery.data.document.documentId, detailQuery.data.document.originalFilename);
     },
-    onSuccess: (file) => {
+    onSuccess: (file: AutonomoDocumentFileDownload) => {
       setPreviewFile({
         url: URL.createObjectURL(file.blob),
         filename: file.filename,
         contentType: file.contentType
       });
     },
-    onError: (error) => toast.error("Original file could not be loaded", { description: error.message })
+    onError: (error: Error) => toast.error("Original file could not be loaded", { description: error.message })
   });
 
   if (!selectedDocumentId) {

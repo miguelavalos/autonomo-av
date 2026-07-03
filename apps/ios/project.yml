@@ -105,6 +105,7 @@ targets:
       Release: Config/Release.xcconfig
     sources:
       - path: AutonomoAVShareExtension
+      - path: ../../shared/apple/AutonomoAVShareExtensionInboxWriter.swift
     settings:
       base:
         APPLICATION_EXTENSION_API_ONLY: YES

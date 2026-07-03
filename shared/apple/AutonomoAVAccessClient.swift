@@ -4,6 +4,162 @@ enum AutonomoAVSharedConfig {
     static let appIdentifier = "autonomoav"
 }
 
+enum AutonomoAccessMode: String, CaseIterable, Codable, Identifiable {
+    case guest
+    case signedInFree
+    case signedInPro
+
+    var id: String { rawValue }
+}
+
+enum AutonomoPlanTier: String, Codable {
+    case free
+    case pro
+}
+
+struct AutonomoResolvedAccess: Equatable {
+    let platformUserId: String?
+    let planTier: AutonomoPlanTier
+    let accessMode: AutonomoAccessMode
+    let capabilities: AutonomoAccessCapabilities
+    let limits: AutonomoAccessLimits
+
+    static let guest = AutonomoResolvedAccess.localFallback(for: .guest)
+
+    static func localFallback(for accessMode: AutonomoAccessMode) -> AutonomoResolvedAccess {
+        AutonomoResolvedAccess(
+            platformUserId: nil,
+            planTier: accessMode == .signedInPro ? .pro : .free,
+            accessMode: accessMode,
+            capabilities: .forMode(accessMode),
+            limits: .forMode(accessMode)
+        )
+    }
+}
+
+struct AutonomoAccessCapabilities: Codable, Equatable {
+    let isSignedIn: Bool
+    let canUseBackend: Bool
+    let canUsePremiumFeatures: Bool
+    let canUseCloudSync: Bool
+    let canManagePlan: Bool
+
+    var canUseIntake: Bool {
+        canUsePremiumFeatures
+    }
+
+    static func forMode(_ accessMode: AutonomoAccessMode) -> AutonomoAccessCapabilities {
+        switch accessMode {
+        case .guest:
+            AutonomoAccessCapabilities(
+                isSignedIn: false,
+                canUseBackend: true,
+                canUsePremiumFeatures: false,
+                canUseCloudSync: false,
+                canManagePlan: false
+            )
+        case .signedInFree:
+            AutonomoAccessCapabilities(
+                isSignedIn: true,
+                canUseBackend: true,
+                canUsePremiumFeatures: false,
+                canUseCloudSync: false,
+                canManagePlan: true
+            )
+        case .signedInPro:
+            AutonomoAccessCapabilities(
+                isSignedIn: true,
+                canUseBackend: true,
+                canUsePremiumFeatures: true,
+                canUseCloudSync: true,
+                canManagePlan: true
+            )
+        }
+    }
+
+    init(
+        isSignedIn: Bool,
+        canUseBackend: Bool,
+        canUsePremiumFeatures: Bool,
+        canUseCloudSync: Bool,
+        canManagePlan: Bool
+    ) {
+        self.isSignedIn = isSignedIn
+        self.canUseBackend = canUseBackend
+        self.canUsePremiumFeatures = canUsePremiumFeatures
+        self.canUseCloudSync = canUseCloudSync
+        self.canManagePlan = canManagePlan
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        isSignedIn = try container.decodeIfPresent(Bool.self, forKey: .isSignedIn) ?? false
+        canUseBackend = try container.decodeIfPresent(Bool.self, forKey: .canUseBackend) ?? true
+        canUsePremiumFeatures = try container.decodeIfPresent(Bool.self, forKey: .canUsePremiumFeatures) ?? false
+        canUseCloudSync = try container.decodeIfPresent(Bool.self, forKey: .canUseCloudSync) ?? false
+        canManagePlan = try container.decodeIfPresent(Bool.self, forKey: .canManagePlan) ?? isSignedIn
+    }
+}
+
+struct AutonomoAccessLimits: Codable, Equatable {
+    static func forMode(_ accessMode: AutonomoAccessMode) -> AutonomoAccessLimits {
+        _ = accessMode
+        return AutonomoAccessLimits()
+    }
+}
+
+struct AutonomoMeAccessResponse: Decodable, Equatable {
+    let viewer: AutonomoMeAccessViewer?
+    let apps: [AutonomoAppAccess]
+}
+
+struct AutonomoMeAccessViewer: Decodable, Equatable {
+    let isAuthenticated: Bool
+    let userId: String?
+    let identityProvider: String?
+}
+
+struct AutonomoAppAccess: Decodable, Equatable {
+    let appId: String
+    let accessMode: AutonomoAccessMode
+    let planTier: AutonomoPlanTier
+    let capabilities: AutonomoAccessCapabilities
+    let limits: AutonomoAccessLimits
+
+    init(
+        appId: String,
+        accessMode: AutonomoAccessMode,
+        planTier: AutonomoPlanTier,
+        capabilities: AutonomoAccessCapabilities,
+        limits: AutonomoAccessLimits
+    ) {
+        self.appId = appId
+        self.accessMode = accessMode
+        self.planTier = planTier
+        self.capabilities = capabilities
+        self.limits = limits
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case appId
+        case accessMode
+        case planTier
+        case capabilities
+        case limits
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        appId = try container.decode(String.self, forKey: .appId)
+        accessMode = try container.decode(AutonomoAccessMode.self, forKey: .accessMode)
+        planTier = try container.decode(AutonomoPlanTier.self, forKey: .planTier)
+        capabilities = try container.decodeIfPresent(AutonomoAccessCapabilities.self, forKey: .capabilities)
+            ?? .forMode(accessMode)
+        limits = try container.decodeIfPresent(AutonomoAccessLimits.self, forKey: .limits)
+            ?? .forMode(accessMode)
+    }
+}
+
 @MainActor
 protocol AutonomoPromotionCodeRedeeming {
     func redeemPromotionCode(_ code: String) async throws -> AutonomoPromotionCodeRedemptionResponse

@@ -53,7 +53,8 @@
 "intake.scan.unavailable.message" = "Document scanning is not available on this device.";
 "intake.import.failed.title" = "Import failed";
 "intake.import.failed.message" = "The selected file could not be copied for upload.";
-"intake.shareImport.partialFailure" = "Share import finished with %d failed file(s) and %d unsupported file(s).";
+"intake.import.partialFailure" = "Import finished with %d failed file(s) and %d unsupported or too-large file(s).";
+"intake.shareImport.partialFailure" = "Share import finished with %d failed file(s) and %d unsupported or too-large file(s).";
 "account.signedIn" = "Signed in";
 "account.signOut" = "Sign out";
 "account.temporary" = "Account temporarily unavailable";

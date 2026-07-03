@@ -5,11 +5,15 @@ ios_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 env_name=""
 configuration="Release"
 skip_build=0
+derived_data_path="$ios_root/.DerivedData-autonomoav-ios-preflight"
+keep_derived_data=0
+build_started=0
 
 usage() {
   cat <<'USAGE'
 Usage:
-  scripts/check-ios-release-preflight.sh --env dev|prod [--configuration Debug|Release] [--skip-build]
+  scripts/check-ios-release-preflight.sh --env dev|prod [--configuration Debug|Release]
+    [--skip-build] [--derived-data-path <path>] [--keep-derived-data]
 
 Runs the Autonomo AV iOS release guardrail checks without printing secrets.
 This script does not archive, export, upload, or contact App Store Connect.
@@ -28,6 +32,14 @@ while [ "$#" -gt 0 ]; do
       ;;
     --skip-build)
       skip_build=1
+      shift
+      ;;
+    --derived-data-path)
+      derived_data_path="${2:-}"
+      shift 2
+      ;;
+    --keep-derived-data)
+      keep_derived_data=1
       shift
       ;;
     -h|--help)
@@ -51,6 +63,27 @@ if [ "$configuration" != "Debug" ] && [ "$configuration" != "Release" ]; then
   echo "--configuration must be Debug or Release." >&2
   exit 2
 fi
+
+if [ -z "$derived_data_path" ]; then
+  echo "--derived-data-path must not be empty." >&2
+  exit 2
+fi
+
+derived_data_dir="$(cd "$(dirname "$derived_data_path")" && pwd)"
+derived_data_path="$derived_data_dir/$(basename "$derived_data_path")"
+
+cleanup() {
+  local status=$?
+  if [ "$skip_build" -eq 0 ] && [ "$build_started" -eq 1 ] && [ -d "$derived_data_path" ]; then
+    if [ "$status" -eq 0 ] && [ "$keep_derived_data" -eq 0 ]; then
+      du -sh "$derived_data_path"
+      rm -rf "$derived_data_path"
+    else
+      echo "iOS release preflight preserving derived data at $derived_data_path" >&2
+    fi
+  fi
+}
+trap cleanup EXIT
 
 failures=0
 fail() {
@@ -158,11 +191,13 @@ if [ "$failures" -gt 0 ]; then
 fi
 
 if [ "$skip_build" -eq 0 ]; then
+  build_started=1
   xcodebuild \
     -project "$ios_root/AutonomoAV.xcodeproj" \
     -scheme AutonomoAV \
     -configuration "$configuration" \
     -destination 'generic/platform=iOS Simulator' \
+    -derivedDataPath "$derived_data_path" \
     build \
     CODE_SIGNING_ALLOWED=NO
 fi
@@ -172,4 +207,5 @@ Autonomo AV iOS release preflight passed.
   environment: $env_name
   configuration: $configuration
   build: $([ "$skip_build" -eq 1 ] && echo skipped || echo passed)
+  derived data: $([ "$skip_build" -eq 1 ] && echo none || echo "$derived_data_path")
 EOF

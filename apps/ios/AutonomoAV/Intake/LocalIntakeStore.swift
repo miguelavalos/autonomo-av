@@ -1,13 +1,7 @@
 import Foundation
 import Observation
-import UniformTypeIdentifiers
 
-enum LocalIntakeStatus: String, Codable, Equatable {
-    case pending
-    case uploading
-    case uploaded
-    case failed
-
+extension LocalIntakeStatus {
     var displayText: String {
         switch self {
         case .pending:
@@ -22,193 +16,19 @@ enum LocalIntakeStatus: String, Codable, Equatable {
     }
 }
 
-struct LocalIntakeItem: Codable, Equatable, Identifiable {
-    let id: UUID
-    var fileName: String
-    var mimeType: String
-    var byteSize: Int
-    var relativePath: String
-    var source: AutonomoUploadSource
-    var status: LocalIntakeStatus
-    var idempotencyKey: String
-    var createdAt: Date
-    var updatedAt: Date
-    var uploadId: String?
-    var documentId: String?
-    var queueItemId: String?
-    var attemptCount: Int
-    var errorMessage: String?
-}
-
 struct ScannedDocumentPage: Equatable {
     let fileName: String
     let data: Data
 }
 
-struct LocalIntakePersistence {
-    let rootURL: URL
-    private let fileManager: FileManager
-
-    init(
-        rootURL: URL = LocalIntakePersistence.defaultRootURL(),
-        fileManager: FileManager = .default
-    ) {
-        self.rootURL = rootURL
-        self.fileManager = fileManager
-    }
-
-    var uploadsURL: URL {
-        rootURL.appending(path: "Uploads", directoryHint: .isDirectory)
-    }
-
-    var metadataURL: URL {
-        rootURL.appending(path: "intake-items.json")
-    }
-
-    func loadItems() -> [LocalIntakeItem] {
-        guard let data = try? Data(contentsOf: metadataURL) else {
-            return []
-        }
-        return (try? JSONDecoder.autonomo.decode([LocalIntakeItem].self, from: data)) ?? []
-    }
-
-    func saveItems(_ items: [LocalIntakeItem]) throws {
-        try ensureDirectories()
-        let data = try JSONEncoder.autonomo.encode(items)
-        try data.write(to: metadataURL, options: [.atomic])
-    }
-
-    func copyImportedFile(from url: URL, source: AutonomoUploadSource) throws -> LocalIntakeItem {
-        let accessGranted = url.startAccessingSecurityScopedResource()
-        defer {
-            if accessGranted {
-                url.stopAccessingSecurityScopedResource()
-            }
-        }
-
-        return try copyFile(from: url, source: source)
-    }
-
-    func copySharedInboxFile(from url: URL) throws -> LocalIntakeItem {
-        try copyFile(from: url, source: .iosShare)
-    }
-
-    private func copyFile(from url: URL, source: AutonomoUploadSource) throws -> LocalIntakeItem {
-        try ensureDirectories()
-        let id = UUID()
-        let fileName = url.lastPathComponent.isEmpty ? "document-\(id.uuidString).pdf" : url.lastPathComponent
-        guard let mimeType = Self.mimeType(for: url) else {
-            throw AutonomoAPIClientError.unsupportedFile
-        }
-        let destination = uploadsURL.appending(path: "\(id.uuidString)-\(fileName)")
-        if fileManager.fileExists(atPath: destination.path) {
-            try fileManager.removeItem(at: destination)
-        }
-        try fileManager.copyItem(at: url, to: destination)
-        return try makeItem(
-            id: id,
-            fileName: fileName,
-            mimeType: mimeType,
-            source: source,
-            destination: destination
-        )
-    }
-
+extension LocalIntakePersistence {
     func storeScannedPage(_ page: ScannedDocumentPage, source: AutonomoUploadSource = .iosCamera) throws -> LocalIntakeItem {
-        try ensureDirectories()
-        let id = UUID()
-        let destination = uploadsURL.appending(path: "\(id.uuidString)-\(page.fileName)")
-        try page.data.write(to: destination, options: [.atomic])
-        return try makeItem(
-            id: id,
+        try storeData(
+            page.data,
             fileName: page.fileName,
             mimeType: "image/jpeg",
-            source: source,
-            destination: destination
+            source: source
         )
-    }
-
-    func fileURL(for item: LocalIntakeItem) -> URL {
-        rootURL.appending(path: item.relativePath)
-    }
-
-    private func makeItem(
-        id: UUID,
-        fileName: String,
-        mimeType: String,
-        source: AutonomoUploadSource,
-        destination: URL
-    ) throws -> LocalIntakeItem {
-        let byteSize = try destination.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
-        let now = Date()
-        let relativePath = destination.path.replacingOccurrences(of: rootURL.path + "/", with: "")
-        return LocalIntakeItem(
-            id: id,
-            fileName: fileName,
-            mimeType: mimeType,
-            byteSize: byteSize,
-            relativePath: relativePath,
-            source: source,
-            status: .pending,
-            idempotencyKey: "ios-\(id.uuidString)",
-            createdAt: now,
-            updatedAt: now,
-            uploadId: nil,
-            documentId: nil,
-            queueItemId: nil,
-            attemptCount: 0,
-            errorMessage: nil
-        )
-    }
-
-    private func ensureDirectories() throws {
-        try fileManager.createDirectory(at: uploadsURL, withIntermediateDirectories: true)
-    }
-
-    static func mimeType(for url: URL) -> String? {
-        if let type = UTType(filenameExtension: url.pathExtension),
-           type.conforms(to: .pdf) || type.conforms(to: .image) {
-            let mimeType = type.preferredMIMEType ?? fallbackMimeType(forExtension: url.pathExtension)
-            return supportedMimeTypes.contains(mimeType ?? "") ? mimeType : nil
-        }
-        guard let fallbackMimeType = fallbackMimeType(forExtension: url.pathExtension) else {
-            return nil
-        }
-        return supportedMimeTypes.contains(fallbackMimeType) ? fallbackMimeType : nil
-    }
-
-    static func fallbackMimeType(forExtension pathExtension: String) -> String? {
-        switch pathExtension.lowercased() {
-        case "pdf":
-            return "application/pdf"
-        case "jpg", "jpeg":
-            return "image/jpeg"
-        case "png":
-            return "image/png"
-        case "heic":
-            return "image/heic"
-        case "heif":
-            return "image/heif"
-        case "webp":
-            return "image/webp"
-        default:
-            return nil
-        }
-    }
-
-    private static let supportedMimeTypes: Set<String> = [
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-        "image/webp",
-        "image/heic",
-        "image/heif"
-    ]
-
-    static func defaultRootURL() -> URL {
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? FileManager.default.temporaryDirectory
-        return base.appending(path: "AutonomoAV", directoryHint: .isDirectory)
     }
 }
 
@@ -216,6 +36,7 @@ struct LocalIntakePersistence {
 @Observable
 final class IntakeStore {
     private let client: AutonomoAPIClient
+    private let uploader: AutonomoPreparedDocumentUploader
     private let persistence: LocalIntakePersistence
     private let sharedInbox: SharedIntakeInbox
 
@@ -233,9 +54,15 @@ final class IntakeStore {
         sharedInbox: SharedIntakeInbox = SharedIntakeInbox()
     ) {
         self.client = client
+        self.uploader = AutonomoPreparedDocumentUploader(backend: client)
         self.persistence = persistence
         self.sharedInbox = sharedInbox
-        self.localItems = persistence.loadItems().sorted { $0.createdAt > $1.createdAt }
+
+        let normalizedItems = AutonomoLocalIntakeQueue.normalizeLoadedItems(persistence.loadItems())
+        self.localItems = normalizedItems.items.sorted { $0.createdAt > $1.createdAt }
+        if normalizedItems.didChange {
+            try? persistence.saveItems(self.localItems)
+        }
     }
 
     var pendingOrFailedItems: [LocalIntakeItem] {
@@ -248,10 +75,40 @@ final class IntakeStore {
 
     func importFiles(from urls: [URL], source: AutonomoUploadSource = .iosFiles) async {
         do {
-            let items = try urls.map { try persistence.copyImportedFile(from: $0, source: source) }
-            localItems.insert(contentsOf: items, at: 0)
-            try save()
-            await uploadPending()
+            var importedItems: [LocalIntakeItem] = []
+            var rejectedCount = 0
+            var failedCount = 0
+
+            for url in urls {
+                do {
+                    importedItems.append(try persistence.copyImportedFile(from: url, source: source))
+                } catch {
+                    if (error as? AutonomoDocumentIntakeError)?.isDeterministicRejection == true {
+                        rejectedCount += 1
+                    } else {
+                        failedCount += 1
+                    }
+                }
+            }
+
+            if !importedItems.isEmpty {
+                localItems.insert(contentsOf: importedItems, at: 0)
+                try save()
+            }
+
+            if failedCount > 0 || rejectedCount > 0 {
+                lastErrorMessage = L10n.string(
+                    "intake.import.partialFailure",
+                    failedCount,
+                    rejectedCount
+                )
+            } else if !importedItems.isEmpty {
+                lastErrorMessage = nil
+            }
+
+            if !importedItems.isEmpty {
+                await uploadPending()
+            }
         } catch {
             lastErrorMessage = error.localizedDescription
         }
@@ -278,7 +135,7 @@ final class IntakeStore {
             guard !urls.isEmpty else { return }
 
             var importedItems: [LocalIntakeItem] = []
-            var skippedUnsupportedCount = 0
+            var rejectedCount = 0
             var failedCount = 0
 
             for url in urls {
@@ -287,8 +144,8 @@ final class IntakeStore {
                     try sharedInbox.removePendingFile(at: url)
                     importedItems.append(item)
                 } catch {
-                    if (error as? AutonomoAPIClientError) == .unsupportedFile {
-                        skippedUnsupportedCount += 1
+                    if (error as? AutonomoDocumentIntakeError)?.isDeterministicRejection == true {
+                        rejectedCount += 1
                         try? sharedInbox.removePendingFile(at: url)
                     } else {
                         failedCount += 1
@@ -302,11 +159,11 @@ final class IntakeStore {
                 await uploadPending()
             }
 
-            if failedCount > 0 || skippedUnsupportedCount > 0 {
+            if failedCount > 0 || rejectedCount > 0 {
                 lastErrorMessage = L10n.string(
                     "intake.shareImport.partialFailure",
                     failedCount,
-                    skippedUnsupportedCount
+                    rejectedCount
                 )
             } else if !importedItems.isEmpty {
                 lastErrorMessage = nil
@@ -318,9 +175,7 @@ final class IntakeStore {
 
     func retry(_ item: LocalIntakeItem) async {
         updateItem(id: item.id) { current in
-            current.status = .pending
-            current.errorMessage = nil
-            current.updatedAt = Date()
+            current.markPendingForRetry()
         }
         try? save()
         await uploadPending()
@@ -363,10 +218,7 @@ final class IntakeStore {
 
     private func upload(_ item: LocalIntakeItem) async {
         updateItem(id: item.id) { current in
-            current.status = .uploading
-            current.attemptCount += 1
-            current.updatedAt = Date()
-            current.errorMessage = nil
+            current.markUploading()
         }
         try? save()
 
@@ -374,35 +226,21 @@ final class IntakeStore {
             let current = localItems.first { $0.id == item.id } ?? item
             let fileURL = persistence.fileURL(for: current)
             let data = try Data(contentsOf: fileURL)
-            let prepared = try await client.prepareUpload(AutonomoPrepareUploadRequest(
+            let uploadResult = try await uploader.upload(AutonomoDocumentUploadPayload(
                 originalFilename: current.fileName,
                 contentType: current.mimeType,
-                byteSize: data.count,
-                sha256: AutonomoAPIClient.sha256Hex(data),
+                data: data,
                 source: current.source
             ))
-            try await client.uploadData(data, preparedUpload: prepared, mimeType: current.mimeType)
-            let completed = try await client.completeUpload(
-                uploadId: prepared.uploadId,
-                source: current.source,
-                idempotencyKey: current.idempotencyKey
-            )
 
             updateItem(id: item.id) { uploaded in
-                uploaded.status = .uploaded
-                uploaded.uploadId = prepared.uploadId
-                uploaded.documentId = completed.documentId
-                uploaded.queueItemId = completed.queueItemId
-                uploaded.updatedAt = Date()
-                uploaded.errorMessage = nil
+                uploaded.markUploaded(uploadResult)
             }
             try save()
             await refreshRemoteDocuments()
         } catch {
             updateItem(id: item.id) { failed in
-                failed.status = .failed
-                failed.errorMessage = error.localizedDescription
-                failed.updatedAt = Date()
+                failed.markFailed(error.localizedDescription)
             }
             try? save()
         }
@@ -426,21 +264,4 @@ final class IntakeStore {
     private func save() throws {
         try persistence.saveItems(localItems)
     }
-}
-
-private extension JSONEncoder {
-    static let autonomo: JSONEncoder = {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return encoder
-    }()
-}
-
-private extension JSONDecoder {
-    static let autonomo: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return decoder
-    }()
 }

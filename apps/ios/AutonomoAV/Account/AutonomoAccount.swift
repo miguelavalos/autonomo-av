@@ -64,12 +64,25 @@ protocol AccountProfileResolving {
     func resolveCurrentAccountUser() async throws -> AutonomoAccountUser
 }
 
+enum AccountProfileResolverError: LocalizedError, Equatable {
+    case missingInternalUser
+
+    var errorDescription: String? {
+        L10n.string("auth.unavailable")
+    }
+}
+
 @MainActor
 struct PlatformAccountProfileResolver: AccountProfileResolving {
     let apiClient: AutonomoAPIClient
 
     func resolveCurrentAccountUser() async throws -> AutonomoAccountUser {
         let response = try await apiClient.fetchAccountSummary()
+        let userId = response.id.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !userId.isEmpty else {
+            throw AccountProfileResolverError.missingInternalUser
+        }
+
         let displayName: String
         if let resolvedDisplayName = response.displayName, !resolvedDisplayName.isEmpty {
             displayName = resolvedDisplayName
@@ -77,7 +90,7 @@ struct PlatformAccountProfileResolver: AccountProfileResolving {
             displayName = L10n.string("app.name")
         }
         return AutonomoAccountUser(
-            id: response.id,
+            id: userId,
             displayName: displayName,
             emailAddress: response.emailAddress
         )

@@ -7,8 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url))
-    },
-    preserveSymlinks: true
+    }
   },
   optimizeDeps: {
     exclude: ["@avalsys/account-av-web", "@avalsys/apps-av-web"]

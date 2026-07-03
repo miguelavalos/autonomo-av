@@ -42,7 +42,15 @@ export type AutonomoDocumentType =
   | "unknown";
 export type AutonomoReviewedDocumentType = "invoice" | "ticket" | "receipt" | "other";
 export type AutonomoCounterpartyKind = "supplier" | "customer" | "both" | "unknown";
-export type AutonomoIntakeSource = "admin_upload" | "ios_camera" | "ios_files" | "ios_share" | "web_upload" | "email_attachment" | "email_body";
+export type AutonomoIntakeSource =
+  | "ios_camera"
+  | "ios_files"
+  | "ios_share"
+  | "macos_files"
+  | "macos_drag_drop"
+  | "macos_share"
+  | "macos_service"
+  | "web_upload";
 export type AutonomoIntakeQueueItemStatus = "queued" | "claimed" | "processing" | "drafted" | "failed" | "superseded";
 export type AutonomoPriority = "low" | "normal" | "interesting" | "urgent" | "blocking";
 export type AutonomoRecommendedAction =
@@ -205,6 +213,7 @@ export interface AutonomoDocumentDetailResponse {
 export interface AutonomoDocumentListQuery {
   status?: AutonomoDocumentStatus;
   quarter?: string;
+  source?: AutonomoIntakeSource;
   direction?: AutonomoDocumentDirection;
   documentType?: AutonomoDocumentType;
   counterpartyId?: string;

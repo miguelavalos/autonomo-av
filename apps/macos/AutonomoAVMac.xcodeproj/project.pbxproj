@@ -1,0 +1,764 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		17B033E5D9A1D64B3AAEA0BB /* AutonomoAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B835461A48DACEC8536F9EE1 /* AutonomoAPIClient.swift */; };
+		20AFC0AF8C9E2874AC20530E /* AutonomoAVAccessClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B62619CDD170CDD30B3C89 /* AutonomoAVAccessClient.swift */; };
+		266C840BDD52B8156F739420 /* AccountAV in Frameworks */ = {isa = PBXBuildFile; productRef = 301B6C33E6F50ADECDB5DC66 /* AccountAV */; };
+		272BFC218B740F239C08A5ED /* SharedIntakeInbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = E89A68C8C159B25174FFA312 /* SharedIntakeInbox.swift */; };
+		2825CB77B8653A70DA7C797E /* AutonomoAVMacIntakeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5536A17503421DFD6903BE /* AutonomoAVMacIntakeTests.swift */; };
+		35134334202CC8D4B05E6AE8 /* AutonomoAVPreparedUploadWorkflow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E66AFA5096466E175AD3396 /* AutonomoAVPreparedUploadWorkflow.swift */; };
+		3875C6A0B5A81B9EC55E24B3 /* AutonomoAVMacShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E8445B5A8D664335C4F247F4 /* AutonomoAVMacShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		3C45CBB8D698204FCC79A39E /* AutonomoAVMacModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B6BC975E9247642811D1F0 /* AutonomoAVMacModel.swift */; };
+		4D8824CFB83B2149B5C5D490 /* AutonomoAVMacFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 652C44597B637E5444F622A8 /* AutonomoAVMacFormatters.swift */; };
+		4F0BFFC504E1FE72EF61C27A /* AutonomoAVShareExtensionInboxWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E289776DA52ACB37D9CD44 /* AutonomoAVShareExtensionInboxWriter.swift */; };
+		779D1404935BA3D840E0CB19 /* AutonomoAVMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5FF2691691FB273EFABEB9 /* AutonomoAVMacApp.swift */; };
+		7A47A2EEE88F61816CD53AF4 /* AutonomoAVMacFilePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C54117BFFC2F26B05E2B42F /* AutonomoAVMacFilePicker.swift */; };
+		7F08C3A08BBEB2F15DC8D2CA /* AutonomoAVMacSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D776A325DA69DE527C1547F3 /* AutonomoAVMacSettingsView.swift */; };
+		81AFF5E45DACC5DDA85E75C6 /* AutonomoAVDocumentIntakeSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0146B19127C5F2254709A5AE /* AutonomoAVDocumentIntakeSupport.swift */; };
+		88BB4F08D4EA8D8AF79E442C /* AutonomoAccount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52E05B2664E080B7787609EE /* AutonomoAccount.swift */; };
+		8D777BCEB0FEF45DC759607C /* AutonomoAVLocalIntakeQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D31FD3647B00CDAD5CE327A /* AutonomoAVLocalIntakeQueue.swift */; };
+		9682F6ECB1FB829F5EF8C58D /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BA287B1045D14B11010EDC38 /* Localizable.strings */; };
+		9FC1A3003947507973ED9239 /* AutonomoAVMacRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C34E408185E800E7EA26E6 /* AutonomoAVMacRootView.swift */; };
+		B1A28D3F0D113B359000BDFF /* AutonomoAVMacMenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA2F3BAF8E3E4CAE1CD43EB1 /* AutonomoAVMacMenuBarView.swift */; };
+		C0F236619FB019676FABFBD9 /* AutonomoAVMacFileServiceProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C06E3F5159692A894EC3CB78 /* AutonomoAVMacFileServiceProvider.swift */; };
+		D31065409694BC4F94068DC8 /* AutonomoAVShareExtensionInboxWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8E289776DA52ACB37D9CD44 /* AutonomoAVShareExtensionInboxWriter.swift */; };
+		D63E4010092D690082CB4132 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B110A471C834A898042361A9 /* ShareViewController.swift */; };
+		DBD614CC329E2762CC2ECCF8 /* AutonomoAVMacTelemetry.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCA44FB637E95DCF1E78E281 /* AutonomoAVMacTelemetry.swift */; };
+		FC3E201BFF6A694203752E73 /* AutonomoAVMacSidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E36CBB12C28D13E2ED7460 /* AutonomoAVMacSidebarView.swift */; };
+		FCAD55DC90E997ED9AD09185 /* AutonomoAVMacConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E791D345E4A27C10CBFBB85 /* AutonomoAVMacConfig.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		1DE1DF845733BB3E89E3593D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A4438E26EA7B23C82E925390 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BC3DABC0B65BD4CAEBE0F3A9;
+			remoteInfo = AutonomoAVMac;
+		};
+		916044A96679121DE1612BCD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A4438E26EA7B23C82E925390 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B7C94B61A7321A3071929B2C;
+			remoteInfo = AutonomoAVMacShareExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0A1718B0DB6550D05E54D2CE /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				3875C6A0B5A81B9EC55E24B3 /* AutonomoAVMacShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0146B19127C5F2254709A5AE /* AutonomoAVDocumentIntakeSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVDocumentIntakeSupport.swift; sourceTree = "<group>"; };
+		0E791D345E4A27C10CBFBB85 /* AutonomoAVMacConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacConfig.swift; sourceTree = "<group>"; };
+		13B922837CF43AFA65F337DC /* AutonomoAVMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AutonomoAVMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		14595B8A5F4C13376EF91604 /* account-av */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "account-av"; path = "../../../account-av"; sourceTree = SOURCE_ROOT; };
+		16E70D7F7ED5218DD640A609 /* AutonomoAVMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AutonomoAVMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2E66AFA5096466E175AD3396 /* AutonomoAVPreparedUploadWorkflow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVPreparedUploadWorkflow.swift; sourceTree = "<group>"; };
+		32B62619CDD170CDD30B3C89 /* AutonomoAVAccessClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVAccessClient.swift; sourceTree = "<group>"; };
+		45C34E408185E800E7EA26E6 /* AutonomoAVMacRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacRootView.swift; sourceTree = "<group>"; };
+		52E05B2664E080B7787609EE /* AutonomoAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccount.swift; sourceTree = "<group>"; };
+		53B6BC975E9247642811D1F0 /* AutonomoAVMacModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacModel.swift; sourceTree = "<group>"; };
+		5B5FF2691691FB273EFABEB9 /* AutonomoAVMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacApp.swift; sourceTree = "<group>"; };
+		5C1D199D195AB0C0B3F4407F /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		652C44597B637E5444F622A8 /* AutonomoAVMacFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacFormatters.swift; sourceTree = "<group>"; };
+		6C54117BFFC2F26B05E2B42F /* AutonomoAVMacFilePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacFilePicker.swift; sourceTree = "<group>"; };
+		8128026E97B1705B268513B6 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		8D31FD3647B00CDAD5CE327A /* AutonomoAVLocalIntakeQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVLocalIntakeQueue.swift; sourceTree = "<group>"; };
+		AA2F3BAF8E3E4CAE1CD43EB1 /* AutonomoAVMacMenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacMenuBarView.swift; sourceTree = "<group>"; };
+		AAFDBE49825103F68014C59D /* AutonomoAVMacShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AutonomoAVMacShareExtension.entitlements; sourceTree = "<group>"; };
+		B0E36CBB12C28D13E2ED7460 /* AutonomoAVMacSidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacSidebarView.swift; sourceTree = "<group>"; };
+		B110A471C834A898042361A9 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		B835461A48DACEC8536F9EE1 /* AutonomoAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAPIClient.swift; sourceTree = "<group>"; };
+		BA287B1045D14B11010EDC38 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; path = Localizable.strings; sourceTree = "<group>"; };
+		C06E3F5159692A894EC3CB78 /* AutonomoAVMacFileServiceProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacFileServiceProvider.swift; sourceTree = "<group>"; };
+		D776A325DA69DE527C1547F3 /* AutonomoAVMacSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacSettingsView.swift; sourceTree = "<group>"; };
+		DCA44FB637E95DCF1E78E281 /* AutonomoAVMacTelemetry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacTelemetry.swift; sourceTree = "<group>"; };
+		E8445B5A8D664335C4F247F4 /* AutonomoAVMacShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AutonomoAVMacShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E89A68C8C159B25174FFA312 /* SharedIntakeInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedIntakeInbox.swift; sourceTree = "<group>"; };
+		F8E289776DA52ACB37D9CD44 /* AutonomoAVShareExtensionInboxWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVShareExtensionInboxWriter.swift; sourceTree = "<group>"; };
+		F9438BE2DEDE54224FEC4AAC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		FA5536A17503421DFD6903BE /* AutonomoAVMacIntakeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVMacIntakeTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CF84613A91AEDE4BE15AFDF3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				266C840BDD52B8156F739420 /* AccountAV in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		17399902233D0DAC4AF7CCC4 /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				6C54117BFFC2F26B05E2B42F /* AutonomoAVMacFilePicker.swift */,
+				C06E3F5159692A894EC3CB78 /* AutonomoAVMacFileServiceProvider.swift */,
+				652C44597B637E5444F622A8 /* AutonomoAVMacFormatters.swift */,
+				DCA44FB637E95DCF1E78E281 /* AutonomoAVMacTelemetry.swift */,
+			);
+			path = Support;
+			sourceTree = "<group>";
+		};
+		197A034216BCF401BF040F44 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				13B922837CF43AFA65F337DC /* AutonomoAVMac.app */,
+				E8445B5A8D664335C4F247F4 /* AutonomoAVMacShareExtension.appex */,
+				16E70D7F7ED5218DD640A609 /* AutonomoAVMacTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		19E23617C95A774E1B1D16DC /* en.lproj */ = {
+			isa = PBXGroup;
+			children = (
+				BA287B1045D14B11010EDC38 /* Localizable.strings */,
+			);
+			name = en.lproj;
+			path = ../ios/AutonomoAV/Resources/en.lproj;
+			sourceTree = "<group>";
+		};
+		206B26F2059E2DBDE8014881 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				8128026E97B1705B268513B6 /* Debug.xcconfig */,
+				5C1D199D195AB0C0B3F4407F /* Release.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		485D2462ECD12EA69E5CC975 = {
+			isa = PBXGroup;
+			children = (
+				9E5B940FB8A94FA03C11910E /* Account */,
+				ADC0D93BFFE2AD30EBB5DC1F /* apple */,
+				206B26F2059E2DBDE8014881 /* Config */,
+				19E23617C95A774E1B1D16DC /* en.lproj */,
+				C0E16A150C41D23B493079C6 /* Network */,
+				4B1647A0AAB7BD5E1AFB6A94 /* Packages */,
+				8B8B8A8FDC5A00444D6C603B /* ShareExtension */,
+				6DF1499DDEE4D572800FE9A0 /* Sources */,
+				6D1905B1664FD43764013D89 /* Tests */,
+				197A034216BCF401BF040F44 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4B1647A0AAB7BD5E1AFB6A94 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				14595B8A5F4C13376EF91604 /* account-av */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		6D1905B1664FD43764013D89 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				FA5536A17503421DFD6903BE /* AutonomoAVMacIntakeTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		6DF1499DDEE4D572800FE9A0 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				CE970D9E0FA7324567C9A695 /* App */,
+				17399902233D0DAC4AF7CCC4 /* Support */,
+				B5952ECE093C21E9DB4C80BC /* Views */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		8B8B8A8FDC5A00444D6C603B /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				AAFDBE49825103F68014C59D /* AutonomoAVMacShareExtension.entitlements */,
+				F9438BE2DEDE54224FEC4AAC /* Info.plist */,
+				B110A471C834A898042361A9 /* ShareViewController.swift */,
+			);
+			path = ShareExtension;
+			sourceTree = "<group>";
+		};
+		9E5B940FB8A94FA03C11910E /* Account */ = {
+			isa = PBXGroup;
+			children = (
+				52E05B2664E080B7787609EE /* AutonomoAccount.swift */,
+			);
+			name = Account;
+			path = ../ios/AutonomoAV/Account;
+			sourceTree = "<group>";
+		};
+		ADC0D93BFFE2AD30EBB5DC1F /* apple */ = {
+			isa = PBXGroup;
+			children = (
+				32B62619CDD170CDD30B3C89 /* AutonomoAVAccessClient.swift */,
+				0146B19127C5F2254709A5AE /* AutonomoAVDocumentIntakeSupport.swift */,
+				8D31FD3647B00CDAD5CE327A /* AutonomoAVLocalIntakeQueue.swift */,
+				2E66AFA5096466E175AD3396 /* AutonomoAVPreparedUploadWorkflow.swift */,
+				F8E289776DA52ACB37D9CD44 /* AutonomoAVShareExtensionInboxWriter.swift */,
+				E89A68C8C159B25174FFA312 /* SharedIntakeInbox.swift */,
+			);
+			name = apple;
+			path = ../../shared/apple;
+			sourceTree = "<group>";
+		};
+		B5952ECE093C21E9DB4C80BC /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AA2F3BAF8E3E4CAE1CD43EB1 /* AutonomoAVMacMenuBarView.swift */,
+				45C34E408185E800E7EA26E6 /* AutonomoAVMacRootView.swift */,
+				D776A325DA69DE527C1547F3 /* AutonomoAVMacSettingsView.swift */,
+				B0E36CBB12C28D13E2ED7460 /* AutonomoAVMacSidebarView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C0E16A150C41D23B493079C6 /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				B835461A48DACEC8536F9EE1 /* AutonomoAPIClient.swift */,
+			);
+			name = Network;
+			path = ../ios/AutonomoAV/Network;
+			sourceTree = "<group>";
+		};
+		CE970D9E0FA7324567C9A695 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5B5FF2691691FB273EFABEB9 /* AutonomoAVMacApp.swift */,
+				0E791D345E4A27C10CBFBB85 /* AutonomoAVMacConfig.swift */,
+				53B6BC975E9247642811D1F0 /* AutonomoAVMacModel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5144C59F80BEE619DEE421DE /* AutonomoAVMacTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1099B5D4626593EEDAFA047C /* Build configuration list for PBXNativeTarget "AutonomoAVMacTests" */;
+			buildPhases = (
+				258E890E20E78E695E05BBB8 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A935BF1926A9726198589B14 /* PBXTargetDependency */,
+			);
+			name = AutonomoAVMacTests;
+			packageProductDependencies = (
+			);
+			productName = AutonomoAVMacTests;
+			productReference = 16E70D7F7ED5218DD640A609 /* AutonomoAVMacTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		B7C94B61A7321A3071929B2C /* AutonomoAVMacShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DE6159C96B927F264CC596B3 /* Build configuration list for PBXNativeTarget "AutonomoAVMacShareExtension" */;
+			buildPhases = (
+				FD1C65DC4B896572CEC6C1C1 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = AutonomoAVMacShareExtension;
+			packageProductDependencies = (
+			);
+			productName = AutonomoAVMacShareExtension;
+			productReference = E8445B5A8D664335C4F247F4 /* AutonomoAVMacShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		BC3DABC0B65BD4CAEBE0F3A9 /* AutonomoAVMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22B5E8F32057761014FE8C7F /* Build configuration list for PBXNativeTarget "AutonomoAVMac" */;
+			buildPhases = (
+				5D7049C77BBA70836127F521 /* Sources */,
+				62786131346314B100511FFC /* Resources */,
+				CF84613A91AEDE4BE15AFDF3 /* Frameworks */,
+				0A1718B0DB6550D05E54D2CE /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A7595FADEA44091AF25BF7F7 /* PBXTargetDependency */,
+			);
+			name = AutonomoAVMac;
+			packageProductDependencies = (
+				301B6C33E6F50ADECDB5DC66 /* AccountAV */,
+			);
+			productName = AutonomoAVMac;
+			productReference = 13B922837CF43AFA65F337DC /* AutonomoAVMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A4438E26EA7B23C82E925390 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					B7C94B61A7321A3071929B2C = {
+						DevelopmentTeam = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.Mac = {
+								enabled = 1;
+							};
+						};
+					};
+					BC3DABC0B65BD4CAEBE0F3A9 = {
+						DevelopmentTeam = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.Mac = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = 114BA5DAC708500F4088B2E4 /* Build configuration list for PBXProject "AutonomoAVMac" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 485D2462ECD12EA69E5CC975;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				48A98A3C8649DA7D3A863EF5 /* XCLocalSwiftPackageReference "../../../account-av" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 197A034216BCF401BF040F44 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				BC3DABC0B65BD4CAEBE0F3A9 /* AutonomoAVMac */,
+				B7C94B61A7321A3071929B2C /* AutonomoAVMacShareExtension */,
+				5144C59F80BEE619DEE421DE /* AutonomoAVMacTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		62786131346314B100511FFC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9682F6ECB1FB829F5EF8C58D /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		258E890E20E78E695E05BBB8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2825CB77B8653A70DA7C797E /* AutonomoAVMacIntakeTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5D7049C77BBA70836127F521 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17B033E5D9A1D64B3AAEA0BB /* AutonomoAPIClient.swift in Sources */,
+				20AFC0AF8C9E2874AC20530E /* AutonomoAVAccessClient.swift in Sources */,
+				81AFF5E45DACC5DDA85E75C6 /* AutonomoAVDocumentIntakeSupport.swift in Sources */,
+				8D777BCEB0FEF45DC759607C /* AutonomoAVLocalIntakeQueue.swift in Sources */,
+				779D1404935BA3D840E0CB19 /* AutonomoAVMacApp.swift in Sources */,
+				FCAD55DC90E997ED9AD09185 /* AutonomoAVMacConfig.swift in Sources */,
+				7A47A2EEE88F61816CD53AF4 /* AutonomoAVMacFilePicker.swift in Sources */,
+				C0F236619FB019676FABFBD9 /* AutonomoAVMacFileServiceProvider.swift in Sources */,
+				4D8824CFB83B2149B5C5D490 /* AutonomoAVMacFormatters.swift in Sources */,
+				B1A28D3F0D113B359000BDFF /* AutonomoAVMacMenuBarView.swift in Sources */,
+				3C45CBB8D698204FCC79A39E /* AutonomoAVMacModel.swift in Sources */,
+				9FC1A3003947507973ED9239 /* AutonomoAVMacRootView.swift in Sources */,
+				7F08C3A08BBEB2F15DC8D2CA /* AutonomoAVMacSettingsView.swift in Sources */,
+				FC3E201BFF6A694203752E73 /* AutonomoAVMacSidebarView.swift in Sources */,
+				DBD614CC329E2762CC2ECCF8 /* AutonomoAVMacTelemetry.swift in Sources */,
+				35134334202CC8D4B05E6AE8 /* AutonomoAVPreparedUploadWorkflow.swift in Sources */,
+				4F0BFFC504E1FE72EF61C27A /* AutonomoAVShareExtensionInboxWriter.swift in Sources */,
+				88BB4F08D4EA8D8AF79E442C /* AutonomoAccount.swift in Sources */,
+				272BFC218B740F239C08A5ED /* SharedIntakeInbox.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD1C65DC4B896572CEC6C1C1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D31065409694BC4F94068DC8 /* AutonomoAVShareExtensionInboxWriter.swift in Sources */,
+				D63E4010092D690082CB4132 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A7595FADEA44091AF25BF7F7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B7C94B61A7321A3071929B2C /* AutonomoAVMacShareExtension */;
+			targetProxy = 916044A96679121DE1612BCD /* PBXContainerItemProxy */;
+		};
+		A935BF1926A9726198589B14 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BC3DABC0B65BD4CAEBE0F3A9 /* AutonomoAVMac */;
+			targetProxy = 1DE1DF845733BB3E89E3593D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0ABFC7E407285CC0A50BF8A3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5C1D199D195AB0C0B3F4407F /* Release.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/AutonomoAVMacShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(AUTONOMOAV_MACOS_BUNDLE_IDENTIFIER).share";
+				PRODUCT_MODULE_NAME = AutonomoAVMacShareExtension;
+				PRODUCT_NAME = "Autonomo AV Inbox";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		3652450610573FF3E6A9F535 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8128026E97B1705B268513B6 /* Debug.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/AutonomoAVMacShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(AUTONOMOAV_MACOS_BUNDLE_IDENTIFIER).share";
+				PRODUCT_MODULE_NAME = AutonomoAVMacShareExtension;
+				PRODUCT_NAME = "Autonomo AV Inbox";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		4CBE47175754F3C9C5AAF642 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_LANGUAGE = en;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "Autonomo AV";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		79B68C6286D6350CA0BBB9AD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8128026E97B1705B268513B6 /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Supporting/AutonomoAVMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Supporting/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_MODULE_NAME = AutonomoAVMac;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		7AB15B9EC0C308EDAFE118B8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5C1D199D195AB0C0B3F4407F /* Release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(AUTONOMOAV_MACOS_BUNDLE_IDENTIFIER).tests";
+				PRODUCT_MODULE_NAME = AutonomoAVMacTests;
+				PRODUCT_NAME = AutonomoAVMacTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Autonomo AV.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Autonomo AV";
+			};
+			name = Release;
+		};
+		B4A5F0F14CD2901EA7BBBCEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5C1D199D195AB0C0B3F4407F /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Supporting/AutonomoAVMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Supporting/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(PRODUCT_BUNDLE_IDENTIFIER)";
+				PRODUCT_MODULE_NAME = AutonomoAVMac;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		C1C3C118109A0D5CED796884 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8128026E97B1705B268513B6 /* Debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGNING_ALLOWED = NO;
+				COMBINE_HIDPI_IMAGES = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(AUTONOMOAV_MACOS_BUNDLE_IDENTIFIER).tests";
+				PRODUCT_MODULE_NAME = AutonomoAVMacTests;
+				PRODUCT_NAME = AutonomoAVMacTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Autonomo AV.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Autonomo AV";
+			};
+			name = Debug;
+		};
+		F846744F50451B1C8022A545 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_LANGUAGE = en;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "Autonomo AV";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1099B5D4626593EEDAFA047C /* Build configuration list for PBXNativeTarget "AutonomoAVMacTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1C3C118109A0D5CED796884 /* Debug */,
+				7AB15B9EC0C308EDAFE118B8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		114BA5DAC708500F4088B2E4 /* Build configuration list for PBXProject "AutonomoAVMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F846744F50451B1C8022A545 /* Debug */,
+				4CBE47175754F3C9C5AAF642 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		22B5E8F32057761014FE8C7F /* Build configuration list for PBXNativeTarget "AutonomoAVMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				79B68C6286D6350CA0BBB9AD /* Debug */,
+				B4A5F0F14CD2901EA7BBBCEF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DE6159C96B927F264CC596B3 /* Build configuration list for PBXNativeTarget "AutonomoAVMacShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3652450610573FF3E6A9F535 /* Debug */,
+				0ABFC7E407285CC0A50BF8A3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		48A98A3C8649DA7D3A863EF5 /* XCLocalSwiftPackageReference "../../../account-av" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../account-av";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		301B6C33E6F50ADECDB5DC66 /* AccountAV */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AccountAV;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = A4438E26EA7B23C82E925390 /* Project object */;
+}

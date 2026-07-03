@@ -20,6 +20,19 @@ final class AutonomoAPIClientTests: XCTestCase {
         XCTAssertEqual(response.displayName, "Business Owner")
     }
 
+    func testAccountSummaryRejectsMissingInternalUserId() {
+        let data = Data("""
+        {
+          "user": {
+            "email": "owner@example.com",
+            "name": "Business Owner"
+          }
+        }
+        """.utf8)
+
+        XCTAssertThrowsError(try JSONDecoder().decode(AccountSummaryResponse.self, from: data))
+    }
+
     func testPrepareUploadRequestEncodesBackendPayload() throws {
         let request = AutonomoPrepareUploadRequest(
             originalFilename: "invoice.pdf",
@@ -56,6 +69,10 @@ final class AutonomoAPIClientTests: XCTestCase {
           "uploadId": "upload_123",
           "uploadUrl": "https://uploads.example.com/signed",
           "uploadMethod": "PUT",
+          "headers": {
+            "content-type": "application/pdf",
+            "x-amz-meta-checksum": "abc123"
+          },
           "maxBytes": 10485760
         }
         """.utf8)
@@ -65,6 +82,8 @@ final class AutonomoAPIClientTests: XCTestCase {
         XCTAssertEqual(response.uploadId, "upload_123")
         XCTAssertEqual(response.uploadURL, URL(string: "https://uploads.example.com/signed"))
         XCTAssertEqual(response.uploadMethod, "PUT")
+        XCTAssertEqual(response.headers["content-type"], "application/pdf")
+        XCTAssertEqual(response.headers["x-amz-meta-checksum"], "abc123")
         XCTAssertEqual(response.maxBytes, 10_485_760)
     }
 
@@ -89,6 +108,7 @@ final class AutonomoAPIClientTests: XCTestCase {
 
         XCTAssertEqual(response.uploadURL, URL(string: "/v1/apps/autonomo/uploads/upload_123"))
         XCTAssertEqual(response.uploadMethod, "PUT")
+        XCTAssertEqual(response.headers["Content-Type"], "application/pdf")
     }
 
     func testDocumentSummaryDecodesBackendNamesAndCrossSurfaceSources() throws {
@@ -173,6 +193,34 @@ final class AutonomoAPIClientTests: XCTestCase {
         XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer token_123")
         XCTAssertEqual(request.value(forHTTPHeaderField: "x-appsav-app-id"), "autonomoav")
         XCTAssertEqual(request.value(forHTTPHeaderField: "Accept"), "application/json")
+    }
+
+    func testPreparedUploadHeadersPreserveSignerHeaders() {
+        var request = URLRequest(url: URL(string: "https://example-r2.cloudflare.com/bucket/object")!)
+
+        AutonomoAPIClient.addPreparedUploadHeaders(
+            to: &request,
+            headers: [
+                "content-type": "application/pdf",
+                "x-amz-meta-checksum": "abc123"
+            ],
+            fallbackMimeType: "image/png"
+        )
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "application/pdf")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "x-amz-meta-checksum"), "abc123")
+    }
+
+    func testPreparedUploadHeadersAddFallbackContentType() {
+        var request = URLRequest(url: URL(string: "https://api-account-av-preview.avalsys.com/v1/apps/autonomo/uploads/upload_123")!)
+
+        AutonomoAPIClient.addPreparedUploadHeaders(
+            to: &request,
+            headers: [:],
+            fallbackMimeType: "image/png"
+        )
+
+        XCTAssertEqual(request.value(forHTTPHeaderField: "Content-Type"), "image/png")
     }
 
     func testSHA256Hex() {

@@ -17,6 +17,12 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
   Native SwiftUI iPhone intake app with Account AV sign-in boundary, scan/files
   import, local retry state, backend upload client, and Share Extension scaffold
   labeled `Enviar a Autonomo AV Inbox`.
+- `apps/macos`
+  Native SwiftUI macOS intake app scaffold with MenuBarExtra, main inbox window,
+  local retry queue reuse, Finder/Open With, Services, Share Extension,
+  drag/drop and file picker import, and Account AV upload wiring through the
+  shared Apple upload core. The Share Extension writes only to the app group
+  inbox; the containing app drains and uploads after Account AV session restore.
 - `apps/web`
   Minimal signed-in web app with inbox-first workflow, drag/drop upload,
   review, quarter view, settings, fixture mode, and live backend client wiring.
@@ -40,13 +46,80 @@ vp run build:production
 ```bash
 cd apps/ios
 xcodegen generate
-scripts/check-ios-release-preflight.sh --env dev --configuration Debug
+scripts/check-ios-release-preflight.sh --env dev --configuration Debug --skip-build
 scripts/check-ios-signing-readiness.sh --env dev --mode device-dev
-xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generic/platform=iOS Simulator' -derivedDataPath .DerivedData-autonomoav-ios-build build-for-testing CODE_SIGNING_ALLOWED=NO
+du -sh .DerivedData-autonomoav-ios-build
+rm -rf .DerivedData-autonomoav-ios-build
 ```
 
+```bash
+cd apps/macos
+xcodegen generate
+scripts/check-macos-runtime-config.sh --env dev --configuration Debug
+scripts/check-macos-release-preflight.sh --env dev --configuration Debug --skip-build
+scripts/check-macos-signing-readiness.sh --env dev --mode device-dev
+xcodebuild test -project AutonomoAVMac.xcodeproj -scheme AutonomoAVMac -destination 'platform=macOS' -derivedDataPath .DerivedData-autonomoav-macos-test CODE_SIGNING_ALLOWED=NO
+du -sh .DerivedData-autonomoav-macos-test
+rm -rf .DerivedData-autonomoav-macos-test
+```
+
+For a local signed macOS QA build, inspect the built `.app` before smoking
+Finder/Open With or the menu bar app:
+
+```bash
+scripts/check-macos-signed-build.sh --env dev --app /path/to/Autonomo\ AV.app
+```
+
+The macOS project registers App Groups for the containing app and share
+extension through the generated Xcode project. On a development machine with
+Apple account access, a signed build with `-allowProvisioningUpdates` should
+create or refresh app-specific profiles for both bundle identifiers. Treat the
+Share Extension/App Group handoff as proven only when
+`check-macos-signing-readiness.sh` passes and
+`check-macos-signed-build.sh` reports app-specific embedded profiles with
+`app-group-proof=yes`. A `local-qa-ready` build with wildcard embedded profiles
+is still useful for local Finder/Open With and menu bar smokes, but not for
+claiming the share handoff is fully provisioned.
+
+For local signed no-upload smokes, use the aggregate script. The Share Extension
+registration smoke validates the signed `.appex` through PlugInKit; the Share
+Extension discovery smoke stages the app under a temporary `~/Applications`
+folder and verifies that macOS lists `Autonomo AV Inbox` for a synthetic PDF.
+The Finder/Open With and Services scripts launch the signed app with an isolated
+local queue, require signed-out account restore by default, invoke the macOS
+intake surface with a synthetic PDF, and verify the expected pending source:
+
+```bash
+scripts/smoke-macos-signed-local.sh --env dev --app /path/to/Autonomo\ AV.app
+```
+
+The aggregate script runs these individual checks:
+
+```bash
+scripts/smoke-macos-share-extension-registration.sh --env dev --app /path/to/Autonomo\ AV.app
+scripts/smoke-macos-share-extension-discovery.sh --env dev --app /path/to/Autonomo\ AV.app
+scripts/smoke-macos-open-with.sh --env dev --app /path/to/Autonomo\ AV.app
+scripts/smoke-macos-services.sh --env dev --app /path/to/Autonomo\ AV.app
+```
+
+For the CI-equivalent macOS lane from the repo root:
+
+```bash
+scripts/macos-ci-test.sh
+```
+
+For local desktop smoke runs against a signed sandboxed build, launch the app
+through LaunchServices with `AUTONOMOAV_LOCAL_INTAKE_ROOT_URL` pointed at a
+temporary folder inside the app container, for example under
+`~/Library/Containers/com.avalsys.autonomoav.mac.dev/Data/tmp`. This keeps
+Open With/Finder import validation out of the user's real Application Support
+queue while preserving the same app code path.
+
 Private API URLs, Clerk keys, Apple team values, and Sentry DSNs must stay in
-ignored local config files.
+ignored local config files. Generate the macOS local config with
+`apps/macos/scripts/generate-macos-local-xcconfig.sh --env dev|prod`; the output
+is `apps/macos/Config/Local.xcconfig` and must remain ignored.
 
 ## Web Runtime Modes
 
@@ -97,6 +170,8 @@ GitHub Actions run:
 - web typecheck and deploy-safe production build;
 - iOS XcodeGen, dev runtime config check, and generic simulator
   `build-for-testing` without signing.
+- macOS XcodeGen, dev runtime/share-extension/security preflight, and unsigned
+  unit tests with an uploaded `.xcresult` on failure.
 
 iOS unit tests are intentionally not part of the first CI gate until the
 simulator/runtime lane is stable for this new product repo. The iOS CI still

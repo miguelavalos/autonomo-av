@@ -23,10 +23,14 @@ preflight fails, fix the missing guard or stop and report the blocker.
 ## Public Repo Rules
 
 - Keep private Account AV keys, backend URLs, Apple team overrides, provisioning
-  profiles, and generated `apps/ios/Config/Local.xcconfig` out of git.
+  profiles, and generated `apps/ios/Config/Local.xcconfig` or
+  `apps/macos/Config/Local.xcconfig` out of git.
 - Do not archive, export, or upload TestFlight builds from ad-hoc commands.
   Follow the private Autonomo AV App Store publish runbook.
 - For iOS runtime checks, use the scripts under `apps/ios/scripts/`.
+- For macOS runtime checks, use the scripts under `apps/macos/scripts/`; for
+  CI-equivalent local validation, use `scripts/macos-ci-test.sh`.
 - The Share Extension label is `Enviar a Autonomo AV Inbox`.
-- The Share Extension must not read or store Account AV bearer tokens. It hands
+- The macOS Share Extension label is `Autonomo AV Inbox`.
+- Share Extensions must not read or store Account AV bearer tokens. They hand
   compatible files to the containing app through the configured App Group.
