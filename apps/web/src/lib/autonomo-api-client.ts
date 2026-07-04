@@ -14,7 +14,8 @@ import type {
   AutonomoQuarterSummaryResponse,
   AutonomoUploadCompletionResponse,
   AutonomoUploadContentType,
-  AutonomoWorkspaceBootstrapResponse
+  AutonomoWorkspaceBootstrapResponse,
+  AutonomoWorkspaceBusinessProfileUpdateRequest
 } from "@/lib/autonomo-types";
 import {
   autonomoUploadContentTypeValues,
@@ -40,6 +41,14 @@ export class AutonomoApiClient {
   bootstrapWorkspace(): Promise<AutonomoWorkspaceBootstrapResponse> {
     if (this.useFixtures) return fixtureAutonomoApi.bootstrapWorkspace();
     return this.fetchJson("/v1/apps/autonomo/workspace/bootstrap", { method: "POST" });
+  }
+
+  updateBusinessProfile(payload: AutonomoWorkspaceBusinessProfileUpdateRequest): Promise<AutonomoWorkspaceBootstrapResponse> {
+    if (this.useFixtures) return fixtureAutonomoApi.updateBusinessProfile(payload);
+    return this.fetchJson("/v1/apps/autonomo/workspace/business-profile", {
+      method: "PUT",
+      body: payload
+    });
   }
 
   listCounterparties(limit = 100): Promise<AutonomoCounterpartiesListResponse> {
@@ -241,7 +250,7 @@ export class AutonomoApiError extends Error {
 }
 
 type RequestOptions = {
-  method?: "GET" | "PATCH" | "POST";
+  method?: "GET" | "PATCH" | "POST" | "PUT";
   body?: unknown;
 };
 

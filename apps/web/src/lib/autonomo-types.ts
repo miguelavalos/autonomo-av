@@ -42,6 +42,8 @@ export type AutonomoDocumentType =
   | "unknown";
 export type AutonomoReviewedDocumentType = "invoice" | "ticket" | "receipt" | "other";
 export type AutonomoCounterpartyKind = "supplier" | "customer" | "both" | "unknown";
+export type AutonomoBusinessProfileKind = "self_employed" | "company" | "other";
+export type AutonomoBusinessProfileStatus = "missing" | "complete";
 export type AutonomoIntakeSource =
   | "ios_camera"
   | "ios_files"
@@ -98,8 +100,31 @@ export interface AutonomoWorkspaceSummary {
   timezone: string;
   defaultCurrency: string;
   status: "active" | "archived" | "disabled";
+  businessProfile: AutonomoWorkspaceBusinessProfile;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AutonomoWorkspaceBusinessProfile {
+  profileStatus: AutonomoBusinessProfileStatus;
+  kind: AutonomoBusinessProfileKind | null;
+  legalName: string | null;
+  tradeName: string | null;
+  taxId: string | null;
+  vatId: string | null;
+  country: string | null;
+  fiscalAddress: string | null;
+  updatedAt: string | null;
+}
+
+export interface AutonomoWorkspaceBusinessProfileUpdateRequest {
+  kind: AutonomoBusinessProfileKind;
+  legalName: string;
+  tradeName?: string | null;
+  taxId?: string | null;
+  vatId?: string | null;
+  country: string;
+  fiscalAddress?: string | null;
 }
 
 export interface AutonomoWorkspaceBootstrapResponse {

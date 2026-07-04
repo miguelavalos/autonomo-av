@@ -21,10 +21,11 @@ import type {
   AutonomoReviewedRecordSummary,
   AutonomoUploadCompletionResponse,
   AutonomoWorkspaceBootstrapResponse,
+  AutonomoWorkspaceBusinessProfileUpdateRequest,
   AutonomoWorkspaceSummary
 } from "@/lib/autonomo-types";
 
-const workspace: AutonomoWorkspaceSummary = {
+let workspace: AutonomoWorkspaceSummary = {
   workspaceId: "autonomo-fixture-workspace-001",
   ownerUserId: "account-av-user-fixture",
   displayName: "Marta Rojas Autonomo",
@@ -32,6 +33,17 @@ const workspace: AutonomoWorkspaceSummary = {
   timezone: "Europe/Madrid",
   defaultCurrency: "EUR",
   status: "active",
+  businessProfile: {
+    profileStatus: "complete",
+    kind: "self_employed",
+    legalName: "Marta Rojas",
+    tradeName: "Marta Rojas Studio",
+    taxId: "00000000T",
+    vatId: "ES00000000T",
+    country: "ES",
+    fiscalAddress: "Madrid",
+    updatedAt: "2026-07-01T08:00:00.000Z"
+  },
   createdAt: "2026-07-01T08:00:00.000Z",
   updatedAt: "2026-07-01T08:00:00.000Z"
 };
@@ -270,6 +282,26 @@ const fixtureFiles = new Map<string, Blob>();
 
 export const fixtureAutonomoApi = {
   async bootstrapWorkspace(): Promise<AutonomoWorkspaceBootstrapResponse> {
+    return response({ workspace });
+  },
+
+  async updateBusinessProfile(payload: AutonomoWorkspaceBusinessProfileUpdateRequest): Promise<AutonomoWorkspaceBootstrapResponse> {
+    const now = new Date().toISOString();
+    workspace = {
+      ...workspace,
+      businessProfile: {
+        profileStatus: "complete",
+        kind: payload.kind,
+        legalName: payload.legalName.trim(),
+        tradeName: clean(payload.tradeName),
+        taxId: clean(payload.taxId),
+        vatId: clean(payload.vatId),
+        country: payload.country.trim().toUpperCase(),
+        fiscalAddress: clean(payload.fiscalAddress),
+        updatedAt: now
+      },
+      updatedAt: now
+    };
     return response({ workspace });
   },
 

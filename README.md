@@ -27,8 +27,9 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
   containing app drains and uploads only while Pro access is active.
 - `apps/web`
   Minimal signed-in web app with inbox-first workflow, drag/drop upload,
-  review, quarter view, settings, fixture mode, live backend client wiring, and
-  a Pro gate before mounting product workflows.
+  business profile onboarding, review, quarter view, settings, fixture mode,
+  live backend client wiring, and a Pro plus business-profile gate before
+  upload workflows.
 
 ## Docs
 

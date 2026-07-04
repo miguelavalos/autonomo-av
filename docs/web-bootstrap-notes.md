@@ -47,6 +47,7 @@ and does not access the token env var directly.
 The API client uses the Autonomo backend paths from the V1 contract:
 
 - `POST /v1/apps/autonomo/workspace/bootstrap`
+- `PUT /v1/apps/autonomo/workspace/business-profile`
 - `POST /v1/apps/autonomo/uploads/prepare`
 - `PUT /v1/apps/autonomo/uploads/:uploadId`
 - `POST /v1/apps/autonomo/uploads/:uploadId/complete`
@@ -68,11 +69,14 @@ The API client uses the Autonomo backend paths from the V1 contract:
 3. Open `http://localhost:5195/sign-in`, sign in with Account AV, then continue
    to `/`.
 4. Confirm the header shows `Live` and `Account AV`.
-5. Verify workspace bootstrap loads, the inbox lists documents, and a small
-   supported PDF/image upload reaches queued state.
-6. Open a document, preview/download the file, save a reviewed/ignored/duplicate
+5. Verify workspace bootstrap loads. If the business profile is missing,
+   complete legal name, tax ID or VAT ID, country, and business type before
+   upload.
+6. Confirm the inbox lists documents and a small supported PDF/image upload
+   reaches queued state.
+7. Open a document, preview/download the file, save a reviewed/ignored/duplicate
    action, and confirm quarter summary refreshes.
-7. Check the browser console and network panel for auth, CORS, or token
+8. Check the browser console and network panel for auth, CORS, or token
    retrieval errors. Do not copy tokens into logs or screenshots.
 
 ## Cloudflare Web Deploy

@@ -58,6 +58,7 @@ import {
 import {
   autonomoUploadContentTypeValues,
   type AutonomoAppAccess,
+  type AutonomoBusinessProfileKind,
   type AutonomoCounterpartyKind,
   type AutonomoCounterpartyResponse,
   type AutonomoCounterpartySummary,
@@ -72,7 +73,10 @@ import {
   type AutonomoPriority,
   type AutonomoQuarterSummaryResponse,
   type AutonomoReviewedDocumentType,
-  type AutonomoUploadCompletionResponse
+  type AutonomoUploadCompletionResponse,
+  type AutonomoWorkspaceBusinessProfile,
+  type AutonomoWorkspaceBusinessProfileUpdateRequest,
+  type AutonomoWorkspaceSummary
 } from "@/lib/autonomo-types";
 
 const statuses: Array<AutonomoDocumentStatus | "all"> = [
@@ -104,6 +108,7 @@ const priorities: Array<AutonomoPriority | "all"> = ["all", "low", "normal", "in
 const manualStatuses: AutonomoManualDocumentStatus[] = ["queued", "needs_review", "reviewed", "duplicate", "ignored", "failed"];
 const reviewedDocumentTypes: AutonomoReviewedDocumentType[] = ["invoice", "ticket", "receipt", "other"];
 const counterpartyKinds: AutonomoCounterpartyKind[] = ["supplier", "customer", "both", "unknown"];
+const businessProfileKinds: AutonomoBusinessProfileKind[] = ["self_employed", "company", "other"];
 const uploadAccept = `${autonomoUploadContentTypeValues.join(",")},.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif`;
 
 type PublicRoute = "delete-account" | "privacy" | "support" | "terms";
@@ -494,6 +499,7 @@ function AutonomoSurface({
 
   const documents: AutonomoDocumentListItem[] = documentsQuery.data?.documents ?? [];
   const counterparties: AutonomoCounterpartySummary[] = counterpartiesQuery.data?.counterparties ?? [];
+  const workspace = workspaceQuery.data?.workspace ?? null;
   const visibleDocuments = useMemo(
     () =>
       documents.filter((document) => {
@@ -543,6 +549,7 @@ function AutonomoSurface({
           onRefresh={refreshAll}
           selectedDocumentId={selectedDocumentId}
           setSelectedDocumentId={setSelectedDocumentId}
+          workspace={workspace}
         />
       ) : null}
 
@@ -558,8 +565,10 @@ function AutonomoSurface({
 
       {route === "settings" ? (
         <SettingsScreen
+          client={client}
           emailIntake={emailIntake}
-          workspace={workspaceQuery.data?.workspace ?? null}
+          onWorkspaceUpdated={refreshAll}
+          workspace={workspace}
         />
       ) : null}
     </section>
@@ -750,7 +759,8 @@ function InboxScreen({
   onFiltersChange,
   onRefresh,
   selectedDocumentId,
-  setSelectedDocumentId
+  setSelectedDocumentId,
+  workspace
 }: {
   client: AutonomoApiClient;
   counterparties: AutonomoCounterpartySummary[];
@@ -761,8 +771,11 @@ function InboxScreen({
   onRefresh: () => Promise<void>;
   selectedDocumentId: string | null;
   setSelectedDocumentId: (documentId: string | null) => void;
+  workspace: AutonomoWorkspaceSummary | null;
 }) {
   const metrics = useMemo(() => metricsFromDocuments(documents), [documents]);
+  const businessProfile = workspace?.businessProfile ?? null;
+  const canUpload = businessProfile?.profileStatus === "complete";
 
   return (
     <div className="grid gap-4">
@@ -775,7 +788,15 @@ function InboxScreen({
 
       <div className="inbox-layout">
         <div className="grid min-w-0 gap-4">
-          <UploadPanel client={client} onUploaded={onRefresh} />
+          {!canUpload ? (
+            <BusinessProfilePanel
+              client={client}
+              onSaved={onRefresh}
+              profile={businessProfile}
+              title="Business profile"
+            />
+          ) : null}
+          <UploadPanel canUpload={canUpload} client={client} onUploaded={onRefresh} />
           <FiltersPanel counterparties={counterparties} filters={filters} onChange={onFiltersChange} />
           <DocumentList
             documents={documents}
@@ -796,7 +817,84 @@ function InboxScreen({
   );
 }
 
-function UploadPanel({ client, onUploaded }: { client: AutonomoApiClient; onUploaded: () => Promise<void> }) {
+function BusinessProfilePanel({
+  client,
+  onSaved,
+  profile,
+  title = "Business profile"
+}: {
+  client: AutonomoApiClient;
+  onSaved: () => Promise<void>;
+  profile: AutonomoWorkspaceBusinessProfile | null;
+  title?: string;
+}) {
+  const [form, setForm] = useState(() => businessProfileFormFromProfile(profile));
+
+  useEffect(() => {
+    setForm(businessProfileFormFromProfile(profile));
+  }, [profile]);
+
+  const saveMutation = useMutation({
+    mutationFn: (payload: AutonomoWorkspaceBusinessProfileUpdateRequest) => client.updateBusinessProfile(payload),
+    onSuccess: async () => {
+      toast.success("Business profile saved");
+      await onSaved();
+    },
+    onError: (error: Error) => toast.error("Profile save failed", { description: error.message })
+  });
+
+  const save = () => {
+    const error = validateBusinessProfileForm(form);
+    if (error) {
+      toast.error("Business profile incomplete", { description: error });
+      return;
+    }
+
+    saveMutation.mutate({
+      kind: form.kind,
+      legalName: form.legalName.trim(),
+      tradeName: optionalText(form.tradeName),
+      taxId: optionalText(form.taxId),
+      vatId: optionalText(form.vatId),
+      country: form.country.trim().toUpperCase(),
+      fiscalAddress: optionalText(form.fiscalAddress)
+    });
+  };
+
+  const complete = profile?.profileStatus === "complete";
+
+  return (
+    <section className="panel" aria-labelledby="business-profile-title">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 id="business-profile-title" className="section-title">{title}</h2>
+          <p className="section-copy">Fiscal identity lets Autonomo AV recognize whether invoices are addressed to you and score drafts with better evidence.</p>
+        </div>
+        <Badge tone={complete ? "success" : "warning"}>{complete ? "Complete" : "Required"}</Badge>
+      </div>
+      <div className="filters-grid">
+        <SelectField label="Type" value={form.kind} onChange={(value) => setForm({ ...form, kind: value as AutonomoBusinessProfileKind })}>
+          {businessProfileKinds.map((kind) => <option key={kind} value={kind}>{labelFor(kind)}</option>)}
+        </SelectField>
+        <InputField label="Legal name" value={form.legalName} onChange={(value) => setForm({ ...form, legalName: value })} />
+        <InputField label="Trade name" value={form.tradeName} onChange={(value) => setForm({ ...form, tradeName: value })} />
+        <InputField label="Tax ID" value={form.taxId} onChange={(value) => setForm({ ...form, taxId: value })} />
+        <InputField label="VAT ID" value={form.vatId} onChange={(value) => setForm({ ...form, vatId: value })} />
+        <InputField label="Country" value={form.country} placeholder="ES" onChange={(value) => setForm({ ...form, country: value.toUpperCase() })} />
+        <InputField label="Fiscal address" value={form.fiscalAddress} onChange={(value) => setForm({ ...form, fiscalAddress: value })} />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button className="primary-button" type="button" disabled={saveMutation.isPending} onClick={save}>
+          {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+          Save profile
+        </button>
+        {profile?.updatedAt ? <span className="text-sm text-muted-foreground">Updated {formatDate(profile.updatedAt)}</span> : null}
+      </div>
+    </section>
+  );
+}
+
+function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; client: AutonomoApiClient; onUploaded: () => Promise<void> }) {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -816,6 +914,12 @@ function UploadPanel({ client, onUploaded }: { client: AutonomoApiClient; onUplo
   const onDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragActive(false);
+    if (!canUpload) {
+      toast.error("Business profile required", {
+        description: "Complete your business profile before uploading documents."
+      });
+      return;
+    }
     const file = event.dataTransfer.files[0];
     if (file) {
       setSelectedFile(file);
@@ -827,13 +931,17 @@ function UploadPanel({ client, onUploaded }: { client: AutonomoApiClient; onUplo
     <section className="panel upload-panel" aria-labelledby="upload-title">
       <div>
         <h2 id="upload-title" className="section-title">Add to inbox</h2>
-        <p className="section-copy">Drop one PDF or image here, or choose a file. New items appear in the inbox as queued work.</p>
+        <p className="section-copy">
+          {canUpload
+            ? "Drop one PDF or image here, or choose a file. New items appear in the inbox as queued work."
+            : "Complete your business profile before uploading documents."}
+        </p>
       </div>
       <div
-        className={dragActive ? "drop-zone drop-zone-active" : "drop-zone"}
+        className={dragActive && canUpload ? "drop-zone drop-zone-active" : "drop-zone"}
         onDragEnter={(event) => {
           event.preventDefault();
-          setDragActive(true);
+          setDragActive(canUpload);
         }}
         onDragLeave={() => setDragActive(false)}
         onDragOver={(event) => event.preventDefault()}
@@ -851,7 +959,7 @@ function UploadPanel({ client, onUploaded }: { client: AutonomoApiClient; onUplo
           accept={uploadAccept}
           onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
         />
-        <button className="secondary-button" type="button" onClick={() => inputRef.current?.click()}>
+        <button className="secondary-button" type="button" disabled={!canUpload} onClick={() => inputRef.current?.click()}>
           <FileText className="size-4" aria-hidden="true" />
           Choose file
         </button>
@@ -867,7 +975,7 @@ function UploadPanel({ client, onUploaded }: { client: AutonomoApiClient; onUplo
         <button
           className="primary-button"
           type="button"
-          disabled={!selectedFile || uploadMutation.isPending}
+          disabled={!canUpload || !selectedFile || uploadMutation.isPending}
           onClick={() => selectedFile ? uploadMutation.mutate(selectedFile) : undefined}
         >
           {uploadMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
@@ -1365,14 +1473,25 @@ function QuarterScreen({
 }
 
 function SettingsScreen({
+  client,
   emailIntake,
+  onWorkspaceUpdated,
   workspace
 }: {
+  client: AutonomoApiClient;
   emailIntake: AutonomoEmailIntakeSettings;
-  workspace: { displayName: string; country: string; timezone: string; defaultCurrency: string; status: string } | null;
+  onWorkspaceUpdated: () => Promise<void>;
+  workspace: AutonomoWorkspaceSummary | null;
 }) {
   return (
     <section className="settings-grid">
+      <BusinessProfilePanel
+        client={client}
+        onSaved={onWorkspaceUpdated}
+        profile={workspace?.businessProfile ?? null}
+        title="Business identity"
+      />
+
       <div className="panel">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -1584,6 +1703,25 @@ function metricsFromDocuments(documents: AutonomoDocumentListItem[]) {
     needsReview: documents.filter((document) => document.status === "needs_review").length,
     queued: documents.filter((document) => document.status === "queued" || document.status === "uploaded" || document.status === "processing").length
   };
+}
+
+function businessProfileFormFromProfile(profile: AutonomoWorkspaceBusinessProfile | null) {
+  return {
+    kind: profile?.kind ?? ("self_employed" as AutonomoBusinessProfileKind),
+    legalName: profile?.legalName ?? "",
+    tradeName: profile?.tradeName ?? "",
+    taxId: profile?.taxId ?? "",
+    vatId: profile?.vatId ?? "",
+    country: profile?.country ?? "ES",
+    fiscalAddress: profile?.fiscalAddress ?? ""
+  };
+}
+
+function validateBusinessProfileForm(form: ReturnType<typeof businessProfileFormFromProfile>) {
+  if (!form.legalName.trim()) return "Legal name is required.";
+  if (!/^[A-Z]{2}$/.test(form.country.trim().toUpperCase())) return "Country must be a two-letter code such as ES.";
+  if (!form.taxId.trim() && !form.vatId.trim()) return "Tax ID or VAT ID is required.";
+  return null;
 }
 
 function reviewFormFromDetail(detail: AutonomoDocumentDetailResponse): ReviewFormState {
