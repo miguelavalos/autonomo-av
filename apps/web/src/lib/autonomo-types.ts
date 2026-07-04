@@ -248,6 +248,50 @@ export interface AutonomoReviewedRecordSummary {
   updatedAt: string;
 }
 
+export interface AutonomoRecordListQuery {
+  dateFrom?: string;
+  dateTo?: string;
+  quarter?: string;
+  direction?: AutonomoDocumentDirection;
+  documentType?: AutonomoReviewedDocumentType;
+  counterpartyId?: string;
+  category?: string;
+  limit?: number;
+}
+
+export interface AutonomoRecordListItem {
+  recordId: string;
+  documentId: string;
+  counterpartyId: string | null;
+  counterpartyDisplayName: string | null;
+  counterpartyKind: AutonomoCounterpartyKind | null;
+  direction: AutonomoDocumentDirection;
+  documentType: AutonomoReviewedDocumentType;
+  recordDate: string;
+  quarter: string;
+  currency: string;
+  baseAmount: string;
+  vatAmount: string;
+  totalAmount: string;
+  category: string | null;
+  notes: string | null;
+  documentTitle: string | null;
+  documentStatus: AutonomoDocumentStatus;
+  originalFilename: string;
+  source: AutonomoIntakeSource;
+  contentType: AutonomoUploadContentType;
+  byteSize: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AutonomoRecordsListResponse {
+  appId: "autonomoav";
+  workspace: AutonomoWorkspaceSummary;
+  records: AutonomoRecordListItem[];
+  generatedAt: string;
+}
+
 export interface AutonomoDocumentsListResponse {
   appId: "autonomoav";
   workspace: AutonomoWorkspaceSummary;

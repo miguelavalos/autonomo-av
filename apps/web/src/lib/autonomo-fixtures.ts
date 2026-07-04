@@ -15,6 +15,9 @@ import type {
   AutonomoDocumentManualReviewRequest,
   AutonomoDocumentsListResponse,
   AutonomoDocumentDraftSummary,
+  AutonomoRecordListItem,
+  AutonomoRecordListQuery,
+  AutonomoRecordsListResponse,
   AutonomoQuarterCurrencySummary,
   AutonomoQuarterDocumentTypeSummary,
   AutonomoQuarterSummaryResponse,
@@ -138,6 +141,27 @@ let documents: AutonomoDocumentListItem[] = [
     queueStatus: "superseded",
     createdAt: "2026-07-01T08:18:00.000Z",
     updatedAt: "2026-07-01T08:44:00.000Z"
+  },
+  {
+    documentId: "doc-reviewed-purchase-006",
+    assetId: "asset-reviewed-purchase-006",
+    workspaceId: workspace.workspaceId,
+    status: "reviewed",
+    direction: "purchase",
+    documentType: "invoice",
+    title: "Office rent June",
+    documentDate: "2026-06-01",
+    quarter: "2026-Q2",
+    counterpartyId: "cp-supplier-gestoria-norte",
+    originalFilename: "office-rent-june.pdf",
+    contentType: "application/pdf",
+    byteSize: 309112,
+    source: "web_upload",
+    uploadedByUserId: workspace.ownerUserId,
+    queueItemId: "queue-reviewed-purchase-006",
+    queueStatus: "superseded",
+    createdAt: "2026-07-01T08:21:00.000Z",
+    updatedAt: "2026-07-01T08:48:00.000Z"
   },
   {
     documentId: "doc-failed-004",
@@ -275,6 +299,23 @@ let reviewedRecords: Record<string, AutonomoReviewedRecordSummary> = {
     notes: "Reviewed fixture record.",
     createdAt: "2026-07-01T08:44:00.000Z",
     updatedAt: "2026-07-01T08:44:00.000Z"
+  },
+  "doc-reviewed-purchase-006": {
+    recordId: "record-reviewed-purchase-006",
+    documentId: "doc-reviewed-purchase-006",
+    counterpartyId: "cp-supplier-gestoria-norte",
+    direction: "purchase",
+    documentType: "invoice",
+    recordDate: "2026-06-01",
+    quarter: "2026-Q2",
+    currency: "EUR",
+    baseAmount: "950.00",
+    vatAmount: "199.50",
+    totalAmount: "1149.50",
+    category: "Office rent",
+    notes: "Reviewed fixture purchase.",
+    createdAt: "2026-07-01T08:48:00.000Z",
+    updatedAt: "2026-07-01T08:48:00.000Z"
   }
 };
 
@@ -340,6 +381,23 @@ export const fixtureAutonomoApi = {
     return response({ workspace, documents: filtered });
   },
 
+  async listRecords(filters: AutonomoRecordListQuery = {}): Promise<AutonomoRecordsListResponse> {
+    const limit = clamp(filters.limit ?? 100, 1, 250);
+    const filtered = Object.values(reviewedRecords)
+      .map(recordListItem)
+      .filter((record) => !filters.dateFrom || record.recordDate >= filters.dateFrom)
+      .filter((record) => !filters.dateTo || record.recordDate <= filters.dateTo)
+      .filter((record) => !filters.quarter || record.quarter === filters.quarter)
+      .filter((record) => !filters.direction || record.direction === filters.direction)
+      .filter((record) => !filters.documentType || record.documentType === filters.documentType)
+      .filter((record) => !filters.counterpartyId || record.counterpartyId === filters.counterpartyId)
+      .filter((record) => !filters.category || record.category === filters.category)
+      .sort((left, right) => right.recordDate.localeCompare(left.recordDate) || right.createdAt.localeCompare(left.createdAt))
+      .slice(0, limit);
+
+    return response({ workspace, records: filtered });
+  },
+
   async getDocumentDetail(documentId: string): Promise<AutonomoDocumentDetailResponse> {
     const document = findDocument(documentId);
     return response({
@@ -362,7 +420,7 @@ export const fixtureAutonomoApi = {
       documentDate: payload.documentDate,
       quarter: payload.quarter,
       counterpartyId: payload.counterpartyId,
-      queueStatus: payload.status === "queued" ? "queued" : document.queueStatus,
+      queueStatus: payload.status === "queued" ? "queued" : "superseded",
       updatedAt: now
     };
 
@@ -475,6 +533,39 @@ function findDocument(documentId: string) {
     throw new Error(`Fixture document not found: ${documentId}`);
   }
   return document;
+}
+
+function recordListItem(record: AutonomoReviewedRecordSummary): AutonomoRecordListItem {
+  const document = findDocument(record.documentId);
+  const counterparty = record.counterpartyId
+    ? counterparties.find((item) => item.counterpartyId === record.counterpartyId) ?? null
+    : null;
+
+  return {
+    recordId: record.recordId,
+    documentId: record.documentId,
+    counterpartyId: record.counterpartyId,
+    counterpartyDisplayName: counterparty?.displayName ?? null,
+    counterpartyKind: counterparty?.kind ?? null,
+    direction: record.direction,
+    documentType: record.documentType,
+    recordDate: record.recordDate,
+    quarter: record.quarter,
+    currency: record.currency,
+    baseAmount: record.baseAmount,
+    vatAmount: record.vatAmount,
+    totalAmount: record.totalAmount,
+    category: record.category,
+    notes: record.notes,
+    documentTitle: document.title,
+    documentStatus: document.status,
+    originalFilename: document.originalFilename,
+    source: document.source,
+    contentType: document.contentType,
+    byteSize: document.byteSize,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt
+  };
 }
 
 function summarizeCurrencies(records: AutonomoReviewedRecordSummary[]): AutonomoQuarterCurrencySummary[] {

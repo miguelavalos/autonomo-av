@@ -228,7 +228,7 @@ textarea {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1.25rem;
-  padding: 1.5rem;
+  padding: 1.1rem 1.25rem;
   overflow: hidden;
 }
 
@@ -274,12 +274,20 @@ textarea {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.compact-metrics {
+  gap: 0.75rem;
+}
+
 .metric,
 .summary-tile {
   position: relative;
   overflow: hidden;
   min-width: 0;
   padding: 1rem;
+}
+
+.compact-metrics .metric {
+  padding: 0.8rem 0.9rem;
 }
 
 .metric-label,
@@ -300,6 +308,11 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
+.compact-metrics .metric-value {
+  margin-top: 0.35rem;
+  font-size: 1.35rem;
+}
+
 .metric::before {
   position: absolute;
   top: 0;
@@ -315,11 +328,79 @@ textarea {
 .metric-info::before { background: #2563eb; }
 .metric-muted::before { background: #94a3b8; }
 
-.inbox-layout {
+.intake-page,
+.records-management {
+  display: grid;
+  gap: 1rem;
+}
+
+.intake-layout,
+.records-layout {
   display: grid;
   gap: 1.25rem;
   grid-template-columns: minmax(0, 1.08fr) minmax(22rem, 0.72fr);
   align-items: start;
+}
+
+.records-overview {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--card));
+  padding: 1rem;
+}
+
+.records-layout {
+  grid-template-columns: minmax(0, 1.05fr) minmax(21rem, 0.65fr);
+}
+
+.manual-record-panel,
+.records-filters-panel,
+.records-table-panel {
+  align-content: start;
+}
+
+.manual-record-grid,
+.records-filter-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.manual-record-grid .field-label:nth-child(1),
+.manual-record-grid .field-label:nth-child(7),
+.records-filter-grid .field-label:last-child {
+  grid-column: span 2;
+}
+
+.manual-file-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px dashed hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--muted) / 0.34);
+  padding: 0.85rem;
+}
+
+.records-table {
+  min-width: 66rem;
+}
+
+.records-table th:nth-child(8),
+.records-table td:nth-child(8) {
+  min-width: 12rem;
+}
+
+.records-table .cell-title,
+.records-table .cell-subtitle {
+  max-width: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .business-profile-panel {
@@ -704,9 +785,10 @@ textarea {
 }
 
 @media (max-width: 980px) {
-  .inbox-layout,
+  .intake-layout,
   .legal-grid,
   .quarter-grid,
+  .records-layout,
   .settings-grid {
     grid-template-columns: 1fr;
   }
@@ -718,9 +800,17 @@ textarea {
 
   .filters-grid,
   .form-grid,
+  .manual-record-grid,
   .metric-row,
+  .records-filter-grid,
   .totals-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .manual-record-grid .field-label:nth-child(1),
+  .manual-record-grid .field-label:nth-child(7),
+  .records-filter-grid .field-label:last-child {
+    grid-column: span 1;
   }
 }
 
@@ -742,7 +832,9 @@ textarea {
   .filters-grid,
   .form-grid,
   .form-grid.compact,
+  .manual-record-grid,
   .metric-row,
+  .records-filter-grid,
   .totals-grid {
     grid-template-columns: 1fr;
   }

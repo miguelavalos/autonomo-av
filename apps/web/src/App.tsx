@@ -54,6 +54,7 @@ import {
   formatMoney,
   isValidMoney,
   labelFor,
+  moneyString,
   optionalText,
   priorityForDocument,
   priorityTone,
@@ -72,12 +73,12 @@ import {
   type AutonomoDocumentFileDownload,
   type AutonomoDocumentDirection,
   type AutonomoDocumentListItem,
-  type AutonomoDocumentStatus,
-  type AutonomoDocumentType,
+  type AutonomoDocumentManualReviewRequest,
   type AutonomoEmailIntakeSettings,
   type AutonomoManualDocumentStatus,
-  type AutonomoPriority,
   type AutonomoQuarterSummaryResponse,
+  type AutonomoRecordListItem,
+  type AutonomoRecordListQuery,
   type AutonomoReviewedDocumentType,
   type AutonomoUploadCompletionResponse,
   type AutonomoWorkspaceBusinessProfile,
@@ -86,32 +87,7 @@ import {
 } from "@/lib/autonomo-types";
 import { cn } from "@/lib/utils";
 
-const statuses: Array<AutonomoDocumentStatus | "all"> = [
-  "all",
-  "queued",
-  "processing",
-  "drafted",
-  "needs_review",
-  "reviewed",
-  "duplicate",
-  "ignored",
-  "failed",
-  "quarantined"
-];
 const directions: Array<AutonomoDocumentDirection | "all"> = ["all", "sale", "purchase", "unknown"];
-const documentTypes: Array<AutonomoDocumentType | "all"> = ["all", "invoice", "ticket", "receipt", "tax_document", "accountant_file", "other", "unknown"];
-const sources = [
-  "all",
-  "web_upload",
-  "ios_camera",
-  "ios_files",
-  "ios_share",
-  "macos_files",
-  "macos_drag_drop",
-  "macos_share",
-  "macos_service"
-] as const;
-const priorities: Array<AutonomoPriority | "all"> = ["all", "low", "normal", "interesting", "urgent", "blocking"];
 const manualStatuses: AutonomoManualDocumentStatus[] = ["queued", "needs_review", "reviewed", "duplicate", "ignored", "failed"];
 const reviewedDocumentTypes: AutonomoReviewedDocumentType[] = ["invoice", "ticket", "receipt", "other"];
 const counterpartyKinds: AutonomoCounterpartyKind[] = ["supplier", "customer", "both", "unknown"];
@@ -119,17 +95,22 @@ const businessProfileKinds: AutonomoBusinessProfileKind[] = ["self_employed", "c
 const uploadAccept = `${autonomoUploadContentTypeValues.join(",")},.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif`;
 
 type PublicRoute = "delete-account" | "privacy" | "support" | "terms";
-type AppRoute = "inbox" | "quarter" | "settings" | "sign-in" | PublicRoute;
+type AppRoute = "records" | "intake" | "quarter" | "settings" | "sign-in" | PublicRoute;
 type SignedInRoute = Exclude<AppRoute, "sign-in" | PublicRoute>;
 
-type FiltersState = {
-  status: AutonomoDocumentStatus | "all";
+type RecordsPeriodMode = "month" | "quarter" | "year" | "custom";
+type RecordKindFilter = "all" | "sales" | "purchases" | "expenses";
+
+type RecordFiltersState = {
+  periodMode: RecordsPeriodMode;
+  month: string;
   quarter: string;
-  source: (typeof sources)[number];
-  direction: AutonomoDocumentDirection | "all";
-  documentType: AutonomoDocumentType | "all";
+  year: string;
+  dateFrom: string;
+  dateTo: string;
+  kind: RecordKindFilter;
   counterpartyId: string;
-  priority: AutonomoPriority | "all";
+  category: string;
   limit: number;
 };
 
@@ -141,6 +122,22 @@ type ReviewFormState = {
   documentDate: string;
   quarter: string;
   counterpartyId: string;
+  currency: string;
+  baseAmount: string;
+  vatAmount: string;
+  totalAmount: string;
+  category: string;
+  notes: string;
+};
+
+type ManualRecordFormState = {
+  title: string;
+  direction: Exclude<AutonomoDocumentDirection, "unknown">;
+  documentType: AutonomoReviewedDocumentType;
+  recordDate: string;
+  quarter: string;
+  counterpartyId: string;
+  newCounterpartyName: string;
   currency: string;
   baseAmount: string;
   vatAmount: string;
@@ -181,6 +178,22 @@ const emptyReviewForm: ReviewFormState = {
   documentDate: "",
   quarter: currentQuarter(),
   counterpartyId: "",
+  currency: "EUR",
+  baseAmount: "0.00",
+  vatAmount: "0.00",
+  totalAmount: "0.00",
+  category: "",
+  notes: ""
+};
+
+const emptyManualRecordForm: ManualRecordFormState = {
+  title: "",
+  direction: "purchase",
+  documentType: "invoice",
+  recordDate: todayDateOnly(),
+  quarter: quarterForDate(todayDateOnly()),
+  counterpartyId: "",
+  newCounterpartyName: "",
   currency: "EUR",
   baseAmount: "0.00",
   vatAmount: "0.00",
@@ -345,7 +358,7 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
       ),
     [authSession.getToken, useFixtures]
   );
-  const appRoute: SignedInRoute = route === "sign-in" || isPublicRoute(route) ? "inbox" : route;
+  const appRoute: SignedInRoute = route === "sign-in" || isPublicRoute(route) ? "records" : route;
   const shouldLoadAccess =
     !isPublicRoute(route)
     && authSession.isLoaded
@@ -447,16 +460,7 @@ function AutonomoSurface({
   useFixtures: boolean;
 }) {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<FiltersState>({
-    status: "all",
-    quarter: "",
-    source: "all",
-    direction: "all",
-    documentType: "all",
-    counterpartyId: "all",
-    priority: "all",
-    limit: 25
-  });
+  const [recordFilters, setRecordFilters] = useState<RecordFiltersState>(() => defaultRecordFilters());
   const [quarter, setQuarter] = useState(currentQuarter());
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
 
@@ -469,28 +473,22 @@ function AutonomoSurface({
     queryFn: () => client.listCounterparties(100),
     queryKey: ["autonomo-av", "counterparties"]
   });
-  const documentsQuery = useQuery({
-    enabled: workspaceQuery.isSuccess,
-    queryFn: () =>
-      client.listDocuments({
-        status: filters.status === "all" ? undefined : filters.status,
-        quarter: filterText(filters.quarter),
-        source: filters.source === "all" ? undefined : filters.source,
-        direction: filters.direction === "all" ? undefined : filters.direction,
-        documentType: filters.documentType === "all" ? undefined : filters.documentType,
-        counterpartyId: filters.counterpartyId === "all" ? undefined : filters.counterpartyId,
-        limit: filters.limit
-      }),
+  const recordsQuery = useQuery({
+    enabled: workspaceQuery.isSuccess && route === "records",
+    queryFn: () => client.listRecords(recordListQueryFromFilters(recordFilters)),
     queryKey: [
       "autonomo-av",
-      "documents",
-      filters.status,
-      filters.quarter,
-      filters.source,
-      filters.direction,
-      filters.documentType,
-      filters.counterpartyId,
-      filters.limit
+      "records",
+      recordFilters.periodMode,
+      recordFilters.month,
+      recordFilters.quarter,
+      recordFilters.year,
+      recordFilters.dateFrom,
+      recordFilters.dateTo,
+      recordFilters.kind,
+      recordFilters.counterpartyId,
+      recordFilters.category,
+      recordFilters.limit
     ]
   });
   const overviewDocumentsQuery = useQuery({
@@ -504,29 +502,34 @@ function AutonomoSurface({
     queryKey: ["autonomo-av", "quarter-summary", quarter]
   });
 
-  const documents: AutonomoDocumentListItem[] = documentsQuery.data?.documents ?? [];
+  const records: AutonomoRecordListItem[] = recordsQuery.data?.records ?? [];
+  const allDocuments: AutonomoDocumentListItem[] = overviewDocumentsQuery.data?.documents ?? [];
   const counterparties: AutonomoCounterpartySummary[] = counterpartiesQuery.data?.counterparties ?? [];
   const workspace = workspaceQuery.data?.workspace ?? null;
-  const visibleDocuments = useMemo(
-    () =>
-      documents.filter((document) => {
-        const sourceMatches = filters.source === "all" || document.source === filters.source;
-        const priority = priorityForDocument(document);
-        const priorityMatches = filters.priority === "all" || priority === filters.priority;
-        return sourceMatches && priorityMatches;
-      }),
-    [documents, filters.priority, filters.source]
+  const visibleRecords = useMemo(
+    () => filterRecordsByKind(records, recordFilters.kind),
+    [records, recordFilters.kind]
   );
+  const intakeDocuments = useMemo(
+    () => allDocuments.filter(isOperationalDocument),
+    [allDocuments]
+  );
+  const selectableDocuments = route === "intake" ? intakeDocuments : [];
 
   useEffect(() => {
-    if (selectedDocumentId || visibleDocuments.length === 0) return;
-    const firstActionable = visibleDocuments.find((document) => document.status === "needs_review" || document.status === "drafted" || document.status === "failed");
-    setSelectedDocumentId((firstActionable ?? visibleDocuments[0])?.documentId ?? null);
-  }, [selectedDocumentId, visibleDocuments]);
+    setSelectedDocumentId(null);
+  }, [route]);
+
+  useEffect(() => {
+    if (selectedDocumentId || selectableDocuments.length === 0) return;
+    const firstActionable = selectableDocuments.find((document) => document.status === "needs_review" || document.status === "drafted" || document.status === "failed");
+    setSelectedDocumentId((firstActionable ?? selectableDocuments[0])?.documentId ?? null);
+  }, [selectedDocumentId, selectableDocuments]);
 
   const refreshAll = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["autonomo-av", "workspace"] }),
+      queryClient.invalidateQueries({ queryKey: ["autonomo-av", "records"] }),
       queryClient.invalidateQueries({ queryKey: ["autonomo-av", "documents"] }),
       queryClient.invalidateQueries({ queryKey: ["autonomo-av", "counterparties"] }),
       queryClient.invalidateQueries({ queryKey: ["autonomo-av", "quarter-summary"] })
@@ -535,24 +538,41 @@ function AutonomoSurface({
 
   const error =
     workspaceQuery.error?.message ??
-    documentsQuery.error?.message ??
+    recordsQuery.error?.message ??
     overviewDocumentsQuery.error?.message ??
     counterpartiesQuery.error?.message ??
     quarterSummaryQuery.error?.message;
 
   return (
     <section className="autonomo-surface">
-      <HeaderStrip authSession={authSession} useFixtures={useFixtures} onRefresh={() => void refreshAll()} isRefreshing={documentsQuery.isFetching || quarterSummaryQuery.isFetching} />
+      <HeaderStrip
+        authSession={authSession}
+        route={route}
+        useFixtures={useFixtures}
+        onRefresh={() => void refreshAll()}
+        isRefreshing={recordsQuery.isFetching || overviewDocumentsQuery.isFetching || quarterSummaryQuery.isFetching}
+      />
       {error ? <InlineAlert tone="danger" title="Autonomo AV could not load this workspace">{error}</InlineAlert> : null}
 
-      {route === "inbox" ? (
-        <InboxScreen
+      {route === "records" ? (
+        <RecordsScreen
           client={client}
           counterparties={counterparties}
-          documents={visibleDocuments}
-          filters={filters}
-          isLoading={documentsQuery.isFetching || counterpartiesQuery.isFetching}
-          onFiltersChange={setFilters}
+          filters={recordFilters}
+          isLoading={recordsQuery.isFetching || counterpartiesQuery.isFetching}
+          onFiltersChange={setRecordFilters}
+          onRefresh={refreshAll}
+          records={visibleRecords}
+          workspace={workspace}
+        />
+      ) : null}
+
+      {route === "intake" ? (
+        <IntakeScreen
+          client={client}
+          counterparties={counterparties}
+          documents={intakeDocuments}
+          isLoading={overviewDocumentsQuery.isFetching || counterpartiesQuery.isFetching}
           onRefresh={refreshAll}
           selectedDocumentId={selectedDocumentId}
           setSelectedDocumentId={setSelectedDocumentId}
@@ -608,7 +628,7 @@ function AutonomoPublicPage({ route }: { route: PublicRoute }) {
         <p>{page.actionBody}</p>
         <div className="legal-actions">
           <a className="primary-button" href={page.primaryHref}>{page.primaryLabel}</a>
-          <a className="secondary-button" href="/">Open inbox</a>
+          <a className="secondary-button" href="/">Open records</a>
         </div>
       </section>
     </main>
@@ -619,26 +639,30 @@ function HeaderStrip({
   authSession,
   isRefreshing,
   onRefresh,
+  route,
   useFixtures
 }: {
   authSession: AutonomoAuthSession;
   isRefreshing: boolean;
   onRefresh: () => void;
+  route: SignedInRoute;
   useFixtures: boolean;
 }) {
   const environmentLabel = useFixtures ? "Fixture" : "Live";
   const showSessionBadge = authSession.statusLabel !== environmentLabel;
+  const header = headerForRoute(route);
+  const HeaderIcon = header.icon;
 
   return (
     <Card className="autonomo-header-strip">
       <div className="min-w-0">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Inbox aria-hidden="true" />
-          Signed-in workspace
+          <HeaderIcon aria-hidden="true" />
+          {header.label}
         </div>
-        <h1 className="mt-2 text-3xl font-semibold leading-tight text-foreground">Inbox review</h1>
+        <h1 className="mt-2 text-2xl font-semibold leading-tight text-foreground">{header.title}</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          Upload business documents, review AI drafts, and keep reviewed quarter totals separate from pending work.
+          {header.description}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
@@ -650,6 +674,42 @@ function HeaderStrip({
       </div>
     </Card>
   );
+}
+
+function headerForRoute(route: SignedInRoute) {
+  if (route === "records") {
+    return {
+      description: "Track sales, purchases, expenses, and totals by month, year, or custom range.",
+      icon: FileText,
+      label: "Business records",
+      title: "Records"
+    };
+  }
+
+  if (route === "quarter") {
+    return {
+      description: "Reviewed records only. Pending intake stays out of fiscal totals until a human saves the record.",
+      icon: CheckCircle2,
+      label: "Fiscal summary",
+      title: "Quarter"
+    };
+  }
+
+  if (route === "settings") {
+    return {
+      description: "Manage the business identity that Autonomo AV uses to recognize documents addressed to this workspace.",
+      icon: Settings,
+      label: "Workspace setup",
+      title: "Settings"
+    };
+  }
+
+  return {
+    description: "Upload documents, watch the queue, and clear AI drafts before they become reviewed records.",
+    icon: Inbox,
+    label: "Upload and AI",
+    title: "AI Intake"
+  };
 }
 
 function AuthConfigurationMissing() {
@@ -745,12 +805,12 @@ function AutonomoSignInScreen({ authSession, route }: { authSession: AutonomoAut
         <h1 id="auth-title">{authSession.isSignedIn ? "Autonomo AV is ready" : "Sign in to Autonomo AV"}</h1>
         <p>
           {authSession.isSignedIn
-            ? "Open the inbox to continue reviewing workspace documents."
-            : "Use your Account AV session to open the live inbox and backend workspace."}
+            ? "Open records to continue managing workspace documents."
+            : "Use your Account AV session to open live records and the backend workspace."}
         </p>
         {authSession.isSignedIn ? (
           <a className="primary-button auth-action" href={fallbackRedirectUrl}>
-            Open inbox
+            Open records
           </a>
         ) : (
           <AutonomoAccountSignIn fallbackRedirectUrl={fallbackRedirectUrl} />
@@ -760,13 +820,11 @@ function AutonomoSignInScreen({ authSession, route }: { authSession: AutonomoAut
   );
 }
 
-function InboxScreen({
+function IntakeScreen({
   client,
   counterparties,
   documents,
-  filters,
   isLoading,
-  onFiltersChange,
   onRefresh,
   selectedDocumentId,
   setSelectedDocumentId,
@@ -775,9 +833,7 @@ function InboxScreen({
   client: AutonomoApiClient;
   counterparties: AutonomoCounterpartySummary[];
   documents: AutonomoDocumentListItem[];
-  filters: FiltersState;
   isLoading: boolean;
-  onFiltersChange: (filters: FiltersState) => void;
   onRefresh: () => Promise<void>;
   selectedDocumentId: string | null;
   setSelectedDocumentId: (documentId: string | null) => void;
@@ -788,15 +844,15 @@ function InboxScreen({
   const canUpload = businessProfile?.profileStatus === "complete";
 
   return (
-    <div className="grid gap-4">
-      <div className="metric-row">
+    <div className="intake-page">
+      <div className="metric-row compact-metrics">
         <Metric label="Needs review" value={metrics.needsReview} tone="warning" />
         <Metric label="Drafted" value={metrics.drafted} tone="info" />
         <Metric label="Queued" value={metrics.queued} tone="muted" />
         <Metric label="Failed" value={metrics.failed} tone="danger" />
       </div>
 
-      <div className="inbox-layout">
+      <div className="intake-layout">
         <div className="grid min-w-0 gap-4">
           {!canUpload ? (
             <BusinessProfilePanel
@@ -807,11 +863,14 @@ function InboxScreen({
             />
           ) : null}
           <UploadPanel canUpload={canUpload} client={client} onUploaded={onRefresh} />
-          <FiltersPanel counterparties={counterparties} filters={filters} onChange={onFiltersChange} />
           <DocumentList
+            actionLabel="Review"
+            description="Operational items that still need processing, review, retry, or a final decision."
             documents={documents}
+            emptyMessage="No queued, failed, or review-ready documents."
             isLoading={isLoading}
             selectedDocumentId={selectedDocumentId}
+            title="Queue"
             onSelect={setSelectedDocumentId}
           />
         </div>
@@ -824,6 +883,306 @@ function InboxScreen({
         />
       </div>
     </div>
+  );
+}
+
+function RecordsScreen({
+  client,
+  counterparties,
+  filters,
+  isLoading,
+  onFiltersChange,
+  onRefresh,
+  records,
+  workspace
+}: {
+  client: AutonomoApiClient;
+  counterparties: AutonomoCounterpartySummary[];
+  filters: RecordFiltersState;
+  isLoading: boolean;
+  onFiltersChange: (filters: RecordFiltersState) => void;
+  onRefresh: () => Promise<void>;
+  records: AutonomoRecordListItem[];
+  workspace: AutonomoWorkspaceSummary | null;
+}) {
+  const metrics = useMemo(() => recordMetricsFromRecords(records), [records]);
+  const canCreate = workspace?.businessProfile.profileStatus === "complete";
+
+  return (
+    <section className="records-management">
+      {!canCreate ? (
+        <BusinessProfilePanel
+          client={client}
+          onSaved={onRefresh}
+          profile={workspace?.businessProfile ?? null}
+          title="Business profile required"
+        />
+      ) : null}
+
+      <ManualRecordPanel
+        canCreate={canCreate}
+        client={client}
+        counterparties={counterparties}
+        onSaved={onRefresh}
+      />
+
+      <div className="records-overview">
+        <div>
+          <h2 className="section-title">Management register</h2>
+          <p className="section-copy">
+            Reviewed records only. Upload and AI work stays in the intake area until it becomes a saved record.
+          </p>
+        </div>
+        {isLoading ? <Badge tone="muted">Loading</Badge> : <Badge tone="info">{records.length} shown</Badge>}
+      </div>
+
+      <div className="metric-row compact-metrics">
+        <Metric label="Sales" value={formatMoney(metrics.salesTotal, metrics.currency)} tone="success" />
+        <Metric label="Purchases" value={formatMoney(metrics.purchaseTotal, metrics.currency)} tone="info" />
+        <Metric label="VAT" value={formatMoney(metrics.vatTotal, metrics.currency)} tone="warning" />
+        <Metric label="Net" value={formatMoney(metrics.netTotal, metrics.currency)} tone="muted" />
+      </div>
+
+      <RecordsFiltersPanel
+        counterparties={counterparties}
+        filters={filters}
+        onChange={onFiltersChange}
+      />
+
+      <RecordsTable isLoading={isLoading} records={records} />
+    </section>
+  );
+}
+
+function ManualRecordPanel({
+  canCreate,
+  client,
+  counterparties,
+  onSaved
+}: {
+  canCreate: boolean;
+  client: AutonomoApiClient;
+  counterparties: AutonomoCounterpartySummary[];
+  onSaved: () => Promise<void>;
+}) {
+  const [form, setForm] = useState<ManualRecordFormState>(emptyManualRecordForm);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const mutation = useMutation<AutonomoDocumentDetailResponse, Error, void>({
+    mutationFn: async () => {
+      if (!canCreate) throw new Error("Complete the business profile before creating records.");
+      if (!selectedFile) throw new Error("Attach the invoice, ticket, receipt, or sale file for this V1 record.");
+      const validationError = validateManualRecordForm(form);
+      if (validationError) throw new Error(validationError);
+
+      let counterpartyId = optionalText(form.counterpartyId);
+      const newCounterpartyName = optionalText(form.newCounterpartyName);
+      if (!counterpartyId && newCounterpartyName) {
+        const created = await client.createCounterparty({
+          kind: form.direction === "sale" ? "customer" : "supplier",
+          displayName: newCounterpartyName,
+          taxId: null,
+          vatId: null,
+          country: "ES",
+          notes: null
+        });
+        counterpartyId = created.counterparty.counterpartyId;
+      }
+
+      return client.createManualRecordWithFile(selectedFile, manualRecordPayloadFromForm(form, selectedFile, counterpartyId));
+    },
+    onSuccess: async (detail: AutonomoDocumentDetailResponse) => {
+      toast.success("Record saved", { description: detail.document.title ?? detail.document.originalFilename });
+      setForm(emptyManualRecordForm);
+      setSelectedFile(null);
+      if (inputRef.current) inputRef.current.value = "";
+      await onSaved();
+    },
+    onError: (error: Error) => toast.error("Record could not be saved", { description: error.message })
+  });
+
+  return (
+    <Card className="app-card manual-record-panel" aria-labelledby="manual-record-title">
+      <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
+        <div>
+          <CardTitle id="manual-record-title">Manual record</CardTitle>
+          <CardDescription>Enter a purchase, expense, or sale yourself and attach the source document.</CardDescription>
+        </div>
+        <Badge tone={canCreate ? "success" : "warning"}>{canCreate ? "Ready" : "Profile required"}</Badge>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <div className="manual-record-grid">
+          <InputField label="Title" value={form.title} placeholder="Invoice 2026-001" onChange={(value) => setForm({ ...form, title: value })} />
+          <SelectField label="Kind" value={form.direction} onChange={(value) => setForm({ ...form, direction: value as ManualRecordFormState["direction"] })}>
+            <option value="purchase">Purchase / expense</option>
+            <option value="sale">Sale</option>
+          </SelectField>
+          <SelectField label="Type" value={form.documentType} onChange={(value) => setForm({ ...form, documentType: value as AutonomoReviewedDocumentType })}>
+            {reviewedDocumentTypes.map((type) => <option key={type} value={type}>{labelFor(type)}</option>)}
+          </SelectField>
+          <InputField label="Date" type="date" value={form.recordDate} onChange={(value) => setForm({ ...form, recordDate: value, quarter: value ? quarterForDate(value) : form.quarter })} />
+          <InputField label="Quarter" value={form.quarter} onChange={(value) => setForm({ ...form, quarter: value })} />
+          <SelectField label="Counterparty" value={form.counterpartyId} onChange={(value) => setForm({ ...form, counterpartyId: value })}>
+            <option value="">None / create below</option>
+            {counterparties.map((counterparty) => <option key={counterparty.counterpartyId} value={counterparty.counterpartyId}>{counterparty.displayName}</option>)}
+          </SelectField>
+          <InputField label="New counterparty" value={form.newCounterpartyName} placeholder="Supplier or customer name" onChange={(value) => setForm({ ...form, newCounterpartyName: value })} />
+          <InputField label="Currency" value={form.currency} onChange={(value) => setForm({ ...form, currency: value.toUpperCase() })} />
+          <InputField label="Base" value={form.baseAmount} onChange={(value) => setForm({ ...form, baseAmount: value })} />
+          <InputField label="VAT" value={form.vatAmount} onChange={(value) => setForm({ ...form, vatAmount: value })} />
+          <InputField label="Total" value={form.totalAmount} onChange={(value) => setForm({ ...form, totalAmount: value })} />
+          <InputField label="Category" value={form.category} placeholder="Office rent, software, sales" onChange={(value) => setForm({ ...form, category: value })} />
+        </div>
+        <TextAreaField label="Notes" value={form.notes} onChange={(value) => setForm({ ...form, notes: value })} />
+        <div className="manual-file-row">
+          <input
+            ref={inputRef}
+            className="sr-only"
+            type="file"
+            accept={uploadAccept}
+            onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+          />
+          <Button variant="outline" type="button" disabled={!canCreate} onClick={() => inputRef.current?.click()}>
+            <FileText />
+            Choose source file
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {selectedFile ? `${selectedFile.name} · ${formatBytes(selectedFile.size)}` : "A file is required in V1."}
+          </span>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button type="button" disabled={!canCreate || mutation.isPending} onClick={() => mutation.mutate()}>
+          {mutation.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
+          Save reviewed record
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+function RecordsFiltersPanel({
+  counterparties,
+  filters,
+  onChange
+}: {
+  counterparties: AutonomoCounterpartySummary[];
+  filters: RecordFiltersState;
+  onChange: (filters: RecordFiltersState) => void;
+}) {
+  const update = <K extends keyof RecordFiltersState>(key: K, value: RecordFiltersState[K]) => onChange({ ...filters, [key]: value });
+
+  return (
+    <Card className="app-card records-filters-panel" aria-labelledby="record-filters-title">
+      <CardHeader className="flex-row items-center justify-between gap-3">
+        <div>
+          <CardTitle id="record-filters-title">Period and filters</CardTitle>
+          <CardDescription>{recordPeriodDescription(filters)}</CardDescription>
+        </div>
+        <Filter className="text-muted-foreground" aria-hidden="true" />
+      </CardHeader>
+      <CardContent>
+        <div className="records-filter-grid">
+          <SelectField label="Period" value={filters.periodMode} onChange={(value) => update("periodMode", value as RecordsPeriodMode)}>
+            <option value="month">Month</option>
+            <option value="quarter">Quarter</option>
+            <option value="year">Year</option>
+            <option value="custom">Custom range</option>
+          </SelectField>
+          {filters.periodMode === "month" ? (
+            <InputField label="Month" type="month" value={filters.month} onChange={(value) => update("month", value)} />
+          ) : null}
+          {filters.periodMode === "quarter" ? (
+            <InputField label="Quarter" value={filters.quarter} placeholder="2026-Q2" onChange={(value) => update("quarter", value)} />
+          ) : null}
+          {filters.periodMode === "year" ? (
+            <InputField label="Year" type="number" value={filters.year} onChange={(value) => update("year", value)} />
+          ) : null}
+          {filters.periodMode === "custom" ? (
+            <>
+              <InputField label="From" type="date" value={filters.dateFrom} onChange={(value) => update("dateFrom", value)} />
+              <InputField label="To" type="date" value={filters.dateTo} onChange={(value) => update("dateTo", value)} />
+            </>
+          ) : null}
+          <SelectField label="Records" value={filters.kind} onChange={(value) => update("kind", value as RecordKindFilter)}>
+            <option value="all">All records</option>
+            <option value="sales">Sales</option>
+            <option value="purchases">Purchases</option>
+            <option value="expenses">Expenses</option>
+          </SelectField>
+          <SelectField label="Counterparty" value={filters.counterpartyId} onChange={(value) => update("counterpartyId", value)}>
+            <option value="all">All counterparties</option>
+            {counterparties.map((counterparty) => <option key={counterparty.counterpartyId} value={counterparty.counterpartyId}>{counterparty.displayName}</option>)}
+          </SelectField>
+          <InputField label="Category" value={filters.category} placeholder="Exact category" onChange={(value) => update("category", value)} />
+          <InputField label="Limit" type="number" value={String(filters.limit)} onChange={(value) => update("limit", clampRecordLimit(value))} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RecordsTable({ isLoading, records }: { isLoading: boolean; records: AutonomoRecordListItem[] }) {
+  return (
+    <Card className="app-card records-table-panel" aria-labelledby="records-table-title">
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
+        <div>
+          <CardTitle id="records-table-title">Records</CardTitle>
+          <CardDescription>Canonical reviewed sales, purchases, expenses, and attached source files.</CardDescription>
+        </div>
+        {isLoading ? <Badge tone="muted">Loading</Badge> : <Badge tone="info">{records.length} rows</Badge>}
+      </CardHeader>
+      <CardContent>
+        <div className="document-table-wrap">
+          <table className="document-table records-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Record</th>
+                <th>Counterparty</th>
+                <th>Category</th>
+                <th>Base</th>
+                <th>VAT</th>
+                <th>Total</th>
+                <th>Source file</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.length === 0 ? (
+                <tr>
+                  <td colSpan={8}>
+                    <div className="empty-table">
+                      <Search className="size-5" aria-hidden="true" />
+                      No reviewed records match this period.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                records.map((record) => (
+                  <tr key={record.recordId}>
+                    <td>{formatDate(record.recordDate)}</td>
+                    <td>
+                      <div className="cell-title">{record.documentTitle ?? labelFor(record.documentType)}</div>
+                      <div className="cell-subtitle">{labelFor(record.direction)} · {labelFor(record.documentType)} · {record.quarter}</div>
+                    </td>
+                    <td>{record.counterpartyDisplayName ?? "Not set"}</td>
+                    <td>{record.category ?? "Not set"}</td>
+                    <td>{formatMoney(record.baseAmount, record.currency)}</td>
+                    <td>{formatMoney(record.vatAmount, record.currency)}</td>
+                    <td><strong>{formatMoney(record.totalAmount, record.currency)}</strong></td>
+                    <td>
+                      <div className="cell-title">{record.originalFilename}</div>
+                      <div className="cell-subtitle">{labelFor(record.source)} · {formatBytes(record.byteSize)}</div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1001,72 +1360,31 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
   );
 }
 
-function FiltersPanel({
-  counterparties,
-  filters,
-  onChange
-}: {
-  counterparties: AutonomoCounterpartySummary[];
-  filters: FiltersState;
-  onChange: (filters: FiltersState) => void;
-}) {
-  const update = <K extends keyof FiltersState>(key: K, value: FiltersState[K]) => onChange({ ...filters, [key]: value });
-
-  return (
-    <Card className="app-card filters-panel" aria-labelledby="filters-title">
-      <CardHeader className="flex-row items-center justify-between gap-3">
-        <div>
-          <CardTitle id="filters-title">Document filters</CardTitle>
-          <CardDescription>Narrow the inbox by status, quarter, source, direction, type, counterparty, or priority.</CardDescription>
-        </div>
-        <Filter className="text-muted-foreground" aria-hidden="true" />
-      </CardHeader>
-      <CardContent>
-      <div className="filters-grid">
-        <SelectField label="Status" value={filters.status} onChange={(value) => update("status", value as FiltersState["status"])}>
-          {statuses.map((item) => <option key={item} value={item}>{item === "all" ? "All statuses" : labelFor(item)}</option>)}
-        </SelectField>
-        <InputField label="Quarter" value={filters.quarter} placeholder="2026-Q2" onChange={(value) => update("quarter", value)} />
-        <SelectField label="Source" value={filters.source} onChange={(value) => update("source", value as FiltersState["source"])}>
-          {sources.map((item) => <option key={item} value={item}>{item === "all" ? "All sources" : labelFor(item)}</option>)}
-        </SelectField>
-        <SelectField label="Direction" value={filters.direction} onChange={(value) => update("direction", value as FiltersState["direction"])}>
-          {directions.map((item) => <option key={item} value={item}>{item === "all" ? "All directions" : labelFor(item)}</option>)}
-        </SelectField>
-        <SelectField label="Type" value={filters.documentType} onChange={(value) => update("documentType", value as FiltersState["documentType"])}>
-          {documentTypes.map((item) => <option key={item} value={item}>{item === "all" ? "All types" : labelFor(item)}</option>)}
-        </SelectField>
-        <SelectField label="Counterparty" value={filters.counterpartyId} onChange={(value) => update("counterpartyId", value)}>
-          <option value="all">All counterparties</option>
-          {counterparties.map((counterparty) => <option key={counterparty.counterpartyId} value={counterparty.counterpartyId}>{counterparty.displayName}</option>)}
-        </SelectField>
-        <SelectField label="Priority" value={filters.priority} onChange={(value) => update("priority", value as FiltersState["priority"])}>
-          {priorities.map((item) => <option key={item} value={item}>{item === "all" ? "All priorities" : labelFor(item)}</option>)}
-        </SelectField>
-        <InputField label="Limit" type="number" value={String(filters.limit)} onChange={(value) => update("limit", clampLimit(value))} />
-      </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 function DocumentList({
+  actionLabel = "Review",
+  description = "Open a row to review the draft and accepted record.",
   documents,
+  emptyMessage = "No documents match the current filters.",
   isLoading,
   onSelect,
-  selectedDocumentId
+  selectedDocumentId,
+  title = "Inbox"
 }: {
+  actionLabel?: string;
+  description?: string;
   documents: AutonomoDocumentListItem[];
+  emptyMessage?: string;
   isLoading: boolean;
   onSelect: (documentId: string) => void;
   selectedDocumentId: string | null;
+  title?: string;
 }) {
   return (
     <Card className="app-card document-list-panel" aria-labelledby="document-list-title">
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
         <div>
-          <CardTitle id="document-list-title">Inbox</CardTitle>
-          <CardDescription>Open a row to review the draft and accepted record.</CardDescription>
+          <CardTitle id="document-list-title">{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </div>
         {isLoading ? <Badge tone="muted">Loading</Badge> : <Badge tone="info">{documents.length} shown</Badge>}
       </CardHeader>
@@ -1091,7 +1409,7 @@ function DocumentList({
                 <td colSpan={8}>
                   <div className="empty-table">
                     <Search className="size-5" aria-hidden="true" />
-                    No documents match the current filters.
+                    {emptyMessage}
                   </div>
                 </td>
               </tr>
@@ -1113,7 +1431,7 @@ function DocumentList({
                     <td>
                       <Button variant="outline" size="sm" type="button" onClick={() => onSelect(document.documentId)}>
                         <FileText aria-hidden="true" />
-                        Review
+                        {actionLabel}
                       </Button>
                     </td>
                   </tr>
@@ -1684,9 +2002,11 @@ function usePathRoute(): AppRoute {
   if (path.startsWith("/privacy")) return "privacy";
   if (path.startsWith("/support")) return "support";
   if (path.startsWith("/terms")) return "terms";
+  if (path.startsWith("/intake")) return "intake";
+  if (path.startsWith("/ledger") || path.startsWith("/records")) return "records";
   if (path.startsWith("/quarter")) return "quarter";
   if (path.startsWith("/settings")) return "settings";
-  return "inbox";
+  return "records";
 }
 
 function pathForRoute(route: AppRoute) {
@@ -1695,6 +2015,8 @@ function pathForRoute(route: AppRoute) {
   if (route === "privacy") return "/privacy";
   if (route === "support") return "/support";
   if (route === "terms") return "/terms";
+  if (route === "records") return "/";
+  if (route === "intake") return "/intake";
   if (route === "quarter") return "/quarter";
   if (route === "settings") return "/settings";
   return "/";
@@ -1723,6 +2045,154 @@ function safeReturnTo(search: string) {
   return returnTo;
 }
 
+function todayDateOnly() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function currentMonth() {
+  return todayDateOnly().slice(0, 7);
+}
+
+function currentYear() {
+  return todayDateOnly().slice(0, 4);
+}
+
+function defaultRecordFilters(): RecordFiltersState {
+  return {
+    periodMode: "year",
+    month: currentMonth(),
+    quarter: currentQuarter(),
+    year: currentYear(),
+    dateFrom: `${currentYear()}-01-01`,
+    dateTo: todayDateOnly(),
+    kind: "all",
+    counterpartyId: "all",
+    category: "",
+    limit: 100
+  };
+}
+
+function recordListQueryFromFilters(filters: RecordFiltersState): AutonomoRecordListQuery {
+  const period = recordPeriodRange(filters);
+  return {
+    ...period,
+    direction: filters.kind === "sales" ? "sale" : filters.kind === "purchases" || filters.kind === "expenses" ? "purchase" : undefined,
+    counterpartyId: filters.counterpartyId === "all" ? undefined : filters.counterpartyId,
+    category: filterText(filters.category),
+    limit: filters.limit
+  };
+}
+
+function recordPeriodRange(filters: RecordFiltersState): Pick<AutonomoRecordListQuery, "dateFrom" | "dateTo" | "quarter"> {
+  if (filters.periodMode === "quarter") {
+    return { quarter: filterText(filters.quarter) };
+  }
+
+  if (filters.periodMode === "month") {
+    const match = /^(\d{4})-(\d{2})$/.exec(filters.month);
+    if (!match) return {};
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    if (month < 1 || month > 12) return {};
+    const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+    return {
+      dateFrom: `${filters.month}-01`,
+      dateTo: `${filters.month}-${String(lastDay).padStart(2, "0")}`
+    };
+  }
+
+  if (filters.periodMode === "custom") {
+    return {
+      dateFrom: filterText(filters.dateFrom),
+      dateTo: filterText(filters.dateTo)
+    };
+  }
+
+  const year = /^\d{4}$/.test(filters.year) ? filters.year : currentYear();
+  return {
+    dateFrom: `${year}-01-01`,
+    dateTo: `${year}-12-31`
+  };
+}
+
+function recordPeriodDescription(filters: RecordFiltersState) {
+  if (filters.periodMode === "month") return `Showing reviewed records for ${filters.month || "a selected month"}.`;
+  if (filters.periodMode === "quarter") return `Showing reviewed records for ${filters.quarter || "a selected quarter"}.`;
+  if (filters.periodMode === "custom") return "Showing reviewed records in the selected custom range.";
+  return `Showing reviewed records for ${filters.year || currentYear()}.`;
+}
+
+function filterRecordsByKind(records: AutonomoRecordListItem[], kind: RecordKindFilter) {
+  if (kind === "expenses") {
+    return records.filter((record) => record.direction === "purchase" && (record.documentType === "ticket" || record.documentType === "receipt"));
+  }
+  return records;
+}
+
+function manualRecordPayloadFromForm(
+  form: ManualRecordFormState,
+  file: File,
+  counterpartyId: string | null
+): AutonomoDocumentManualReviewRequest {
+  const title = optionalText(form.title) ?? file.name.replace(/\.[^.]+$/, "");
+  return {
+    status: "reviewed",
+    title,
+    direction: form.direction,
+    documentType: form.documentType,
+    documentDate: form.recordDate,
+    quarter: form.quarter,
+    counterpartyId,
+    reviewedRecord: {
+      counterpartyId,
+      direction: form.direction,
+      documentType: form.documentType,
+      recordDate: form.recordDate,
+      quarter: form.quarter,
+      currency: form.currency.toUpperCase(),
+      baseAmount: form.baseAmount,
+      vatAmount: form.vatAmount,
+      totalAmount: form.totalAmount,
+      category: optionalText(form.category),
+      notes: optionalText(form.notes)
+    }
+  };
+}
+
+function validateManualRecordForm(form: ManualRecordFormState) {
+  if (!form.recordDate) return "Record date is required.";
+  if (!form.quarter) return "Quarter is required.";
+  if (quarterForDate(form.recordDate) !== form.quarter) return "Quarter must match the record date.";
+  if (!/^[A-Z]{3}$/.test(form.currency)) return "Currency must be a 3-letter ISO code.";
+  if (!isValidMoney(form.baseAmount) || !isValidMoney(form.vatAmount) || !isValidMoney(form.totalAmount)) {
+    return "Base, VAT, and total must be non-negative amounts with up to 2 decimals.";
+  }
+  return null;
+}
+
+function recordMetricsFromRecords(records: AutonomoRecordListItem[]) {
+  const currency = records[0]?.currency ?? "EUR";
+  let salesTotal = 0;
+  let purchaseTotal = 0;
+  let vatTotal = 0;
+
+  for (const record of records) {
+    const total = Number(record.totalAmount);
+    const vat = Number(record.vatAmount);
+    if (record.direction === "sale" && Number.isFinite(total)) salesTotal += total;
+    if (record.direction === "purchase" && Number.isFinite(total)) purchaseTotal += total;
+    if (Number.isFinite(vat)) vatTotal += vat;
+  }
+
+  return {
+    currency,
+    salesTotal: moneyString(salesTotal),
+    purchaseTotal: moneyString(purchaseTotal),
+    vatTotal: moneyString(vatTotal),
+    netTotal: moneyString(salesTotal - purchaseTotal)
+  };
+}
+
 function metricsFromDocuments(documents: AutonomoDocumentListItem[]) {
   return {
     drafted: documents.filter((document) => document.status === "drafted").length,
@@ -1730,6 +2200,18 @@ function metricsFromDocuments(documents: AutonomoDocumentListItem[]) {
     needsReview: documents.filter((document) => document.status === "needs_review").length,
     queued: documents.filter((document) => document.status === "queued" || document.status === "uploaded" || document.status === "processing").length
   };
+}
+
+function isOperationalDocument(document: AutonomoDocumentListItem) {
+  return (
+    document.status === "queued"
+    || document.status === "uploaded"
+    || document.status === "processing"
+    || document.status === "drafted"
+    || document.status === "needs_review"
+    || document.status === "failed"
+    || document.status === "quarantined"
+  );
 }
 
 function businessProfileFormFromProfile(profile: AutonomoWorkspaceBusinessProfile | null) {
@@ -1834,8 +2316,8 @@ function validateReviewForm(form: ReviewFormState, status: AutonomoManualDocumen
   return null;
 }
 
-function clampLimit(value: string) {
+function clampRecordLimit(value: string) {
   const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return 25;
-  return Math.min(Math.max(Math.trunc(parsed), 1), 100);
+  if (!Number.isFinite(parsed)) return 100;
+  return Math.min(Math.max(Math.trunc(parsed), 1), 250);
 }

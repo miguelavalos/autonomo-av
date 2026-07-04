@@ -11,6 +11,8 @@ import type {
   AutonomoMeAccessResponse,
   AutonomoPrepareUploadRequest,
   AutonomoPreparedUploadResponse,
+  AutonomoRecordListQuery,
+  AutonomoRecordsListResponse,
   AutonomoQuarterSummaryResponse,
   AutonomoUploadCompletionResponse,
   AutonomoUploadContentType,
@@ -69,6 +71,11 @@ export class AutonomoApiClient {
     return this.fetchJson(`/v1/apps/autonomo/documents${queryString(filters)}`);
   }
 
+  listRecords(filters: AutonomoRecordListQuery = {}): Promise<AutonomoRecordsListResponse> {
+    if (this.useFixtures) return fixtureAutonomoApi.listRecords(filters);
+    return this.fetchJson(`/v1/apps/autonomo/records${queryString(filters)}`);
+  }
+
   getDocumentDetail(documentId: string): Promise<AutonomoDocumentDetailResponse> {
     if (this.useFixtures) return fixtureAutonomoApi.getDocumentDetail(documentId);
     return this.fetchJson(`/v1/apps/autonomo/documents/${encodeURIComponent(documentId)}`);
@@ -80,6 +87,14 @@ export class AutonomoApiClient {
       method: "PATCH",
       body: payload
     });
+  }
+
+  async createManualRecordWithFile(
+    file: File,
+    payload: AutonomoDocumentManualReviewRequest
+  ): Promise<AutonomoDocumentDetailResponse> {
+    const uploaded = await this.uploadFile(file);
+    return this.saveDocumentReview(uploaded.documentId, payload);
   }
 
   getDocumentFile(documentId: string, fallbackFilename: string): Promise<AutonomoDocumentFileDownload> {
@@ -254,7 +269,7 @@ type RequestOptions = {
   body?: unknown;
 };
 
-function queryString(filters: AutonomoDocumentListQuery) {
+function queryString(filters: AutonomoDocumentListQuery | AutonomoRecordListQuery) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
     if (value !== undefined && value !== null && String(value).trim() !== "") {

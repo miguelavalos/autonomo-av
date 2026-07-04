@@ -17,8 +17,9 @@ export const autonomoProductConfig: AppsAvProductConfig = {
 };
 
 export const autonomoNavLinks: AppsAvProductLink[] = [
-  { href: "/", label: "Inbox" },
-  { href: "/quarter", label: "Quarter" },
+  { href: "/", label: "Records" },
+  { href: "/intake", label: "AI Intake" },
+  { href: "/quarter", label: "Reports" },
   { href: "/settings", label: "Settings" }
 ];
 
@@ -32,7 +33,7 @@ export const autonomoFooterLabels = {
 };
 
 export const autonomoShellLabels = {
-  home: "Autonomo AV inbox",
+  home: "Autonomo AV records",
   mobileNavigation: "Mobile navigation",
   openNavigation: "Open navigation",
   primaryNavigation: "Primary navigation"
