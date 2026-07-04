@@ -20,6 +20,12 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from "react";
 import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge as UiBadge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { AutonomoApiClient } from "@/lib/autonomo-api-client";
 import {
   AutonomoAccountSignIn,
@@ -78,6 +84,7 @@ import {
   type AutonomoWorkspaceBusinessProfileUpdateRequest,
   type AutonomoWorkspaceSummary
 } from "@/lib/autonomo-types";
+import { cn } from "@/lib/utils";
 
 const statuses: Array<AutonomoDocumentStatus | "all"> = [
   "all",
@@ -619,11 +626,14 @@ function HeaderStrip({
   onRefresh: () => void;
   useFixtures: boolean;
 }) {
+  const environmentLabel = useFixtures ? "Fixture" : "Live";
+  const showSessionBadge = authSession.statusLabel !== environmentLabel;
+
   return (
-    <div className="autonomo-header-strip">
+    <Card className="autonomo-header-strip">
       <div className="min-w-0">
         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-          <Inbox className="size-4" aria-hidden="true" />
+          <Inbox aria-hidden="true" />
           Signed-in workspace
         </div>
         <h1 className="mt-2 text-3xl font-semibold leading-tight text-foreground">Inbox review</h1>
@@ -632,13 +642,13 @@ function HeaderStrip({
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge tone={useFixtures ? "warning" : "success"}>{useFixtures ? "Fixture" : "Live"}</Badge>
-        <Badge tone={authBadgeTone(authSession)}>{authSession.statusLabel}</Badge>
-        <button className="icon-button" type="button" onClick={onRefresh} aria-label="Refresh Autonomo AV">
-          {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-        </button>
+        <Badge tone={useFixtures ? "warning" : "success"}>{environmentLabel}</Badge>
+        {showSessionBadge ? <Badge tone={authBadgeTone(authSession)}>{authSession.statusLabel}</Badge> : null}
+        <Button variant="outline" size="icon" type="button" onClick={onRefresh} aria-label="Refresh Autonomo AV">
+          {isRefreshing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -701,10 +711,10 @@ function AutonomoProRequiredScreen({
               Manage Pro
             </a>
           ) : null}
-          <button className="secondary-button auth-action" type="button" onClick={onRefresh} disabled={isRefreshing}>
-            {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+          <Button className="auth-action" variant="outline" type="button" onClick={onRefresh} disabled={isRefreshing}>
+            {isRefreshing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
             Refresh access
-          </button>
+          </Button>
         </div>
       </section>
     </main>
@@ -864,14 +874,15 @@ function BusinessProfilePanel({
   const complete = profile?.profileStatus === "complete";
 
   return (
-    <section className="panel" aria-labelledby="business-profile-title">
-      <div className="flex items-start justify-between gap-3">
+    <Card className="app-card business-profile-panel" aria-labelledby="business-profile-title">
+      <CardHeader className="flex-row items-start justify-between gap-3">
         <div>
-          <h2 id="business-profile-title" className="section-title">{title}</h2>
-          <p className="section-copy">Fiscal identity lets Autonomo AV recognize whether invoices are addressed to you and score drafts with better evidence.</p>
+          <CardTitle id="business-profile-title">{title}</CardTitle>
+          <CardDescription>Fiscal identity lets Autonomo AV recognize whether invoices are addressed to you and score drafts with better evidence.</CardDescription>
         </div>
         <Badge tone={complete ? "success" : "warning"}>{complete ? "Complete" : "Required"}</Badge>
-      </div>
+      </CardHeader>
+      <CardContent className="grid gap-4">
       <div className="filters-grid">
         <SelectField label="Type" value={form.kind} onChange={(value) => setForm({ ...form, kind: value as AutonomoBusinessProfileKind })}>
           {businessProfileKinds.map((kind) => <option key={kind} value={kind}>{labelFor(kind)}</option>)}
@@ -883,14 +894,15 @@ function BusinessProfilePanel({
         <InputField label="Country" value={form.country} placeholder="ES" onChange={(value) => setForm({ ...form, country: value.toUpperCase() })} />
         <InputField label="Fiscal address" value={form.fiscalAddress} onChange={(value) => setForm({ ...form, fiscalAddress: value })} />
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <button className="primary-button" type="button" disabled={saveMutation.isPending} onClick={save}>
-          {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+      </CardContent>
+      <CardFooter>
+        <Button type="button" disabled={saveMutation.isPending} onClick={save}>
+          {saveMutation.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
           Save profile
-        </button>
+        </Button>
         {profile?.updatedAt ? <span className="text-sm text-muted-foreground">Updated {formatDate(profile.updatedAt)}</span> : null}
-      </div>
-    </section>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -928,15 +940,16 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
   };
 
   return (
-    <section className="panel upload-panel" aria-labelledby="upload-title">
-      <div>
-        <h2 id="upload-title" className="section-title">Add to inbox</h2>
-        <p className="section-copy">
+    <Card className="app-card upload-panel" aria-labelledby="upload-title">
+      <CardHeader>
+        <CardTitle id="upload-title">Add to inbox</CardTitle>
+        <CardDescription>
           {canUpload
             ? "Drop one PDF or image here, or choose a file. New items appear in the inbox as queued work."
             : "Complete your business profile before uploading documents."}
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4">
       <div
         className={dragActive && canUpload ? "drop-zone drop-zone-active" : "drop-zone"}
         onDragEnter={(event) => {
@@ -947,7 +960,9 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
         onDragOver={(event) => event.preventDefault()}
         onDrop={onDrop}
       >
-        <UploadCloud className="size-7 text-[var(--autonomo-accent)]" aria-hidden="true" />
+        <div className="drop-zone-icon" aria-hidden="true">
+          <UploadCloud />
+        </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold">Drag and drop a document</div>
           <div className="text-xs text-muted-foreground">PDF, JPEG, PNG, WebP, HEIC, or HEIF up to 25 MB.</div>
@@ -959,10 +974,10 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
           accept={uploadAccept}
           onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
         />
-        <button className="secondary-button" type="button" disabled={!canUpload} onClick={() => inputRef.current?.click()}>
-          <FileText className="size-4" aria-hidden="true" />
+        <Button variant="outline" type="button" disabled={!canUpload} onClick={() => inputRef.current?.click()}>
+          <FileText />
           Choose file
-        </button>
+        </Button>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {selectedFile ? (
@@ -972,17 +987,17 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
         ) : (
           <span className="text-sm text-muted-foreground">No file selected.</span>
         )}
-        <button
-          className="primary-button"
+        <Button
           type="button"
           disabled={!canUpload || !selectedFile || uploadMutation.isPending}
           onClick={() => selectedFile ? uploadMutation.mutate(selectedFile) : undefined}
         >
-          {uploadMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
+          {uploadMutation.isPending ? <Loader2 className="animate-spin" /> : <UploadCloud />}
           Upload
-        </button>
+        </Button>
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -998,14 +1013,15 @@ function FiltersPanel({
   const update = <K extends keyof FiltersState>(key: K, value: FiltersState[K]) => onChange({ ...filters, [key]: value });
 
   return (
-    <section className="panel" aria-labelledby="filters-title">
-      <div className="flex items-center justify-between gap-3">
+    <Card className="app-card filters-panel" aria-labelledby="filters-title">
+      <CardHeader className="flex-row items-center justify-between gap-3">
         <div>
-          <h2 id="filters-title" className="section-title">Document filters</h2>
-          <p className="section-copy">Narrow the inbox by status, quarter, source, direction, type, counterparty, or priority.</p>
+          <CardTitle id="filters-title">Document filters</CardTitle>
+          <CardDescription>Narrow the inbox by status, quarter, source, direction, type, counterparty, or priority.</CardDescription>
         </div>
-        <Filter className="size-5 text-muted-foreground" aria-hidden="true" />
-      </div>
+        <Filter className="text-muted-foreground" aria-hidden="true" />
+      </CardHeader>
+      <CardContent>
       <div className="filters-grid">
         <SelectField label="Status" value={filters.status} onChange={(value) => update("status", value as FiltersState["status"])}>
           {statuses.map((item) => <option key={item} value={item}>{item === "all" ? "All statuses" : labelFor(item)}</option>)}
@@ -1029,7 +1045,8 @@ function FiltersPanel({
         </SelectField>
         <InputField label="Limit" type="number" value={String(filters.limit)} onChange={(value) => update("limit", clampLimit(value))} />
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1045,14 +1062,15 @@ function DocumentList({
   selectedDocumentId: string | null;
 }) {
   return (
-    <section className="panel document-list-panel" aria-labelledby="document-list-title">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <Card className="app-card document-list-panel" aria-labelledby="document-list-title">
+      <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="document-list-title" className="section-title">Inbox</h2>
-          <p className="section-copy">Open a row to review the draft and accepted record.</p>
+          <CardTitle id="document-list-title">Inbox</CardTitle>
+          <CardDescription>Open a row to review the draft and accepted record.</CardDescription>
         </div>
         {isLoading ? <Badge tone="muted">Loading</Badge> : <Badge tone="info">{documents.length} shown</Badge>}
-      </div>
+      </CardHeader>
+      <CardContent>
       <div className="document-table-wrap">
         <table className="document-table">
           <thead>
@@ -1093,10 +1111,10 @@ function DocumentList({
                     <td><Badge tone={priorityTone(priority)}>{labelFor(priority)}</Badge></td>
                     <td>{formatBytes(document.byteSize)}</td>
                     <td>
-                      <button className="secondary-button small" type="button" onClick={() => onSelect(document.documentId)}>
-                        <FileText className="size-4" aria-hidden="true" />
+                      <Button variant="outline" size="sm" type="button" onClick={() => onSelect(document.documentId)}>
+                        <FileText aria-hidden="true" />
                         Review
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -1105,7 +1123,8 @@ function DocumentList({
           </tbody>
         </table>
       </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1230,9 +1249,9 @@ function ReviewColumn({
           <h2 id="review-title" className="section-title">Review document</h2>
           <p className="section-copy">{detail?.document.originalFilename ?? "Loading document"}</p>
         </div>
-        <button className="icon-button" type="button" onClick={onClose} aria-label="Close document review">
-          <X className="size-4" />
-        </button>
+        <Button variant="ghost" size="icon" type="button" onClick={onClose} aria-label="Close document review">
+          <X />
+        </Button>
       </div>
 
       {detailQuery.isFetching ? <InlineAlert title="Loading document">Fetching safe workspace-scoped detail.</InlineAlert> : null}
@@ -1248,10 +1267,10 @@ function ReviewColumn({
           </div>
 
           <div className="review-actions">
-            <button className="secondary-button" type="button" onClick={() => fileMutation.mutate()} disabled={fileMutation.isPending}>
-              {fileMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <ArrowDownToLine className="size-4" />}
+            <Button variant="outline" type="button" onClick={() => fileMutation.mutate()} disabled={fileMutation.isPending}>
+              {fileMutation.isPending ? <Loader2 className="animate-spin" /> : <ArrowDownToLine />}
               Preview file
-            </button>
+            </Button>
             <a className={previewFile ? "secondary-button" : "secondary-button disabled-link"} href={previewFile?.url ?? "#"} download={previewFile?.filename} aria-disabled={!previewFile}>
               <ArrowDownToLine className="size-4" aria-hidden="true" />
               Download
@@ -1295,20 +1314,20 @@ function ReviewColumn({
           />
 
           <div className="review-submit-row">
-            <button className="primary-button" type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("reviewed")}>
-              {saveMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+            <Button type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("reviewed")}>
+              {saveMutation.isPending ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
               Save reviewed
-            </button>
-            <button className="secondary-button" type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("queued")}>
-              <RotateCcw className="size-4" />
+            </Button>
+            <Button variant="outline" type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("queued")}>
+              <RotateCcw />
               Ask reprocess
-            </button>
-            <button className="secondary-button" type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("duplicate")}>
+            </Button>
+            <Button variant="outline" type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("duplicate")}>
               Mark duplicate
-            </button>
-            <button className="secondary-button" type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("ignored")}>
+            </Button>
+            <Button variant="outline" type="button" disabled={saveMutation.isPending} onClick={() => saveWithStatus("ignored")}>
               Ignore
-            </button>
+            </Button>
           </div>
         </>
       ) : null}
@@ -1343,9 +1362,9 @@ function DraftPanel({ detail, onApply }: { detail: AutonomoDocumentDetailRespons
               {draft.extraction.reviewReasons.map((reason) => <Badge key={reason} tone="warning">{labelFor(reason)}</Badge>)}
             </div>
           ) : null}
-          <button className="secondary-button" type="button" onClick={onApply}>
+          <Button variant="outline" type="button" onClick={onApply}>
             Apply draft fields
-          </button>
+          </Button>
         </>
       ) : (
         <p className="section-copy">No structured draft is available yet. You can still classify, ignore, or ask for reprocessing.</p>
@@ -1380,10 +1399,10 @@ function CounterpartyCreatePanel({
         <InputField label="VAT ID" value={form.vatId} onChange={(value) => onChange({ ...form, vatId: value })} />
         <InputField label="Country" value={form.country} onChange={(value) => onChange({ ...form, country: value.toUpperCase() })} />
       </div>
-      <button className="secondary-button" type="button" disabled={isCreating || form.displayName.trim().length === 0} onClick={onCreate}>
-        {isCreating ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+      <Button className="w-fit" variant="outline" type="button" disabled={isCreating || form.displayName.trim().length === 0} onClick={onCreate}>
+        {isCreating ? <Loader2 className="animate-spin" /> : <Plus />}
         Create and select
-      </button>
+      </Button>
     </div>
   );
 }
@@ -1517,8 +1536,9 @@ function SettingsScreen({
           </div>
           <div className="alias-row">
             <code>{emailIntake.alias}</code>
-            <button
-              className="icon-button"
+            <Button
+              variant="outline"
+              size="icon"
               type="button"
               aria-label="Copy private email alias"
               onClick={() => {
@@ -1528,8 +1548,8 @@ function SettingsScreen({
                 }
               }}
             >
-              <Copy className="size-4" />
-            </button>
+              <Copy />
+            </Button>
           </div>
           <Badge tone={emailIntake.status === "active" ? "success" : "warning"}>{labelFor(emailIntake.status)}</Badge>
         </div>
@@ -1551,20 +1571,20 @@ function FilePreview({ file }: { file: PreviewFileState }) {
 
 function Metric({ label, value, tone }: { label: string; value: number | string; tone: "danger" | "info" | "muted" | "success" | "warning" }) {
   return (
-    <div className={`metric metric-${tone}`}>
+    <Card className={`metric metric-${tone}`}>
       <div className="metric-label">{label}</div>
       <div className="metric-value">{value}</div>
-    </div>
+    </Card>
   );
 }
 
 function SummaryTile({ detail, label, value }: { detail: string; label: string; value: string }) {
   return (
-    <div className="summary-tile">
+    <Card className="summary-tile">
       <span>{label}</span>
       <strong>{value}</strong>
       <small>{detail}</small>
-    </div>
+    </Card>
   );
 }
 
@@ -1578,18 +1598,25 @@ function DraftValue({ label, value }: { label: string; value: string }) {
 }
 
 function Badge({ children, tone = "muted" }: { children: ReactNode; tone?: "danger" | "info" | "muted" | "success" | "warning" }) {
-  return <span className={`badge badge-${tone}`}>{children}</span>;
+  return (
+    <UiBadge
+      className={cn("tone-badge", `tone-badge-${tone}`)}
+      variant={tone === "danger" ? "destructive" : tone === "muted" ? "secondary" : "outline"}
+    >
+      {children}
+    </UiBadge>
+  );
 }
 
 function InlineAlert({ children, title, tone = "muted" }: { children: ReactNode; title: string; tone?: "danger" | "muted" | "warning" }) {
   return (
-    <div className={`inline-alert inline-alert-${tone}`}>
-      <AlertTriangle className="size-4" aria-hidden="true" />
+    <Alert className={cn("inline-alert", `inline-alert-${tone}`)} variant={tone === "danger" ? "destructive" : "default"}>
+      <AlertTriangle aria-hidden="true" />
       <div>
-        <div className="font-semibold">{title}</div>
-        <div>{children}</div>
+        <AlertTitle>{title}</AlertTitle>
+        <AlertDescription>{children}</AlertDescription>
       </div>
-    </div>
+    </Alert>
   );
 }
 
@@ -1620,7 +1647,7 @@ function InputField({
   return (
     <label className="field-label">
       <span>{label}</span>
-      <input type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
+      <Input type={type} value={value} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
@@ -1629,7 +1656,7 @@ function TextAreaField({ label, onChange, value }: { label: string; onChange: (v
   return (
     <label className="field-label field-wide">
       <span>{label}</span>
-      <textarea value={value} rows={3} onChange={(event) => onChange(event.target.value)} />
+      <Textarea value={value} rows={3} onChange={(event) => onChange(event.target.value)} />
     </label>
   );
 }
