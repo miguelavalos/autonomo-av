@@ -29,7 +29,8 @@ export type AutonomoManualDocumentStatus =
   | "reviewed"
   | "duplicate"
   | "ignored"
-  | "failed";
+  | "failed"
+  | "quarantined";
 
 export type AutonomoDocumentDirection = "sale" | "purchase" | "unknown";
 export type AutonomoDocumentType =
@@ -53,6 +54,7 @@ export type AutonomoIntakeSource =
   | "macos_share"
   | "macos_service"
   | "web_upload";
+export type AutonomoIntakeMode = "ai_intake" | "manual_record";
 export type AutonomoIntakeQueueItemStatus = "queued" | "claimed" | "processing" | "drafted" | "failed" | "superseded";
 export type AutonomoPriority = "low" | "normal" | "interesting" | "urgent" | "blocking";
 export type AutonomoRecommendedAction =
@@ -184,6 +186,7 @@ export interface AutonomoDocumentListItem {
   contentType: AutonomoUploadContentType;
   byteSize: number;
   source: AutonomoIntakeSource;
+  intakeMode: AutonomoIntakeMode;
   uploadedByUserId: string;
   queueItemId: string | null;
   queueStatus: AutonomoIntakeQueueItemStatus | null;
@@ -279,6 +282,7 @@ export interface AutonomoRecordListItem {
   documentStatus: AutonomoDocumentStatus;
   originalFilename: string;
   source: AutonomoIntakeSource;
+  intakeMode: AutonomoIntakeMode;
   contentType: AutonomoUploadContentType;
   byteSize: number;
   createdAt: string;
@@ -312,6 +316,7 @@ export interface AutonomoDocumentListQuery {
   status?: AutonomoDocumentStatus;
   quarter?: string;
   source?: AutonomoIntakeSource;
+  intakeMode?: AutonomoIntakeMode;
   direction?: AutonomoDocumentDirection;
   documentType?: AutonomoDocumentType;
   counterpartyId?: string;
@@ -383,7 +388,8 @@ export interface AutonomoPrepareUploadRequest {
   contentType: AutonomoUploadContentType;
   byteSize: number;
   sha256: string;
-  source: "web_upload";
+  source: AutonomoIntakeSource;
+  intakeMode?: AutonomoIntakeMode;
 }
 
 export interface AutonomoPreparedUploadResponse {
@@ -406,9 +412,10 @@ export interface AutonomoUploadCompletionResponse {
   documentId: string;
   assetId: string;
   uploadId: string;
-  queueItemId: string;
-  status: "queued";
-  documentStatus: "queued";
+  queueItemId: string | null;
+  status: "queued" | "needs_review";
+  documentStatus: "queued" | "needs_review";
+  intakeMode: AutonomoIntakeMode;
   storageKey: string;
   bytesReceived: number;
   uploadedAt: string;

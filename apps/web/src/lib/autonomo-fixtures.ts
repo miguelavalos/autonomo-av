@@ -15,6 +15,7 @@ import type {
   AutonomoDocumentManualReviewRequest,
   AutonomoDocumentsListResponse,
   AutonomoDocumentDraftSummary,
+  AutonomoIntakeMode,
   AutonomoRecordListItem,
   AutonomoRecordListQuery,
   AutonomoRecordsListResponse,
@@ -94,6 +95,7 @@ let documents: AutonomoDocumentListItem[] = [
     contentType: "application/pdf",
     byteSize: 384120,
     source: "web_upload",
+    intakeMode: "ai_intake",
     uploadedByUserId: workspace.ownerUserId,
     queueItemId: "queue-needs-review-001",
     queueStatus: "drafted",
@@ -115,6 +117,7 @@ let documents: AutonomoDocumentListItem[] = [
     contentType: "image/jpeg",
     byteSize: 928311,
     source: "ios_share",
+    intakeMode: "ai_intake",
     uploadedByUserId: workspace.ownerUserId,
     queueItemId: "queue-drafted-002",
     queueStatus: "drafted",
@@ -136,6 +139,7 @@ let documents: AutonomoDocumentListItem[] = [
     contentType: "application/pdf",
     byteSize: 218400,
     source: "web_upload",
+    intakeMode: "ai_intake",
     uploadedByUserId: workspace.ownerUserId,
     queueItemId: "queue-reviewed-sale-003",
     queueStatus: "superseded",
@@ -157,6 +161,7 @@ let documents: AutonomoDocumentListItem[] = [
     contentType: "application/pdf",
     byteSize: 309112,
     source: "web_upload",
+    intakeMode: "ai_intake",
     uploadedByUserId: workspace.ownerUserId,
     queueItemId: "queue-reviewed-purchase-006",
     queueStatus: "superseded",
@@ -178,6 +183,7 @@ let documents: AutonomoDocumentListItem[] = [
     contentType: "image/webp",
     byteSize: 491112,
     source: "ios_camera",
+    intakeMode: "ai_intake",
     uploadedByUserId: workspace.ownerUserId,
     queueItemId: "queue-failed-004",
     queueStatus: "failed",
@@ -199,6 +205,7 @@ let documents: AutonomoDocumentListItem[] = [
     contentType: "application/pdf",
     byteSize: 616448,
     source: "ios_files",
+    intakeMode: "ai_intake",
     uploadedByUserId: workspace.ownerUserId,
     queueItemId: "queue-queued-005",
     queueStatus: "queued",
@@ -375,6 +382,7 @@ export const fixtureAutonomoApi = {
       .filter((document) => !filters.quarter || document.quarter === filters.quarter)
       .filter((document) => !filters.direction || document.direction === filters.direction)
       .filter((document) => !filters.documentType || document.documentType === filters.documentType)
+      .filter((document) => !filters.intakeMode || document.intakeMode === filters.intakeMode)
       .filter((document) => !filters.counterpartyId || document.counterpartyId === filters.counterpartyId)
       .slice(0, limit);
 
@@ -446,17 +454,17 @@ export const fixtureAutonomoApi = {
     return fixtureAutonomoApi.getDocumentDetail(documentId);
   },
 
-  async uploadFile(file: File): Promise<AutonomoUploadCompletionResponse> {
+  async uploadFile(file: File, intakeMode: AutonomoIntakeMode = "ai_intake"): Promise<AutonomoUploadCompletionResponse> {
     const now = new Date().toISOString();
     const documentId = `doc-web-upload-${Date.now()}`;
     const assetId = `asset-web-upload-${Date.now()}`;
-    const queueItemId = `queue-web-upload-${Date.now()}`;
+    const queueItemId = intakeMode === "ai_intake" ? `queue-web-upload-${Date.now()}` : null;
     const contentType = normalizeContentType(file.type);
     const document: AutonomoDocumentListItem = {
       documentId,
       assetId,
       workspaceId: workspace.workspaceId,
-      status: "queued",
+      status: intakeMode === "ai_intake" ? "queued" : "needs_review",
       direction: "unknown",
       documentType: "unknown",
       title: file.name.replace(/\.[^.]+$/, ""),
@@ -467,9 +475,10 @@ export const fixtureAutonomoApi = {
       contentType,
       byteSize: file.size,
       source: "web_upload",
+      intakeMode,
       uploadedByUserId: workspace.ownerUserId,
       queueItemId,
-      queueStatus: "queued",
+      queueStatus: intakeMode === "ai_intake" ? "queued" : null,
       createdAt: now,
       updatedAt: now
     };
@@ -484,8 +493,9 @@ export const fixtureAutonomoApi = {
       assetId,
       uploadId: `upload-${documentId}`,
       queueItemId,
-      status: "queued",
-      documentStatus: "queued",
+      status: intakeMode === "ai_intake" ? "queued" : "needs_review",
+      documentStatus: intakeMode === "ai_intake" ? "queued" : "needs_review",
+      intakeMode,
       storageKey: `fixture/autonomo/${documentId}/${file.name}`,
       bytesReceived: file.size,
       uploadedAt: now,
@@ -561,6 +571,7 @@ function recordListItem(record: AutonomoReviewedRecordSummary): AutonomoRecordLi
     documentStatus: document.status,
     originalFilename: document.originalFilename,
     source: document.source,
+    intakeMode: document.intakeMode,
     contentType: document.contentType,
     byteSize: document.byteSize,
     createdAt: record.createdAt,

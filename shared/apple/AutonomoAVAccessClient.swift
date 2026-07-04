@@ -61,7 +61,7 @@ struct AutonomoAccessCapabilities: Codable, Equatable {
         case .signedInFree:
             AutonomoAccessCapabilities(
                 isSignedIn: true,
-                canUseBackend: false,
+                canUseBackend: true,
                 canUsePremiumFeatures: false,
                 canUseCloudSync: false,
                 canManagePlan: true

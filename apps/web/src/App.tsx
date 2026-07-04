@@ -15,6 +15,7 @@ import {
   RotateCcw,
   Search,
   Settings,
+  Trash2,
   UploadCloud,
   X
 } from "lucide-react";
@@ -372,6 +373,7 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
   });
   const autonomoAccess = accessQuery.data?.apps.find((app: AutonomoAppAccess) => app.appId === "autonomoav");
   const hasProAccess = useFixtures || hasAutonomoProAccess(autonomoAccess);
+  const canUseBackend = useFixtures || hasAutonomoBackendAccess(autonomoAccess);
 
   if (isPublicRoute(route)) {
     return (
@@ -403,7 +405,7 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
     return <AuthSkeleton />;
   }
 
-  if (!hasProAccess) {
+  if (!canUseBackend) {
     return (
       <AppShell
         currentPath={pathForRoute(appRoute)}
@@ -431,8 +433,23 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
       navLinks={autonomoNavLinks}
       product={autonomoProductConfig}
     >
-      <AutonomoSurface authSession={authSession} client={client} emailIntake={emailIntake} route={appRoute} useFixtures={useFixtures} />
+      <AutonomoSurface
+        authSession={authSession}
+        client={client}
+        emailIntake={emailIntake}
+        hasProAccess={hasProAccess}
+        route={appRoute}
+        useFixtures={useFixtures}
+      />
     </AppShell>
+  );
+}
+
+function hasAutonomoBackendAccess(access: AutonomoAppAccess | undefined) {
+  return Boolean(
+    access
+      && access.capabilities.isSignedIn
+      && access.capabilities.canUseBackend
   );
 }
 
@@ -450,12 +467,14 @@ function AutonomoSurface({
   authSession,
   client,
   emailIntake,
+  hasProAccess,
   route,
   useFixtures
 }: {
   authSession: AutonomoAuthSession;
   client: AutonomoApiClient;
   emailIntake: AutonomoEmailIntakeSettings;
+  hasProAccess: boolean;
   route: SignedInRoute;
   useFixtures: boolean;
 }) {
@@ -514,7 +533,7 @@ function AutonomoSurface({
     () => allDocuments.filter(isOperationalDocument),
     [allDocuments]
   );
-  const selectableDocuments = route === "intake" ? intakeDocuments : [];
+  const selectableDocuments = route === "intake" && hasProAccess ? intakeDocuments : [];
 
   useEffect(() => {
     setSelectedDocumentId(null);
@@ -563,21 +582,27 @@ function AutonomoSurface({
           onFiltersChange={setRecordFilters}
           onRefresh={refreshAll}
           records={visibleRecords}
+          selectedDocumentId={selectedDocumentId}
+          setSelectedDocumentId={setSelectedDocumentId}
           workspace={workspace}
         />
       ) : null}
 
       {route === "intake" ? (
-        <IntakeScreen
-          client={client}
-          counterparties={counterparties}
-          documents={intakeDocuments}
-          isLoading={overviewDocumentsQuery.isFetching || counterpartiesQuery.isFetching}
-          onRefresh={refreshAll}
-          selectedDocumentId={selectedDocumentId}
-          setSelectedDocumentId={setSelectedDocumentId}
-          workspace={workspace}
-        />
+        hasProAccess ? (
+          <IntakeScreen
+            client={client}
+            counterparties={counterparties}
+            documents={intakeDocuments}
+            isLoading={overviewDocumentsQuery.isFetching || counterpartiesQuery.isFetching}
+            onRefresh={refreshAll}
+            selectedDocumentId={selectedDocumentId}
+            setSelectedDocumentId={setSelectedDocumentId}
+            workspace={workspace}
+          />
+        ) : (
+          <AiIntakeProGate />
+        )
       ) : null}
 
       {route === "quarter" ? (
@@ -679,9 +704,9 @@ function HeaderStrip({
 function headerForRoute(route: SignedInRoute) {
   if (route === "records") {
     return {
-      description: "Track sales, purchases, expenses, and totals by month, year, or custom range.",
+      description: "Manual sales, purchases, invoices, tickets, and receipts. Pro AI intake can add drafts here after review.",
       icon: FileText,
-      label: "Business records",
+      label: "Manual register",
       title: "Records"
     };
   }
@@ -705,9 +730,9 @@ function headerForRoute(route: SignedInRoute) {
   }
 
   return {
-    description: "Upload documents, watch the queue, and clear AI drafts before they become reviewed records.",
+    description: "Shared Pro AI queue for web uploads, iPhone Share Extension, and macOS intake. Drafts stay out of records until review.",
     icon: Inbox,
-    label: "Upload and AI",
+    label: "Pro AI intake",
     title: "AI Intake"
   };
 }
@@ -845,6 +870,8 @@ function IntakeScreen({
 
   return (
     <div className="intake-page">
+      <AiIntakeBridgePanel />
+
       <div className="metric-row compact-metrics">
         <Metric label="Needs review" value={metrics.needsReview} tone="warning" />
         <Metric label="Drafted" value={metrics.drafted} tone="info" />
@@ -859,18 +886,18 @@ function IntakeScreen({
               client={client}
               onSaved={onRefresh}
               profile={businessProfile}
-              title="Business profile"
+              title="Minimum fiscal setup"
             />
           ) : null}
           <UploadPanel canUpload={canUpload} client={client} onUploaded={onRefresh} />
           <DocumentList
             actionLabel="Review"
-            description="Operational items that still need processing, review, retry, or a final decision."
+            description="Documents from web, iPhone, and macOS that still need AI processing, review, retry, or a final decision."
             documents={documents}
             emptyMessage="No queued, failed, or review-ready documents."
             isLoading={isLoading}
             selectedDocumentId={selectedDocumentId}
-            title="Queue"
+            title="Shared AI queue"
             onSelect={setSelectedDocumentId}
           />
         </div>
@@ -894,6 +921,8 @@ function RecordsScreen({
   onFiltersChange,
   onRefresh,
   records,
+  selectedDocumentId,
+  setSelectedDocumentId,
   workspace
 }: {
   client: AutonomoApiClient;
@@ -903,10 +932,23 @@ function RecordsScreen({
   onFiltersChange: (filters: RecordFiltersState) => void;
   onRefresh: () => Promise<void>;
   records: AutonomoRecordListItem[];
+  selectedDocumentId: string | null;
+  setSelectedDocumentId: (documentId: string | null) => void;
   workspace: AutonomoWorkspaceSummary | null;
 }) {
   const metrics = useMemo(() => recordMetricsFromRecords(records), [records]);
   const canCreate = workspace?.businessProfile.profileStatus === "complete";
+  const archiveMutation = useMutation<AutonomoDocumentDetailResponse, Error, AutonomoRecordListItem>({
+    mutationFn: (record) => client.saveDocumentReview(record.documentId, archivePayloadFromRecord(record)),
+    onSuccess: async (detail) => {
+      toast.success("Record archived", { description: detail.document.title ?? detail.document.originalFilename });
+      if (selectedDocumentId === detail.document.documentId) {
+        setSelectedDocumentId(null);
+      }
+      await onRefresh();
+    },
+    onError: (error: Error) => toast.error("Record could not be archived", { description: error.message })
+  });
 
   return (
     <section className="records-management">
@@ -915,22 +957,15 @@ function RecordsScreen({
           client={client}
           onSaved={onRefresh}
           profile={workspace?.businessProfile ?? null}
-          title="Business profile required"
+          title="Start with minimum fiscal setup"
         />
       ) : null}
 
-      <ManualRecordPanel
-        canCreate={canCreate}
-        client={client}
-        counterparties={counterparties}
-        onSaved={onRefresh}
-      />
-
       <div className="records-overview">
         <div>
-          <h2 className="section-title">Management register</h2>
+          <h2 className="section-title">Manual register</h2>
           <p className="section-copy">
-            Reviewed records only. Upload and AI work stays in the intake area until it becomes a saved record.
+            Free users can keep a clean manual book of sales, purchases, invoices, tickets, and receipts. Pro AI intake can draft records from web, iPhone, and macOS, but nothing enters this register until it is reviewed.
           </p>
         </div>
         {isLoading ? <Badge tone="muted">Loading</Badge> : <Badge tone="info">{records.length} shown</Badge>}
@@ -943,14 +978,108 @@ function RecordsScreen({
         <Metric label="Net" value={formatMoney(metrics.netTotal, metrics.currency)} tone="muted" />
       </div>
 
-      <RecordsFiltersPanel
-        counterparties={counterparties}
-        filters={filters}
-        onChange={onFiltersChange}
-      />
+      <div className="records-layout">
+        <div className="records-workbench">
+          <RecordsFiltersPanel
+            counterparties={counterparties}
+            filters={filters}
+            onChange={onFiltersChange}
+          />
 
-      <RecordsTable isLoading={isLoading} records={records} />
+          <RecordsTable
+            archivingDocumentId={archiveMutation.isPending ? archiveMutation.variables?.documentId ?? null : null}
+            isLoading={isLoading}
+            onArchive={(record) => archiveMutation.mutate(record)}
+            onSelect={setSelectedDocumentId}
+            records={records}
+            selectedDocumentId={selectedDocumentId}
+          />
+        </div>
+        <div className="records-side-stack">
+          <ManualRecordPanel
+            canCreate={canCreate}
+            client={client}
+            counterparties={counterparties}
+            onSaved={onRefresh}
+          />
+          <ReviewColumn
+            client={client}
+            counterparties={counterparties}
+            selectedDocumentId={selectedDocumentId}
+            onClose={() => setSelectedDocumentId(null)}
+            onSaved={onRefresh}
+          />
+        </div>
+      </div>
     </section>
+  );
+}
+
+function AiIntakeProGate() {
+  const managementUrl = getAutonomoAccountManagementUrl("/apps/autonomoav")
+    ?? getAutonomoAccountManagementUrl()
+    ?? autonomoProductConfig.links.suite?.href;
+
+  return (
+    <section className="intake-page">
+      <AiIntakeBridgePanel />
+      <Card className="app-card pro-gate-panel" aria-labelledby="ai-pro-gate-title">
+        <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle id="ai-pro-gate-title">AI intake is Pro</CardTitle>
+            <CardDescription>
+              Free workspaces keep manual records without aggressive caps. Pro adds the shared AI queue for web, iPhone, and macOS.
+            </CardDescription>
+          </div>
+          <Badge tone="warning">Upgrade</Badge>
+        </CardHeader>
+        <CardFooter>
+          {managementUrl ? (
+            <a className="primary-button" href={managementUrl}>
+              Manage Pro
+            </a>
+          ) : null}
+          <a className="secondary-button" href="/">
+            Back to records
+          </a>
+        </CardFooter>
+      </Card>
+    </section>
+  );
+}
+
+function AiIntakeBridgePanel() {
+  return (
+    <Card className="app-card ai-intake-bridge" aria-labelledby="ai-intake-bridge-title">
+      <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
+        <div>
+          <CardTitle id="ai-intake-bridge-title">One Pro AI inbox across every surface</CardTitle>
+          <CardDescription>
+            Web, iPhone, and macOS all feed the same backend queue. AI creates drafts only; reviewed records stay human-owned.
+          </CardDescription>
+        </div>
+        <Badge tone="info">Pro</Badge>
+      </CardHeader>
+      <CardContent>
+        <div className="ai-channel-grid">
+          <IntakeChannelCard icon={<UploadCloud />} title="Web" detail="Drop PDFs and images from the browser." />
+          <IntakeChannelCard icon={<Inbox />} title="iPhone" detail="Share invoices or import files into Autonomo AV Inbox." />
+          <IntakeChannelCard icon={<FileText />} title="macOS" detail="Use Finder, Services, drag/drop, and the menu bar app." />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function IntakeChannelCard({ detail, icon, title }: { detail: string; icon: ReactNode; title: string }) {
+  return (
+    <div className="ai-channel">
+      <div className="ai-channel-icon" aria-hidden="true">{icon}</div>
+      <div>
+        <div className="ai-channel-title">{title}</div>
+        <div className="ai-channel-detail">{detail}</div>
+      </div>
+    </div>
   );
 }
 
@@ -1123,13 +1252,27 @@ function RecordsFiltersPanel({
   );
 }
 
-function RecordsTable({ isLoading, records }: { isLoading: boolean; records: AutonomoRecordListItem[] }) {
+function RecordsTable({
+  archivingDocumentId,
+  isLoading,
+  onArchive,
+  onSelect,
+  records,
+  selectedDocumentId
+}: {
+  archivingDocumentId: string | null;
+  isLoading: boolean;
+  onArchive: (record: AutonomoRecordListItem) => void;
+  onSelect: (documentId: string) => void;
+  records: AutonomoRecordListItem[];
+  selectedDocumentId: string | null;
+}) {
   return (
     <Card className="app-card records-table-panel" aria-labelledby="records-table-title">
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
         <div>
           <CardTitle id="records-table-title">Records</CardTitle>
-          <CardDescription>Canonical reviewed sales, purchases, expenses, and attached source files.</CardDescription>
+          <CardDescription>Reviewed sales, purchases, expenses, tickets, receipts, and attached source files.</CardDescription>
         </div>
         {isLoading ? <Badge tone="muted">Loading</Badge> : <Badge tone="info">{records.length} rows</Badge>}
       </CardHeader>
@@ -1146,12 +1289,13 @@ function RecordsTable({ isLoading, records }: { isLoading: boolean; records: Aut
                 <th>VAT</th>
                 <th>Total</th>
                 <th>Source file</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {records.length === 0 ? (
                 <tr>
-                  <td colSpan={8}>
+                  <td colSpan={9}>
                     <div className="empty-table">
                       <Search className="size-5" aria-hidden="true" />
                       No reviewed records match this period.
@@ -1160,7 +1304,10 @@ function RecordsTable({ isLoading, records }: { isLoading: boolean; records: Aut
                 </tr>
               ) : (
                 records.map((record) => (
-                  <tr key={record.recordId}>
+                  <tr
+                    key={record.recordId}
+                    className={record.documentId === selectedDocumentId ? "selected-row" : undefined}
+                  >
                     <td>{formatDate(record.recordDate)}</td>
                     <td>
                       <div className="cell-title">{record.documentTitle ?? labelFor(record.documentType)}</div>
@@ -1174,6 +1321,23 @@ function RecordsTable({ isLoading, records }: { isLoading: boolean; records: Aut
                     <td>
                       <div className="cell-title">{record.originalFilename}</div>
                       <div className="cell-subtitle">{labelFor(record.source)} · {formatBytes(record.byteSize)}</div>
+                    </td>
+                    <td>
+                      <div className="table-actions">
+                        <Button variant="outline" size="sm" type="button" onClick={() => onSelect(record.documentId)}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          type="button"
+                          aria-label={`Archive ${record.documentTitle ?? record.originalFilename}`}
+                          disabled={archivingDocumentId === record.documentId}
+                          onClick={() => onArchive(record)}
+                        >
+                          {archivingDocumentId === record.documentId ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -1237,22 +1401,20 @@ function BusinessProfilePanel({
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div>
           <CardTitle id="business-profile-title">{title}</CardTitle>
-          <CardDescription>Fiscal identity lets Autonomo AV recognize whether invoices are addressed to you and score drafts with better evidence.</CardDescription>
+          <CardDescription>Only type, legal name, and country are required to start creating records.</CardDescription>
         </div>
-        <Badge tone={complete ? "success" : "warning"}>{complete ? "Complete" : "Required"}</Badge>
+        <Badge tone={complete ? "success" : "warning"}>{complete ? "Ready" : "Required"}</Badge>
       </CardHeader>
       <CardContent className="grid gap-4">
-      <div className="filters-grid">
+      <div className="onboarding-minimal-grid">
         <SelectField label="Type" value={form.kind} onChange={(value) => setForm({ ...form, kind: value as AutonomoBusinessProfileKind })}>
           {businessProfileKinds.map((kind) => <option key={kind} value={kind}>{labelFor(kind)}</option>)}
         </SelectField>
         <InputField label="Legal name" value={form.legalName} onChange={(value) => setForm({ ...form, legalName: value })} />
-        <InputField label="Trade name" value={form.tradeName} onChange={(value) => setForm({ ...form, tradeName: value })} />
-        <InputField label="Tax ID" value={form.taxId} onChange={(value) => setForm({ ...form, taxId: value })} />
-        <InputField label="VAT ID" value={form.vatId} onChange={(value) => setForm({ ...form, vatId: value })} />
+        <InputField label="Tax / VAT ID (optional)" value={form.taxId} onChange={(value) => setForm({ ...form, taxId: value })} />
         <InputField label="Country" value={form.country} placeholder="ES" onChange={(value) => setForm({ ...form, country: value.toUpperCase() })} />
-        <InputField label="Fiscal address" value={form.fiscalAddress} onChange={(value) => setForm({ ...form, fiscalAddress: value })} />
       </div>
+      <p className="section-copy">Optional trade name, VAT split, and fiscal address can be added later in settings when they become necessary.</p>
       </CardContent>
       <CardFooter>
         <Button type="button" disabled={saveMutation.isPending} onClick={save}>
@@ -1301,11 +1463,11 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
   return (
     <Card className="app-card upload-panel" aria-labelledby="upload-title">
       <CardHeader>
-        <CardTitle id="upload-title">Add to inbox</CardTitle>
+        <CardTitle id="upload-title">Send to AI inbox</CardTitle>
         <CardDescription>
           {canUpload
-            ? "Drop one PDF or image here, or choose a file. New items appear in the inbox as queued work."
-            : "Complete your business profile before uploading documents."}
+            ? "Drop one PDF or image here. It joins the same Pro queue used by iPhone and macOS intake."
+            : "Complete the minimum fiscal setup before sending documents to AI."}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
@@ -2159,6 +2321,19 @@ function manualRecordPayloadFromForm(
   };
 }
 
+function archivePayloadFromRecord(record: AutonomoRecordListItem): AutonomoDocumentManualReviewRequest {
+  return {
+    status: "ignored",
+    title: record.documentTitle,
+    direction: record.direction,
+    documentType: record.documentType,
+    documentDate: record.recordDate,
+    quarter: record.quarter,
+    counterpartyId: record.counterpartyId,
+    reviewedRecord: null
+  };
+}
+
 function validateManualRecordForm(form: ManualRecordFormState) {
   if (!form.recordDate) return "Record date is required.";
   if (!form.quarter) return "Quarter is required.";
@@ -2203,6 +2378,7 @@ function metricsFromDocuments(documents: AutonomoDocumentListItem[]) {
 }
 
 function isOperationalDocument(document: AutonomoDocumentListItem) {
+  if (document.intakeMode !== "ai_intake") return false;
   return (
     document.status === "queued"
     || document.status === "uploaded"
@@ -2219,7 +2395,7 @@ function businessProfileFormFromProfile(profile: AutonomoWorkspaceBusinessProfil
     kind: profile?.kind ?? ("self_employed" as AutonomoBusinessProfileKind),
     legalName: profile?.legalName ?? "",
     tradeName: profile?.tradeName ?? "",
-    taxId: profile?.taxId ?? "",
+    taxId: profile?.taxId ?? profile?.vatId ?? "",
     vatId: profile?.vatId ?? "",
     country: profile?.country ?? "ES",
     fiscalAddress: profile?.fiscalAddress ?? ""
@@ -2229,7 +2405,6 @@ function businessProfileFormFromProfile(profile: AutonomoWorkspaceBusinessProfil
 function validateBusinessProfileForm(form: ReturnType<typeof businessProfileFormFromProfile>) {
   if (!form.legalName.trim()) return "Legal name is required.";
   if (!/^[A-Z]{2}$/.test(form.country.trim().toUpperCase())) return "Country must be a two-letter code such as ES.";
-  if (!form.taxId.trim() && !form.vatId.trim()) return "Tax ID or VAT ID is required.";
   return null;
 }
 

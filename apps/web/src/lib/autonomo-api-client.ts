@@ -8,6 +8,7 @@ import type {
   AutonomoDocumentListQuery,
   AutonomoDocumentManualReviewRequest,
   AutonomoDocumentsListResponse,
+  AutonomoIntakeMode,
   AutonomoMeAccessResponse,
   AutonomoPrepareUploadRequest,
   AutonomoPreparedUploadResponse,
@@ -93,7 +94,7 @@ export class AutonomoApiClient {
     file: File,
     payload: AutonomoDocumentManualReviewRequest
   ): Promise<AutonomoDocumentDetailResponse> {
-    const uploaded = await this.uploadFile(file);
+    const uploaded = await this.uploadFile(file, "manual_record");
     return this.saveDocumentReview(uploaded.documentId, payload);
   }
 
@@ -107,7 +108,7 @@ export class AutonomoApiClient {
     return this.fetchJson(`/v1/apps/autonomo/quarter-summary?quarter=${encodeURIComponent(quarter)}`);
   }
 
-  async uploadFile(file: File): Promise<AutonomoUploadCompletionResponse> {
+  async uploadFile(file: File, intakeMode: AutonomoIntakeMode = "ai_intake"): Promise<AutonomoUploadCompletionResponse> {
     const contentType = uploadContentTypeForFile(file);
     if (!contentType) {
       throw new AutonomoApiError(415, "unsupported_upload_type", "Autonomo AV supports PDF, JPEG, PNG, WebP, HEIC, and HEIF files.");
@@ -115,14 +116,15 @@ export class AutonomoApiClient {
     if (file.size > autonomoUploadMaxByteSize) {
       throw new AutonomoApiError(413, "upload_too_large", "Autonomo AV uploads are limited to 25 MB in V1.");
     }
-    if (this.useFixtures) return fixtureAutonomoApi.uploadFile(file);
+    if (this.useFixtures) return fixtureAutonomoApi.uploadFile(file, intakeMode);
 
     const prepared = await this.prepareUpload({
       originalFilename: file.name,
       contentType,
       byteSize: file.size,
       sha256: await sha256Hex(file),
-      source: "web_upload"
+      source: "web_upload",
+      intakeMode
     });
 
     return this.putPreparedUpload(prepared, file, contentType);

@@ -2,10 +2,12 @@
 
 Public native and web client workspace for Autonomo AV.
 
-Autonomo AV V1 is a signed-in business-document intake product:
+Autonomo AV V1 is a signed-in business-document register plus Pro AI intake
+product:
 
 ```text
-capture or upload -> backend intake queue -> AI draft -> manual review
+manual record -> reviewed quarter register
+web/iOS/macOS capture -> Pro AI queue -> AI draft -> manual review
 ```
 
 The backend, Admin AV operator surface, and product documentation live in the
@@ -26,10 +28,10 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
   app group inbox after finding a fresh tokenless Pro access snapshot; the
   containing app drains and uploads only while Pro access is active.
 - `apps/web`
-  Minimal signed-in web app with inbox-first workflow, drag/drop upload,
-  business profile onboarding, review, quarter view, settings, fixture mode,
-  live backend client wiring, and a Pro plus business-profile gate before
-  upload workflows.
+  Minimal signed-in web app with minimum business onboarding, manual records
+  register, filters, create/edit review workflow, quarter view, settings,
+  fixture mode, live backend client wiring, and a Pro AI intake surface that
+  shares the backend queue with iOS and macOS.
 
 ## Docs
 

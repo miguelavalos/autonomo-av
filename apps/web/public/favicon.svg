@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Autonomo AV">
+  <rect width="64" height="64" rx="14" fill="#f8fafc"/>
+  <path d="M18 13h21l9 9v29H18z" fill="#ffffff" stroke="#2563eb" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M39 13v10h9" fill="none" stroke="#2563eb" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M24 34h18M24 43h12" stroke="#0f766e" stroke-width="4" stroke-linecap="round"/>
+</svg>

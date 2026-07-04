@@ -357,6 +357,26 @@ textarea {
   grid-template-columns: minmax(0, 1.05fr) minmax(21rem, 0.65fr);
 }
 
+.records-workbench,
+.records-side-stack {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.records-side-stack {
+  align-content: start;
+}
+
+.records-side-stack .manual-record-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.records-side-stack .manual-record-grid .field-label:nth-child(1),
+.records-side-stack .manual-record-grid .field-label:nth-child(7) {
+  grid-column: 1 / -1;
+}
+
 .manual-record-panel,
 .records-filters-panel,
 .records-table-panel {
@@ -368,6 +388,12 @@ textarea {
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.onboarding-minimal-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .manual-record-grid .field-label:nth-child(1),
@@ -396,11 +422,80 @@ textarea {
   min-width: 12rem;
 }
 
+.records-table th:nth-child(9),
+.records-table td:nth-child(9) {
+  width: 7.5rem;
+}
+
 .records-table .cell-title,
 .records-table .cell-subtitle {
   max-width: none;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.ai-intake-bridge {
+  border-color: rgb(37 99 235 / 24%);
+  background:
+    linear-gradient(180deg, hsl(var(--card)) 0%, rgb(239 246 255 / 72%) 100%);
+}
+
+.pro-gate-panel {
+  max-width: 46rem;
+}
+
+.ai-channel-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ai-channel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  background: hsl(var(--background) / 0.82);
+  padding: 0.85rem;
+}
+
+.ai-channel-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+}
+
+.ai-channel-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ai-channel-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.ai-channel-detail {
+  margin-top: 0.15rem;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.76rem;
+  line-height: 1.45;
 }
 
 .business-profile-panel {
@@ -802,9 +897,14 @@ textarea {
   .form-grid,
   .manual-record-grid,
   .metric-row,
+  .onboarding-minimal-grid,
   .records-filter-grid,
   .totals-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ai-channel-grid {
+    grid-template-columns: 1fr;
   }
 
   .manual-record-grid .field-label:nth-child(1),
@@ -834,6 +934,7 @@ textarea {
   .form-grid.compact,
   .manual-record-grid,
   .metric-row,
+  .onboarding-minimal-grid,
   .records-filter-grid,
   .totals-grid {
     grid-template-columns: 1fr;
