@@ -458,13 +458,24 @@ export const fixtureAutonomoApi = {
     const now = new Date().toISOString();
     const documentId = `doc-web-upload-${Date.now()}`;
     const assetId = `asset-web-upload-${Date.now()}`;
-    const queueItemId = intakeMode === "ai_intake" ? `queue-web-upload-${Date.now()}` : null;
     const contentType = normalizeContentType(file.type);
+    const duplicate = documents.some((document) =>
+      document.originalFilename === file.name &&
+      document.byteSize === file.size &&
+      document.contentType === contentType &&
+      !["failed", "ignored", "quarantined"].includes(document.status)
+    );
+    const documentStatus = duplicate
+      ? "duplicate" as const
+      : intakeMode === "ai_intake"
+        ? "queued" as const
+        : "needs_review" as const;
+    const queueItemId = documentStatus === "queued" ? `queue-web-upload-${Date.now()}` : null;
     const document: AutonomoDocumentListItem = {
       documentId,
       assetId,
       workspaceId: workspace.workspaceId,
-      status: intakeMode === "ai_intake" ? "queued" : "needs_review",
+      status: documentStatus,
       direction: "unknown",
       documentType: "unknown",
       title: file.name.replace(/\.[^.]+$/, ""),
@@ -478,7 +489,7 @@ export const fixtureAutonomoApi = {
       intakeMode,
       uploadedByUserId: workspace.ownerUserId,
       queueItemId,
-      queueStatus: intakeMode === "ai_intake" ? "queued" : null,
+      queueStatus: documentStatus === "queued" ? "queued" : null,
       createdAt: now,
       updatedAt: now
     };
@@ -493,8 +504,8 @@ export const fixtureAutonomoApi = {
       assetId,
       uploadId: `upload-${documentId}`,
       queueItemId,
-      status: intakeMode === "ai_intake" ? "queued" : "needs_review",
-      documentStatus: intakeMode === "ai_intake" ? "queued" : "needs_review",
+      status: documentStatus,
+      documentStatus,
       intakeMode,
       storageKey: `fixture/autonomo/${documentId}/${file.name}`,
       bytesReceived: file.size,

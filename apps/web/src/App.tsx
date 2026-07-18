@@ -1435,9 +1435,15 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
   const uploadMutation = useMutation<AutonomoUploadCompletionResponse, Error, File>({
     mutationFn: (file: File) => client.uploadFile(file),
     onSuccess: async (response: AutonomoUploadCompletionResponse) => {
-      toast.success("Document queued", {
-        description: `${response.documentId} is ready for Autonomo AV processing.`
-      });
+      if (response.documentStatus === "duplicate") {
+        toast.info("Duplicate document detected", {
+          description: `${response.documentId} matches an existing workspace document and was not queued again.`
+        });
+      } else {
+        toast.success("Document queued", {
+          description: `${response.documentId} is ready for Autonomo AV processing.`
+        });
+      }
       setSelectedFile(null);
       if (inputRef.current) inputRef.current.value = "";
       await onUploaded();

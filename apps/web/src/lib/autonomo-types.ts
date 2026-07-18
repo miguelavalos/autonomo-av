@@ -413,8 +413,8 @@ export interface AutonomoUploadCompletionResponse {
   assetId: string;
   uploadId: string;
   queueItemId: string | null;
-  status: "queued" | "needs_review";
-  documentStatus: "queued" | "needs_review";
+  status: "queued" | "needs_review" | "duplicate";
+  documentStatus: "queued" | "needs_review" | "duplicate";
   intakeMode: AutonomoIntakeMode;
   storageKey: string;
   bytesReceived: number;
