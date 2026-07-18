@@ -39,10 +39,10 @@ As of 2026-07-18:
 
 - backend/Admin readiness is owned by the private AVALSYS suite;
 - iPhone, macOS, and web implementations are present in this repo;
-- iOS simulator build and all 40 unit tests passed locally on current `main` on
-  2026-07-18. The signed-out onboarding, Apple/Google sign-in choices, and guest
-  Pro information/paywall controls were also inspected in a dedicated Autonomo
-  simulator without starting sign-in or a purchase;
+- iOS simulator build and all 43 tests passed locally on current `main` on
+  2026-07-18: 40 unit tests plus three guest-journey UI tests covering the
+  signed-out onboarding, Apple/Google sign-in choices, and guest Pro/paywall
+  disclosures without starting sign-in or a purchase;
 - macOS tests passed locally on current `main` on 2026-07-18: 22 tests with no
   failures; the latest macOS CI run is also green;
 - iOS archive/export evidence exists and build `0.1.0 (1)` was uploaded to App
@@ -208,8 +208,9 @@ this public repo.
 GitHub Actions run:
 
 - web typecheck and deploy-safe production build;
-- iOS XcodeGen, dev runtime config check, and all unit tests on a dynamically
-  selected iPhone simulator without signing;
+- iOS XcodeGen, dev runtime config check, 40 unit tests, and three signed-out
+  guest-journey UI tests on a dynamically selected iPhone simulator without
+  signing;
 - macOS XcodeGen, dev runtime/share-extension/security preflight, and unsigned
   unit tests with an uploaded `.xcresult` on failure.
 

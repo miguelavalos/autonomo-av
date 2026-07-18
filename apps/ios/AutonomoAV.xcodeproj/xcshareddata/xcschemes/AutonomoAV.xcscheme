@@ -64,6 +64,17 @@
                ReferencedContainer = "container:AutonomoAV.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "1B9816396BEB57269D125919"
+               BuildableName = "AutonomoAVUITests.xctest"
+               BlueprintName = "AutonomoAVUITests"
+               ReferencedContainer = "container:AutonomoAV.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

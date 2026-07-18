@@ -18,6 +18,7 @@
 		1DC171945DC9D8962EC2F9DC /* AutonomoAppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C8ECFF6ADEF60AC87B8CEB0 /* AutonomoAppShellView.swift */; };
 		1DD48BE7025630940D32B6E5 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = DD570F6D091C33B27E535211 /* Localizable.strings */; };
 		20FDDD7EC7259B0F31919111 /* AVBrandFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 4184770238F3F2AAB44B8564 /* AVBrandFoundation */; };
+		22844FACFB29B1F3AEC00438 /* GuestJourneyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49D6D741608974AB57F56980 /* GuestJourneyUITests.swift */; };
 		2C1388F040740123295796E8 /* ClerkKit in Frameworks */ = {isa = PBXBuildFile; productRef = E44A0F90DBA9783ADE54DFEF /* ClerkKit */; };
 		2D23F3C0CAE49C176003CF95 /* AVProductAccountFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = EB0392E8255C4B1B3743E10D /* AVProductAccountFoundation */; };
 		321FF27E9144AB73A88FC54F /* AutonomoAccessControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFD99A9562089C27A2040337 /* AutonomoAccessControllerTests.swift */; };
@@ -55,6 +56,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		301047354D024A0AA9F9E528 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6FA178E706EE00EC94985C90 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B86AD126FD25CDD550BE607E;
+			remoteInfo = AutonomoAV;
+		};
 		3CAA192EE7893CBE06AD8317 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6FA178E706EE00EC94985C90 /* Project object */;
@@ -99,6 +107,7 @@
 		3FBE9EAFFD8235FF1D694BA1 /* AuthGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthGateView.swift; sourceTree = "<group>"; };
 		407B10C5CE515BFD4B64F22B /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		491F42A561AB154CB8856985 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		49D6D741608974AB57F56980 /* GuestJourneyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuestJourneyUITests.swift; sourceTree = "<group>"; };
 		55513D91774B563A79703D23 /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
 		5C82A695A4D13BA44D23E36F /* AutonomoAVShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = AutonomoAVShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		60C0DAA3EDBEAF2A5FCEC857 /* AutonomoAVAccessSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAVAccessSnapshot.swift; sourceTree = "<group>"; };
@@ -127,6 +136,7 @@
 		F3B07E32813A399D90924C4A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		F405171E34353339D552FE2A /* AutonomoAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutonomoAccess.swift; sourceTree = "<group>"; };
 		F4493D7A040D1FE587BCE612 /* SharedIntakeInbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedIntakeInbox.swift; sourceTree = "<group>"; };
+		F517526FEEDED55C36390E3C /* AutonomoAVUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AutonomoAVUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5D7414930EEB051F3693533 /* IntakeShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntakeShellView.swift; sourceTree = "<group>"; };
 		FCA714D1409AB592BFC9A146 /* AutonomoAV.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AutonomoAV.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -207,6 +217,14 @@
 			path = Account;
 			sourceTree = "<group>";
 		};
+		9BFCD05C6BA0CF3FDEC229F4 /* AutonomoAVUITests */ = {
+			isa = PBXGroup;
+			children = (
+				49D6D741608974AB57F56980 /* GuestJourneyUITests.swift */,
+			);
+			path = AutonomoAVUITests;
+			sourceTree = "<group>";
+		};
 		9E3CCE760FD08DB51CC749B5 /* AutonomoAVShareExtension */ = {
 			isa = PBXGroup;
 			children = (
@@ -224,6 +242,7 @@
 				BF63689F2706CF37251749DF /* AutonomoAV */,
 				9E3CCE760FD08DB51CC749B5 /* AutonomoAVShareExtension */,
 				88B800BC1518A9854D141FA3 /* AutonomoAVTests */,
+				9BFCD05C6BA0CF3FDEC229F4 /* AutonomoAVUITests */,
 				BEC551A21F8064D278A57EDA /* Config */,
 				BD550F3FA248248085A8DD3A /* Packages */,
 				F4663004A290265F451515A0 /* Products */,
@@ -294,6 +313,7 @@
 				131ED33993F3CE41DF5CF6A3 /* AutonomoAV.app */,
 				5C82A695A4D13BA44D23E36F /* AutonomoAVShareExtension.appex */,
 				95FD8C885FCDF72A9DE635E5 /* AutonomoAVTests.xctest */,
+				F517526FEEDED55C36390E3C /* AutonomoAVUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -301,6 +321,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		1B9816396BEB57269D125919 /* AutonomoAVUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3DC4C8E5421263304F34F32C /* Build configuration list for PBXNativeTarget "AutonomoAVUITests" */;
+			buildPhases = (
+				D7EA5004A901FC084E6E754F /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B35460F03D4E11B1742ACC8C /* PBXTargetDependency */,
+			);
+			name = AutonomoAVUITests;
+			packageProductDependencies = (
+			);
+			productName = AutonomoAVUITests;
+			productReference = F517526FEEDED55C36390E3C /* AutonomoAVUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		8779040198C13BF1B9904563 /* AutonomoAVShareExtension */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 5FE509FB56C527AF3ACB4E7E /* Build configuration list for PBXNativeTarget "AutonomoAVShareExtension" */;
@@ -376,6 +414,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					1B9816396BEB57269D125919 = {
+						TestTargetID = B86AD126FD25CDD550BE607E;
+					};
 					8779040198C13BF1B9904563 = {
 						DevelopmentTeam = "$(AVALSYS_APPLE_DEVELOPMENT_TEAM)";
 						ProvisioningStyle = Automatic;
@@ -409,6 +450,7 @@
 				B86AD126FD25CDD550BE607E /* AutonomoAV */,
 				8779040198C13BF1B9904563 /* AutonomoAVShareExtension */,
 				9C78ACED14855A5BC5C6F52D /* AutonomoAVTests */,
+				1B9816396BEB57269D125919 /* AutonomoAVUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -479,6 +521,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		D7EA5004A901FC084E6E754F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22844FACFB29B1F3AEC00438 /* GuestJourneyUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -491,6 +541,11 @@
 			isa = PBXTargetDependency;
 			target = B86AD126FD25CDD550BE607E /* AutonomoAV */;
 			targetProxy = 3CAA192EE7893CBE06AD8317 /* PBXContainerItemProxy */;
+		};
+		B35460F03D4E11B1742ACC8C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B86AD126FD25CDD550BE607E /* AutonomoAV */;
+			targetProxy = 301047354D024A0AA9F9E528 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -654,6 +709,24 @@
 			};
 			name = Debug;
 		};
+		A23C5CFFB337C3D10CC08E7E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(AUTONOMOAV_BUNDLE_IDENTIFIER).uitests";
+				PRODUCT_MODULE_NAME = AutonomoAVUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = AutonomoAV;
+			};
+			name = Debug;
+		};
 		E733F51EBD12A49B47DFF729 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -708,6 +781,24 @@
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		E7EC55DAC7896A6E4B296CA1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "$(AUTONOMOAV_BUNDLE_IDENTIFIER).uitests";
+				PRODUCT_MODULE_NAME = AutonomoAVUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = AutonomoAV;
 			};
 			name = Release;
 		};
@@ -767,6 +858,15 @@
 			buildConfigurations = (
 				6EE291C9E2180717EFF266D8 /* Debug */,
 				F8EA1D94694B08E281728C80 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3DC4C8E5421263304F34F32C /* Build configuration list for PBXNativeTarget "AutonomoAVUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A23C5CFFB337C3D10CC08E7E /* Debug */,
+				E7EC55DAC7896A6E4B296CA1 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
