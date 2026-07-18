@@ -42,15 +42,17 @@ As of 2026-07-18:
 - iOS simulator build and all 43 tests passed locally on current `main` on
   2026-07-18: 40 unit tests plus three guest-journey UI tests covering the
   signed-out onboarding, Apple/Google sign-in choices, and guest Pro/paywall
-  disclosures without starting sign-in or a purchase;
+  disclosures without starting sign-in or a purchase. iOS CI run `29646021665`
+  is green on implementation commit `9787c82`;
 - macOS tests passed locally on current `main` on 2026-07-18: 22 tests with no
-  failures; the latest macOS CI run is also green;
+  failures; macOS CI run `29646021709` is green on implementation commit
+  `9787c82`;
 - iOS archive/export evidence exists and build `0.1.0 (1)` was uploaded to App
   Store Connect, but internal TestFlight availability and the signed physical
   iPhone intake/share smoke are not yet recorded;
-- Web CI run `29639313845` and macOS CI run `29639313867` are green on commit
-  `b7148be`; local typecheck, normal
-  build, production-local build, deterministic browser archive flow, and the
+- Web CI run `29640066505` is green on implementation commit `6b65628`; local
+  typecheck, normal build, production-local build, deterministic browser
+  archive flow, and the
   first-upload/automatic-duplicate fixture flow also passed on 2026-07-18. A
   full local browser pass then covered all nine app/public routes, desktop and
   mobile layout, filters, upload/duplicate, draft review, settings, console,

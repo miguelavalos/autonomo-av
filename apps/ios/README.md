@@ -18,6 +18,13 @@ xcodegen generate
 xcodebuild -project AutonomoAV.xcodeproj -scheme AutonomoAV -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
+The shared `AutonomoAV` scheme includes 40 unit tests and three deterministic
+guest-journey UI tests. The UI target validates signed-out onboarding, provider
+choices, subscription disclosure and gating, redemption, and legal-link pair
+consistency without starting authentication or purchase. Use a dedicated
+iPhone simulator when running it locally so concurrent agents do not share
+CoreSimulator state.
+
 Use `scripts/generate-ios-local-xcconfig.sh --env dev` from this folder when
 private local Account AV/API values are available. The generated
 `Config/Local.xcconfig` file is ignored and must stay out of git. When present,
