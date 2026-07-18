@@ -39,13 +39,16 @@ As of 2026-07-18:
 
 - backend/Admin readiness is owned by the private AVALSYS suite;
 - iPhone, macOS, and web implementations are present in this repo;
-- macOS CI is green on current `main`;
+- iOS `build-for-testing` without signing passed locally on current `main` on
+  2026-07-18;
+- macOS tests passed locally on current `main` on 2026-07-18: 22 tests with no
+  failures; the latest macOS CI run is also green;
 - iOS archive/export evidence exists and build `0.1.0 (1)` was uploaded to App
   Store Connect, but internal TestFlight availability and the signed physical
   iPhone intake/share smoke are not yet recorded;
-- Web CI run `29636832417` is green on commit `f8797c2`; local typecheck, normal
-  build, production-local build, and deterministic browser archive flow also
-  passed on 2026-07-18;
+- Web CI run `29637808306` is green on commit `44df449`; local typecheck, normal
+  build, production-local build, deterministic browser archive flow, and the
+  first-upload/automatic-duplicate fixture flow also passed on 2026-07-18;
 - macOS production release remains outside current readiness until production
   Sentry, App Store Connect identity strategy, profiles, and real share-sheet UI
   evidence are complete.
