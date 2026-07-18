@@ -2,8 +2,14 @@
 
 Date: 2026-07-01
 
-This first iPhone scaffold lives in `public/autonomo-av/apps/ios` because no
-existing public Autonomo app was present under `public/`.
+Status: historical bootstrap/archive evidence through 2026-07-04. As of the
+2026-07-18 documentation audit, build `0.1.0 (1)` upload success is recorded but
+App Store Connect processing/internal TestFlight assignment and the first
+signed physical-device Files/Share Extension smoke remain unverified. Use the
+root `README.md` and private App Store publish runbook for current gates.
+
+The iPhone implementation lives in `public/autonomo-av/apps/ios`; this document
+records how its initial bootstrap and first archive/upload were validated.
 
 Scope kept intentionally narrow:
 
@@ -44,7 +50,7 @@ Remaining live blockers:
   upload directly from the extension is required later, add an extension-safe
   backend handoff route rather than copying bearer tokens into the extension.
 
-## Local Validation Update - 2026-07-01
+## Historical Local Validation - 2026-07-01
 
 Checks run from `apps/ios`:
 
@@ -64,9 +70,10 @@ Checks run from `apps/ios`:
   `com.avalsys.autonomoav.dev` and `com.avalsys.autonomoav.dev.share` with app
   group `group.com.avalsys.autonomoav.dev`.
 
-Conclusion: the iOS project compiles without signing and the dev runtime config
-is coherent. Real iPhone/share-extension smoke needs a connected, trusted
-device and a fixed/updated local Simulator runtime.
+Conclusion recorded on 2026-07-01: the iOS project compiled without signing and
+the dev runtime config was coherent. The missing signing profiles in this
+specific snapshot were repaired by the later 2026-07-02/04 archive and export
+passes below; the physical-device product smoke remains open.
 
 ## Local Signing, Archive, and Export Update - 2026-07-02
 

@@ -18,9 +18,9 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
 - `apps/ios`
   Native SwiftUI iPhone intake app with Account AV sign-in boundary, scan/files
   import, local retry state, backend upload client, Pro access gate, and Share
-  Extension scaffold labeled `Enviar a Autonomo AV Inbox`.
+  Extension handoff labeled `Enviar a Autonomo AV Inbox`.
 - `apps/macos`
-  Native SwiftUI macOS intake app scaffold with MenuBarExtra, main inbox window,
+  Native SwiftUI macOS intake app with MenuBarExtra, main inbox window,
   local retry queue reuse, Finder/Open With, Services, Share Extension,
   drag/drop and file picker import, and Account AV upload wiring through the
   shared Apple upload core. Import surfaces require Account AV login plus
@@ -32,6 +32,26 @@ private AVALSYS suite. This public workspace contains the user-facing clients.
   register, filters, create/edit review workflow, quarter view, settings,
   fixture mode, live backend client wiring, and a Pro AI intake surface that
   shares the backend queue with iOS and macOS.
+
+## Current Readiness
+
+As of 2026-07-18:
+
+- backend/Admin readiness is owned by the private AVALSYS suite;
+- iPhone, macOS, and web implementations are present in this repo;
+- macOS CI is green on current `main`;
+- iOS archive/export evidence exists and build `0.1.0 (1)` was uploaded to App
+  Store Connect, but internal TestFlight availability and the signed physical
+  iPhone intake/share smoke are not yet recorded;
+- current Web CI is red: run `28701815816` and a local 2026-07-18 typecheck fail
+  on two implicit-`any` callbacks in `apps/web/src/App.tsx`;
+- macOS production release remains outside current readiness until production
+  Sentry, App Store Connect identity strategy, profiles, and real share-sheet UI
+  evidence are complete.
+
+The private canonical readiness table is
+`private/avalsys-suite/docs/autonomo-av/README.md`. Dated bootstrap notes below
+are evidence snapshots and do not supersede that current status.
 
 ## Docs
 
@@ -179,6 +199,9 @@ GitHub Actions run:
   `build-for-testing` without signing.
 - macOS XcodeGen, dev runtime/share-extension/security preflight, and unsigned
   unit tests with an uploaded `.xcresult` on failure.
+
+Do not describe all public CI as green without checking the exact current
+commit. The latest Web CI on `main` is known failing as of 2026-07-18.
 
 iOS unit tests are intentionally not part of the first CI gate until the
 simulator/runtime lane is stable for this new product repo. The iOS CI still

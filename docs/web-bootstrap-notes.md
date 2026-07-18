@@ -1,6 +1,17 @@
 # Autonomo AV Web Bootstrap Notes
 
-Status: minimal signed-in user web V1 scaffold notes.
+Status: implemented web V1 notes plus historical deployment guidance. Current
+`main` has a known TypeScript/CI regression as of 2026-07-18; use the root
+`README.md` for current readiness.
+
+## Current Source State
+
+The feature surface described below exists. However, Web CI run `28701815816`
+and a 2026-07-18 local `vp run typecheck` fail at `src/App.tsx` callbacks for
+archive mutation because `record` and `detail` are inferred as implicit `any`.
+Repair and rerun typecheck/build before using this document as deploy evidence.
+Earlier deployed preview/production checks remain historical evidence for the
+builds that were deployed then.
 
 The web app lives at `apps/web` and is scoped to the signed-in Autonomo AV user
 surface: inbox, upload, review, quarter, and settings.
