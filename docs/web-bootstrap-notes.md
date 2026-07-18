@@ -17,6 +17,13 @@ deployed then; this source correction was not itself a deployment.
 The web app lives at `apps/web` and is scoped to the signed-in Autonomo AV user
 surface: inbox, upload, review, quarter, and settings.
 
+V1 is intentionally English-only. `AppsAvWebProvider` and `AppShell` receive
+the single supported locale, so stale suite cookies or `?lang=` parameters do
+not mislabel English product/legal copy and the shared footer does not advertise
+incomplete translations. Add another locale only after navigation, workflows,
+validation, toasts, accessibility labels, and all four public routes are fully
+translated.
+
 ## Runtime Modes
 
 Fixture mode is on by default and does not require Account AV auth:

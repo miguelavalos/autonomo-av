@@ -48,7 +48,13 @@ As of 2026-07-18:
   iPhone intake/share smoke are not yet recorded;
 - Web CI run `29637808306` is green on commit `44df449`; local typecheck, normal
   build, production-local build, deterministic browser archive flow, and the
-  first-upload/automatic-duplicate fixture flow also passed on 2026-07-18;
+  first-upload/automatic-duplicate fixture flow also passed on 2026-07-18. A
+  full local browser pass then covered all nine app/public routes, desktop and
+  mobile layout, filters, upload/duplicate, draft review, settings, console,
+  semantic headings, accessible file controls, and legal-page landmarks;
+- the V1 web UI is explicitly English-only. The shared language selector is
+  hidden and the document locale is fixed to English until every product and
+  legal string is translated end to end;
 - macOS production release remains outside current readiness until production
   Sentry, App Store Connect identity strategy, profiles, and real share-sheet UI
   evidence are complete.

@@ -1,4 +1,4 @@
-import { AppShell, AppsAvWebProvider, AuthSkeleton, getAppsAvLocaleFromSearch } from "@avalsys/apps-av-web";
+import { AppShell, AppsAvWebProvider, AuthSkeleton, type AppsAvLocale } from "@avalsys/apps-av-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -35,7 +35,6 @@ import {
   type AutonomoAuthSession
 } from "@/lib/autonomo-auth";
 import {
-  autonomoAccent,
   autonomoFooterLabels,
   autonomoNavLinks,
   autonomoProductConfig,
@@ -94,6 +93,7 @@ const reviewedDocumentTypes: AutonomoReviewedDocumentType[] = ["invoice", "ticke
 const counterpartyKinds: AutonomoCounterpartyKind[] = ["supplier", "customer", "both", "unknown"];
 const businessProfileKinds: AutonomoBusinessProfileKind[] = ["self_employed", "company", "other"];
 const uploadAccept = `${autonomoUploadContentTypeValues.join(",")},.pdf,.jpg,.jpeg,.png,.webp,.heic,.heif`;
+const autonomoSupportedLocales = ["en"] as const satisfies readonly AppsAvLocale[];
 
 type PublicRoute = "delete-account" | "privacy" | "support" | "terms";
 type AppRoute = "records" | "intake" | "quarter" | "settings" | "sign-in" | PublicRoute;
@@ -327,10 +327,8 @@ const publicPages: Record<PublicRoute, {
 };
 
 export function App() {
-  const initialLocale = getAppsAvLocaleFromSearch(window.location.search);
-
   return (
-    <AppsAvWebProvider initialLocale={initialLocale}>
+    <AppsAvWebProvider fixedLocale="en" initialLocale="en" supportedLocales={autonomoSupportedLocales}>
       <AutonomoRuntime />
     </AppsAvWebProvider>
   );
@@ -383,6 +381,7 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
         labels={autonomoShellLabels}
         navLinks={autonomoNavLinks}
         product={autonomoProductConfig}
+        supportedLocales={autonomoSupportedLocales}
       >
         <AutonomoPublicPage route={route} />
       </AppShell>
@@ -413,6 +412,7 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
         labels={autonomoShellLabels}
         navLinks={autonomoNavLinks}
         product={autonomoProductConfig}
+        supportedLocales={autonomoSupportedLocales}
       >
         <AutonomoProRequiredScreen
           access={autonomoAccess}
@@ -432,6 +432,7 @@ function AutonomoAuthenticatedRuntime({ route, useFixtures }: { route: AppRoute;
       labels={autonomoShellLabels}
       navLinks={autonomoNavLinks}
       product={autonomoProductConfig}
+      supportedLocales={autonomoSupportedLocales}
     >
       <AutonomoSurface
         authSession={authSession}
@@ -631,7 +632,7 @@ function AutonomoPublicPage({ route }: { route: PublicRoute }) {
   const page = publicPages[route];
 
   return (
-    <main className="legal-page" aria-labelledby="legal-page-title">
+    <section className="legal-page" aria-labelledby="legal-page-title">
       <section className="legal-hero">
         <Badge tone="info">Autonomo AV</Badge>
         <h1 id="legal-page-title">{page.title}</h1>
@@ -656,7 +657,7 @@ function AutonomoPublicPage({ route }: { route: PublicRoute }) {
           <a className="secondary-button" href="/">Open records</a>
         </div>
       </section>
-    </main>
+    </section>
   );
 }
 
@@ -1027,7 +1028,7 @@ function AiIntakeProGate() {
       <Card className="app-card pro-gate-panel" aria-labelledby="ai-pro-gate-title">
         <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle id="ai-pro-gate-title">AI intake is Pro</CardTitle>
+            <CardTitle as="h2" id="ai-pro-gate-title">AI intake is Pro</CardTitle>
             <CardDescription>
               Free workspaces keep manual records without aggressive caps. Pro adds the shared AI queue for web, iPhone, and macOS.
             </CardDescription>
@@ -1054,7 +1055,7 @@ function AiIntakeBridgePanel() {
     <Card className="app-card ai-intake-bridge" aria-labelledby="ai-intake-bridge-title">
       <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
         <div>
-          <CardTitle id="ai-intake-bridge-title">One Pro AI inbox across every surface</CardTitle>
+          <CardTitle as="h2" id="ai-intake-bridge-title">One Pro AI inbox across every surface</CardTitle>
           <CardDescription>
             Web, iPhone, and macOS all feed the same backend queue. AI creates drafts only; reviewed records stay human-owned.
           </CardDescription>
@@ -1170,6 +1171,7 @@ function ManualRecordPanel({
             ref={inputRef}
             className="sr-only"
             type="file"
+            aria-label="Source file for manual record"
             accept={uploadAccept}
             onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
           />
@@ -1401,7 +1403,7 @@ function BusinessProfilePanel({
     <Card className="app-card business-profile-panel" aria-labelledby="business-profile-title">
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div>
-          <CardTitle id="business-profile-title">{title}</CardTitle>
+          <CardTitle as="h2" id="business-profile-title">{title}</CardTitle>
           <CardDescription>Only type, legal name, and country are required to start creating records.</CardDescription>
         </div>
         <Badge tone={complete ? "success" : "warning"}>{complete ? "Ready" : "Required"}</Badge>
@@ -1470,7 +1472,7 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
   return (
     <Card className="app-card upload-panel" aria-labelledby="upload-title">
       <CardHeader>
-        <CardTitle id="upload-title">Send to AI inbox</CardTitle>
+        <CardTitle as="h2" id="upload-title">Send to AI inbox</CardTitle>
         <CardDescription>
           {canUpload
             ? "Drop one PDF or image here. It joins the same Pro queue used by iPhone and macOS intake."
@@ -1499,6 +1501,7 @@ function UploadPanel({ canUpload, client, onUploaded }: { canUpload: boolean; cl
           ref={inputRef}
           className="sr-only"
           type="file"
+          aria-label="Document for AI inbox"
           accept={uploadAccept}
           onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
         />
@@ -1552,7 +1555,7 @@ function DocumentList({
     <Card className="app-card document-list-panel" aria-labelledby="document-list-title">
       <CardHeader className="flex-row flex-wrap items-center justify-between gap-3">
         <div>
-          <CardTitle id="document-list-title">{title}</CardTitle>
+          <CardTitle as="h2" id="document-list-title">{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
         {isLoading ? <Badge tone="muted">Loading</Badge> : <Badge tone="info">{documents.length} shown</Badge>}
@@ -1720,8 +1723,6 @@ function ReviewColumn({
   }
 
   const detail = detailQuery.data ?? null;
-  const draft = detail?.latestDraft ?? null;
-
   const saveWithStatus = (status: AutonomoManualDocumentStatus) => {
     const error = validateReviewForm(form, status);
     setFormError(error);
@@ -2030,8 +2031,11 @@ function SettingsScreen({
               aria-label="Copy private email alias"
               onClick={() => {
                 if (emailIntake.alias) {
-                  void navigator.clipboard.writeText(emailIntake.alias);
-                  toast.success("Alias copied");
+                  void navigator.clipboard.writeText(emailIntake.alias)
+                    .then(() => toast.success("Alias copied"))
+                    .catch(() => toast.error("Alias could not be copied", {
+                      description: "Select the private alias and copy it manually."
+                    }));
                 }
               }}
             >
