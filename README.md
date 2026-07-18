@@ -43,8 +43,9 @@ As of 2026-07-18:
 - iOS archive/export evidence exists and build `0.1.0 (1)` was uploaded to App
   Store Connect, but internal TestFlight availability and the signed physical
   iPhone intake/share smoke are not yet recorded;
-- current Web CI is red: run `28701815816` and a local 2026-07-18 typecheck fail
-  on two implicit-`any` callbacks in `apps/web/src/App.tsx`;
+- Web CI run `29636832417` is green on commit `f8797c2`; local typecheck, normal
+  build, production-local build, and deterministic browser archive flow also
+  passed on 2026-07-18;
 - macOS production release remains outside current readiness until production
   Sentry, App Store Connect identity strategy, profiles, and real share-sheet UI
   evidence are complete.
@@ -201,7 +202,8 @@ GitHub Actions run:
   unit tests with an uploaded `.xcresult` on failure.
 
 Do not describe all public CI as green without checking the exact current
-commit. The latest Web CI on `main` is known failing as of 2026-07-18.
+commit. Web, iOS, and macOS CI were green at their latest recorded runs on
+2026-07-18; later commits still require their own workflow result.
 
 iOS unit tests are intentionally not part of the first CI gate until the
 simulator/runtime lane is stable for this new product repo. The iOS CI still

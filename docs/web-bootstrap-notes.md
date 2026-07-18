@@ -1,17 +1,18 @@
 # Autonomo AV Web Bootstrap Notes
 
-Status: implemented web V1 notes plus historical deployment guidance. Current
-`main` has a known TypeScript/CI regression as of 2026-07-18; use the root
-`README.md` for current readiness.
+Status: implemented web V1 notes plus historical deployment guidance. The
+2026-07-18 TypeScript and Vite development-runtime regressions are fixed on
+public commit `f8797c2`; use the root `README.md` for current readiness.
 
 ## Current Source State
 
-The feature surface described below exists. However, Web CI run `28701815816`
-and a 2026-07-18 local `vp run typecheck` fail at `src/App.tsx` callbacks for
-archive mutation because `record` and `detail` are inferred as implicit `any`.
-Repair and rerun typecheck/build before using this document as deploy evidence.
-Earlier deployed preview/production checks remain historical evidence for the
-builds that were deployed then.
+The feature surface described below exists. Commit `f8797c2` added explicit
+archive-mutation callback types and made Vite prebundle SWR's
+`use-sync-external-store` CommonJS shim. Local typecheck, normal build,
+production-local build, and a deterministic fixture-browser archive flow
+passed; Web CI run `29636832417` also passed. Earlier deployed
+preview/production checks remain historical evidence for the builds that were
+deployed then; this source correction was not itself a deployment.
 
 The web app lives at `apps/web` and is scoped to the signed-in Autonomo AV user
 surface: inbox, upload, review, quarter, and settings.
