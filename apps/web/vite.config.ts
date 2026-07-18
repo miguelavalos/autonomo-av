@@ -10,7 +10,8 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    exclude: ["@avalsys/account-av-web", "@avalsys/apps-av-web"]
+    exclude: ["@avalsys/account-av-web", "@avalsys/apps-av-web"],
+    include: ["use-sync-external-store/shim/index.js"]
   },
   server: {
     port: 5195

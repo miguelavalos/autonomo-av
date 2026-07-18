@@ -939,8 +939,9 @@ function RecordsScreen({
   const metrics = useMemo(() => recordMetricsFromRecords(records), [records]);
   const canCreate = workspace?.businessProfile.profileStatus === "complete";
   const archiveMutation = useMutation<AutonomoDocumentDetailResponse, Error, AutonomoRecordListItem>({
-    mutationFn: (record) => client.saveDocumentReview(record.documentId, archivePayloadFromRecord(record)),
-    onSuccess: async (detail) => {
+    mutationFn: (record: AutonomoRecordListItem) =>
+      client.saveDocumentReview(record.documentId, archivePayloadFromRecord(record)),
+    onSuccess: async (detail: AutonomoDocumentDetailResponse) => {
       toast.success("Record archived", { description: detail.document.title ?? detail.document.originalFilename });
       if (selectedDocumentId === detail.document.documentId) {
         setSelectedDocumentId(null);
