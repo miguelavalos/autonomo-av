@@ -39,14 +39,17 @@ As of 2026-07-18:
 
 - backend/Admin readiness is owned by the private AVALSYS suite;
 - iPhone, macOS, and web implementations are present in this repo;
-- iOS `build-for-testing` without signing passed locally on current `main` on
-  2026-07-18;
+- iOS simulator build and all 40 unit tests passed locally on current `main` on
+  2026-07-18. The signed-out onboarding, Apple/Google sign-in choices, and guest
+  Pro information/paywall controls were also inspected in a dedicated Autonomo
+  simulator without starting sign-in or a purchase;
 - macOS tests passed locally on current `main` on 2026-07-18: 22 tests with no
   failures; the latest macOS CI run is also green;
 - iOS archive/export evidence exists and build `0.1.0 (1)` was uploaded to App
   Store Connect, but internal TestFlight availability and the signed physical
   iPhone intake/share smoke are not yet recorded;
-- Web CI run `29637808306` is green on commit `44df449`; local typecheck, normal
+- Web CI run `29639313845` and macOS CI run `29639313867` are green on commit
+  `b7148be`; local typecheck, normal
   build, production-local build, deterministic browser archive flow, and the
   first-upload/automatic-duplicate fixture flow also passed on 2026-07-18. A
   full local browser pass then covered all nine app/public routes, desktop and
@@ -205,8 +208,8 @@ this public repo.
 GitHub Actions run:
 
 - web typecheck and deploy-safe production build;
-- iOS XcodeGen, dev runtime config check, and generic simulator
-  `build-for-testing` without signing.
+- iOS XcodeGen, dev runtime config check, and all unit tests on a dynamically
+  selected iPhone simulator without signing;
 - macOS XcodeGen, dev runtime/share-extension/security preflight, and unsigned
   unit tests with an uploaded `.xcresult` on failure.
 
@@ -214,6 +217,5 @@ Do not describe all public CI as green without checking the exact current
 commit. Web, iOS, and macOS CI were green at their latest recorded runs on
 2026-07-18; later commits still require their own workflow result.
 
-iOS unit tests are intentionally not part of the first CI gate until the
-simulator/runtime lane is stable for this new product repo. The iOS CI still
-compiles the test bundle through `build-for-testing`.
+iOS CI stores its `.xcresult` as a failure artifact so simulator or test
+regressions can be inspected without rerunning the lane locally.

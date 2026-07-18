@@ -30,7 +30,7 @@ defaults:
 
 jobs:
   ios:
-    name: Build iOS
+    name: Build and test iOS
     runs-on: macos-15
     timeout-minutes: 30
 
@@ -66,12 +66,30 @@ jobs:
       - name: Validate dev runtime and share extension preflight
         run: apps/ios/scripts/check-ios-release-preflight.sh --env dev --configuration Debug --skip-build
 
-      - name: Build iOS app and tests
+      - name: Build and test iOS app
         working-directory: apps/ios
         run: |
+          set -euo pipefail
+          simulator_id="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.isAvailable and (.name | startswith("iPhone")))][0].udid // empty')"
+          if [ -z "$simulator_id" ]; then
+            echo "No available iPhone simulator was found." >&2
+            exit 1
+          fi
+          mkdir -p ../../.derived-data/ios-ci/TestResults
           xcodebuild \
             -project AutonomoAV.xcodeproj \
             -scheme AutonomoAV \
-            -destination 'generic/platform=iOS Simulator' \
-            build-for-testing \
+            -destination "platform=iOS Simulator,id=$simulator_id" \
+            -derivedDataPath ../../.derived-data/ios-ci \
+            -resultBundlePath ../../.derived-data/ios-ci/TestResults/AutonomoAV.xcresult \
+            test \
             CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS test result bundle
+        if: failure()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ios-ci-xcresult
+          path: .derived-data/ios-ci/TestResults/AutonomoAV.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
