@@ -13,6 +13,11 @@ web/iOS/macOS capture -> Pro AI queue -> AI draft -> manual review
 The backend, Admin AV operator surface, and product documentation live in the
 private AVALSYS suite. This public workspace contains the user-facing clients.
 
+## License Posture
+
+No license is granted merely by publication of this repository. Use outside
+the AVALSYS product family requires explicit permission from the maintainers.
+
 ## Apps
 
 - `apps/ios`
