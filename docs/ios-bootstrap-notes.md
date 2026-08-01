@@ -5,8 +5,12 @@ Date: 2026-07-01
 Status: historical bootstrap/archive evidence through 2026-07-04. As of the
 2026-07-18 documentation audit, build `0.1.0 (1)` upload success is recorded but
 App Store Connect processing/internal TestFlight assignment and the first
-signed physical-device Files/Share Extension smoke remain unverified. Use the
-root `README.md` and private App Store publish runbook for current gates.
+signed physical-device Files/Share Extension smoke remained unverified. An
+authenticated readback on 2026-08-01 closed the store-state gap: the build is
+`VALID`, encryption-exempt, unexpired through 2026-09-30, and
+`IN_BETA_TESTING` only with the internal `Autonomo AV` group. The physical
+device smoke remains pending. Use the root `README.md` and private App Store
+publish runbook for current gates.
 
 The iPhone implementation lives in `public/autonomo-av/apps/ios`; this document
 records how its initial bootstrap and first archive/upload were validated.
@@ -135,6 +139,8 @@ Checks run from `apps/ios` after regenerating production local config:
   passes locally with App Store/TestFlight provisioning profiles for both the
   app and Share Extension.
 
-This did not upload build `2`. App Store Connect processing/internal TestFlight
-verification for the already uploaded build `0.1.0 (1)` remains the next store
-step unless the owner chooses to upload a newer build.
+This did not upload build `2`. Authenticated App Store Connect readback on
+2026-08-01 subsequently confirmed the already uploaded build `0.1.0 (1)` is
+`VALID` and available only to the internal `Autonomo AV` group. A replacement
+upload is not required solely to verify store state; the next release gate is
+the signed physical-device Files/Share Extension smoke.

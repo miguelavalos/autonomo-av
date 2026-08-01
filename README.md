@@ -40,7 +40,7 @@ the AVALSYS product family requires explicit permission from the maintainers.
 
 ## Current Readiness
 
-As of 2026-07-18:
+As of 2026-08-01:
 
 - backend/Admin readiness is owned by the private AVALSYS suite;
 - iPhone, macOS, and web implementations are present in this repo;
@@ -52,9 +52,11 @@ As of 2026-07-18:
 - macOS tests passed locally on current `main` on 2026-07-18: 22 tests with no
   failures; macOS CI run `29646021709` is green on implementation commit
   `9787c82`;
-- iOS archive/export evidence exists and build `0.1.0 (1)` was uploaded to App
-  Store Connect, but internal TestFlight availability and the signed physical
-  iPhone intake/share smoke are not yet recorded;
+- iOS archive/export evidence exists for build `0.1.0 (1)`. Authenticated
+  App Store Connect readback on 2026-08-01 confirms it is `VALID`,
+  encryption-exempt, unexpired through 2026-09-30, and `IN_BETA_TESTING` only
+  with the internal `Autonomo AV` group. The signed physical iPhone
+  intake/share smoke is still pending;
 - Web CI run `29640066505` is green on implementation commit `6b65628`; local
   typecheck, normal build, production-local build, deterministic browser
   archive flow, and the
