@@ -37,3 +37,20 @@ preflight fails, fix the missing guard or stop and report the blocker.
   a fresh signed-in Pro snapshot they must reject the handoff before copying
   files. The containing app drains compatible files from the App Group only
   after Account AV login and Pro access are active.
+
+## Verification
+
+- Before opening a pull request, run `scripts/macos-ci-test.sh` once from the
+  repository root. It regenerates the macOS project, runs the dev runtime and
+  share extension preflight and runs the macOS unit tests, the same as the
+  `macOS CI` workflow.
+- The full suite, release builds and device runs belong to CI and to the
+  required checks; do not repeat them locally unless the change needs it.
+
+## Review
+
+- The independent review that sets the `agent-review` status follows
+  [`project-bootstrap/docs/REVIEW.md`](https://github.com/miguelavalos/project-bootstrap/blob/main/docs/REVIEW.md),
+  found at `~/github/project-bootstrap/docs/REVIEW.md` on agent machines.
+- The reviewer is a fresh agent that did not write the change.
+- The review comment starts with `PASS` or `BLOCK`.
